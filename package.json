@@ -11,6 +11,10 @@
   "scripts": {
     "test": "node --test"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ghost---Shadow/smiles-js"
+  },
   "keywords": [
     "smiles",
     "chemistry",
