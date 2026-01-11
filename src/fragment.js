@@ -1,5 +1,6 @@
 import { validateSMILES } from './validator.js';
 import { countAtoms, countRings, calculateFormula, calculateMolecularWeight } from './properties.js';
+import { findUsedRingNumbers, getNextRingNumber } from './utils.js';
 
 export function Fragment(smiles) {
   const validation = validateSMILES(smiles);
@@ -13,7 +14,19 @@ export function Fragment(smiles) {
 
       for (const branch of branches) {
         const branchSmiles = typeof branch === 'function' ? branch.smiles : String(branch);
-        result += `(${branchSmiles})`;
+
+        const usedInParent = findUsedRingNumbers(result);
+        const usedInBranch = findUsedRingNumbers(branchSmiles);
+
+        let remappedBranch = branchSmiles;
+        for (const ringNum of usedInBranch) {
+          if (usedInParent.has(ringNum)) {
+            const newNum = getNextRingNumber(result + remappedBranch);
+            remappedBranch = remappedBranch.replaceAll(ringNum, newNum.replace('%', ''));
+          }
+        }
+
+        result += `(${remappedBranch})`;
       }
 
       return createFragment(result);
