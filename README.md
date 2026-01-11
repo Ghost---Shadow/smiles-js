@@ -5,13 +5,13 @@ A JavaScript library for building molecules using composable fragments.
 ## Installation
 
 ```bash
-npm install molecular-dsl
+npm install smiles-js
 ```
 
 ## Quick Start
 
 ```js
-import { Fragment, Ring, FusedRings } from 'molecular-dsl';
+import { Fragment, Ring, FusedRings } from 'smiles-js';
 
 const methyl = Fragment('C');
 const benzene = Ring('c', 6);
