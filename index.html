@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMILES-JS Playground</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        header {
+            background: #2d2d30;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #3e3e42;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            width: 32px;
+            height: 32px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #858585;
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #3e3e42;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #cccccc;
+        }
+
+        .editor-panel {
+            border-right: 1px solid #3e3e42;
+        }
+
+        #editor {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-content {
+            flex: 1;
+            overflow: auto;
+            padding: 1.5rem;
+        }
+
+        .output-section {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .output-section h3 {
+            color: #4ec9b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .output-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .output-row:last-child {
+            border-bottom: none;
+        }
+
+        .output-label {
+            color: #9cdcfe;
+            font-weight: 500;
+        }
+
+        .output-value {
+            color: #ce9178;
+            font-family: 'Consolas', monospace;
+        }
+
+        .molecule-viewer {
+            background: #ffffff;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 250px;
+        }
+
+        .molecule-viewer svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .error {
+            background: #5a1d1d;
+            border-color: #be1100;
+            color: #f48771;
+        }
+
+        .error h3 {
+            color: #f48771;
+        }
+
+        .toolbar {
+            background: #2d2d30;
+            padding: 0.5rem 1rem;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        button:active {
+            background: #0d5a8f;
+        }
+
+        .status {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: #858585;
+        }
+
+        .status.success {
+            color: #4ec9b0;
+        }
+
+        .status.error {
+            color: #f48771;
+        }
+
+        pre {
+            background: #1e1e1e;
+            padding: 0.5rem;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+
+        a {
+            color: #3794ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .editor-panel {
+                border-right: none;
+                border-bottom: 1px solid #3e3e42;
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>
+            <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="20" r="8" fill="#4ec9b0"/>
+                <circle cx="30" cy="50" r="8" fill="#569cd6"/>
+                <circle cx="70" cy="50" r="8" fill="#ce9178"/>
+                <circle cx="50" cy="80" r="8" fill="#dcdcaa"/>
+                <line x1="50" y1="20" x2="30" y2="50" stroke="#858585" stroke-width="2"/>
+                <line x1="50" y1="20" x2="70" y2="50" stroke="#858585" stroke-width="2"/>
+                <line x1="30" y1="50" x2="50" y2="80" stroke="#858585" stroke-width="2"/>
+                <line x1="70" y1="50" x2="50" y2="80" stroke="#858585" stroke-width="2"/>
+            </svg>
+            SMILES-JS Playground
+        </h1>
+        <p class="subtitle">Interactive playground for building molecules with composable SMILES fragments</p>
+    </header>
+
+    <div class="container">
+        <div class="panel editor-panel">
+            <div class="panel-header">JavaScript Editor</div>
+            <div id="editor"></div>
+            <div class="toolbar">
+                <button id="runBtn">Run Code</button>
+                <button id="clearBtn">Clear</button>
+                <button id="exampleBtn">Load Example</button>
+                <span class="status" id="status">Ready</span>
+            </div>
+        </div>
+
+        <div class="panel output-panel">
+            <div class="panel-header">Output</div>
+            <div class="output-content" id="output">
+                <div class="output-section">
+                    <h3>Welcome</h3>
+                    <p>Build molecules using composable SMILES fragments!</p>
+                    <p style="margin-top: 0.5rem;">Click "Load Example" to see how to use the library.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
+    <script type="module">
+        import { Fragment, Ring, FusedRings, Repeat } from 'https://cdn.jsdelivr.net/npm/smiles-js@0.1.0/src/index.js';
+        import { benzene, methyl, ethyl, hydroxyl, carboxyl, naphthalene } from 'https://cdn.jsdelivr.net/npm/smiles-js@0.1.0/src/common.js';
+
+        window.SMILES = { Fragment, Ring, FusedRings, Repeat, benzene, methyl, ethyl, hydroxyl, carboxyl, naphthalene };
+
+        let smilesDrawer;
+
+        function initSmilesDrawer() {
+            if (typeof SmilesDrawer !== 'undefined' && !smilesDrawer) {
+                try {
+                    smilesDrawer = new SmilesDrawer.SvgDrawer({
+                        width: 300,
+                        height: 250,
+                        bondThickness: 2,
+                        fontSizeLarge: 14,
+                        fontSizeSmall: 10
+                    });
+                    console.log('SmilesDrawer initialized');
+                } catch (err) {
+                    console.error('Failed to initialize SmilesDrawer:', err);
+                }
+            }
+        }
+
+        window.addEventListener('load', initSmilesDrawer);
+
+        const editor = CodeMirror(document.getElementById('editor'), {
+            value: `// Build molecules with composable fragments
+const { Fragment, Ring, benzene, methyl, ethyl, hydroxyl } = SMILES;
+
+// Create a simple molecule
+const toluene = benzene(methyl);
+console.log(toluene.smiles);
+
+// Compose multiple fragments
+const ethanol = ethyl(hydroxyl);
+console.log('Ethanol:', ethanol.smiles);
+console.log('Formula:', ethanol.formula);
+console.log('MW:', ethanol.molecularWeight);`,
+            mode: 'javascript',
+            theme: 'monokai',
+            lineNumbers: true,
+            lineWrapping: true,
+            autofocus: true
+        });
+
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+
+        function drawMolecule(smiles, svgId) {
+            if (!smilesDrawer) {
+                return '<p style="color: #858585;">Loading molecule drawer...</p>';
+            }
+            return `<svg id="${svgId}" width="300" height="250"></svg>`;
+        }
+
+        function renderMolecule(smiles, svgId) {
+            if (!smilesDrawer) return;
+
+            setTimeout(() => {
+                const svgElement = document.getElementById(svgId);
+                if (!svgElement) return;
+
+                try {
+                    SmilesDrawer.parse(smiles, function(tree) {
+                        smilesDrawer.draw(tree, svgId, 'light', false);
+                    }, function(err) {
+                        const container = svgElement.parentElement;
+                        if (container) {
+                            container.innerHTML = `<p style="color: #f48771;">Error rendering: ${err}</p>`;
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error drawing structure:', error);
+                }
+            }, 10);
+        }
+
+        window.console = {
+            log: function(...args) {
+                const html = args.map(arg => {
+                    if (typeof arg === 'object' && arg !== null && arg.smiles) {
+                        const svgId = `molecule-svg-${Date.now()}-${Math.random()}`;
+                        const moleculeViewer = drawMolecule(arg.smiles, svgId);
+                        setTimeout(() => renderMolecule(arg.smiles, svgId), 50);
+
+                        return `
+                            <div class="output-section">
+                                <h3>Molecule</h3>
+                                <div class="output-row">
+                                    <span class="output-label">SMILES:</span>
+                                    <span class="output-value">${arg.smiles}</span>
+                                </div>
+                                <div class="output-row">
+                                    <span class="output-label">Atoms:</span>
+                                    <span class="output-value">${arg.atoms}</span>
+                                </div>
+                                <div class="output-row">
+                                    <span class="output-label">Rings:</span>
+                                    <span class="output-value">${arg.rings}</span>
+                                </div>
+                                <div class="output-row">
+                                    <span class="output-label">Formula:</span>
+                                    <span class="output-value">${arg.formula}</span>
+                                </div>
+                                <div class="output-row">
+                                    <span class="output-label">Molecular Weight:</span>
+                                    <span class="output-value">${arg.molecularWeight} g/mol</span>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <h4 style="color: #4ec9b0; font-size: 0.85rem; margin-bottom: 0.5rem;">2D STRUCTURE</h4>
+                                    <div class="molecule-viewer">${moleculeViewer}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return `<div class="output-section"><pre>${JSON.stringify(arg, null, 2)}</pre></div>`;
+                }).join('');
+
+                output.innerHTML += html;
+            },
+            error: function(...args) {
+                output.innerHTML += `
+                    <div class="output-section error">
+                        <h3>Error</h3>
+                        <pre>${args.join(' ')}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        function runCode() {
+            output.innerHTML = '';
+            status.textContent = 'Running...';
+            status.className = 'status';
+
+            try {
+                const code = editor.getValue();
+                eval(code);
+                status.textContent = 'Success';
+                status.className = 'status success';
+            } catch (error) {
+                console.error(error.message);
+                status.textContent = 'Error';
+                status.className = 'status error';
+            }
+        }
+
+        function loadExample() {
+            editor.setValue(`// SMILES-JS: Build molecules with composable fragments
+const { Fragment, Ring, FusedRings, Repeat, benzene, methyl, ethyl, hydroxyl, carboxyl, naphthalene } = SMILES;
+
+// Simple molecules
+const toluene = benzene(methyl);
+console.log(toluene);
+
+const ethanol = ethyl(hydroxyl);
+console.log(ethanol);
+
+// Multiple branches
+const xylene = benzene(methyl)(methyl);
+console.log(xylene);
+
+// Nested branching
+const ibuprofen = benzene(Fragment('CC(C)C'))(Fragment('CC(C)C(=O)O'));
+console.log(ibuprofen);
+
+// Ring composition
+const biphenyl = benzene(benzene);
+console.log(biphenyl);
+
+// Fused rings
+console.log(naphthalene);
+
+// Custom ring
+const cyclohexane = Ring('C', 6);
+console.log(cyclohexane);
+
+// Repeat units
+const hexane = Repeat('C', 6);
+console.log(hexane);`);
+            runCode();
+        }
+
+        document.getElementById('runBtn').addEventListener('click', runCode);
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            editor.setValue('');
+            output.innerHTML = `
+                <div class="output-section">
+                    <h3>Welcome to SMILES-JS Playground</h3>
+                    <p>Build molecules using composable SMILES fragments!</p>
+                    <p style="margin-top: 0.5rem;">Click "Load Example" to see how to use the library.</p>
+                </div>
+            `;
+            status.textContent = 'Ready';
+            status.className = 'status';
+        });
+        document.getElementById('exampleBtn').addEventListener('click', loadExample);
+    </script>
+</body>
+</html>
