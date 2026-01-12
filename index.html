@@ -310,13 +310,11 @@ const { Fragment, Ring, benzene, methyl, ethyl, hydroxyl } = SMILES;
 
 // Create a simple molecule
 const toluene = benzene(methyl);
-console.log(toluene.smiles);
+console.log(toluene);
 
 // Compose multiple fragments
 const ethanol = ethyl(hydroxyl);
-console.log('Ethanol:', ethanol.smiles);
-console.log('Formula:', ethanol.formula);
-console.log('MW:', ethanol.molecularWeight);`,
+console.log(ethanol);`,
             mode: 'javascript',
             theme: 'monokai',
             lineNumbers: true,
@@ -356,36 +354,73 @@ console.log('MW:', ethanol.molecularWeight);`,
             }, 10);
         }
 
+        let moleculeResults = [];
+        let hasError = false;
+
         window.console = {
             log: function(...args) {
-                const html = args.map(arg => {
+                args.forEach(arg => {
                     if (typeof arg === 'object' && arg !== null && arg.smiles) {
-                        const svgId = `molecule-svg-${Date.now()}-${Math.random()}`;
-                        const moleculeViewer = drawMolecule(arg.smiles, svgId);
-                        setTimeout(() => renderMolecule(arg.smiles, svgId), 50);
+                        moleculeResults.push(arg);
+                    } else {
+                        moleculeResults.push({ type: 'text', value: arg });
+                    }
+                });
+            },
+            error: function(...args) {
+                hasError = true;
+                moleculeResults.push({ type: 'error', value: args.join(' ') });
+            }
+        };
 
-                        return `
+        function runCode() {
+            output.innerHTML = '';
+            moleculeResults = [];
+            hasError = false;
+            status.textContent = 'Running...';
+            status.className = 'status';
+
+            try {
+                const code = editor.getValue();
+                eval(code);
+
+                let html = '';
+                moleculeResults.forEach((result, index) => {
+                    if (result.type === 'error') {
+                        html += `
+                            <div class="output-section error">
+                                <h3>Error</h3>
+                                <pre>${result.value}</pre>
+                            </div>
+                        `;
+                    } else if (result.type === 'text') {
+                        html += `<div class="output-section"><pre>${JSON.stringify(result.value, null, 2)}</pre></div>`;
+                    } else if (result.smiles) {
+                        const svgId = `molecule-svg-${index}`;
+                        const moleculeViewer = drawMolecule(result.smiles, svgId);
+
+                        html += `
                             <div class="output-section">
                                 <h3>Molecule</h3>
                                 <div class="output-row">
                                     <span class="output-label">SMILES:</span>
-                                    <span class="output-value">${arg.smiles}</span>
+                                    <span class="output-value">${result.smiles}</span>
                                 </div>
                                 <div class="output-row">
                                     <span class="output-label">Atoms:</span>
-                                    <span class="output-value">${arg.atoms}</span>
+                                    <span class="output-value">${result.atoms}</span>
                                 </div>
                                 <div class="output-row">
                                     <span class="output-label">Rings:</span>
-                                    <span class="output-value">${arg.rings}</span>
+                                    <span class="output-value">${result.rings}</span>
                                 </div>
                                 <div class="output-row">
                                     <span class="output-label">Formula:</span>
-                                    <span class="output-value">${arg.formula}</span>
+                                    <span class="output-value">${result.formula}</span>
                                 </div>
                                 <div class="output-row">
                                     <span class="output-label">Molecular Weight:</span>
-                                    <span class="output-value">${arg.molecularWeight} g/mol</span>
+                                    <span class="output-value">${result.molecularWeight} g/mol</span>
                                 </div>
                                 <div style="margin-top: 1rem;">
                                     <h4 style="color: #4ec9b0; font-size: 0.85rem; margin-bottom: 0.5rem;">2D STRUCTURE</h4>
@@ -394,33 +429,26 @@ console.log('MW:', ethanol.molecularWeight);`,
                             </div>
                         `;
                     }
-                    return `<div class="output-section"><pre>${JSON.stringify(arg, null, 2)}</pre></div>`;
-                }).join('');
+                });
 
-                output.innerHTML += html;
-            },
-            error: function(...args) {
-                output.innerHTML += `
+                output.innerHTML = html;
+
+                moleculeResults.forEach((result, index) => {
+                    if (result.smiles) {
+                        const svgId = `molecule-svg-${index}`;
+                        renderMolecule(result.smiles, svgId);
+                    }
+                });
+
+                status.textContent = hasError ? 'Error' : 'Success';
+                status.className = `status ${hasError ? 'error' : 'success'}`;
+            } catch (error) {
+                output.innerHTML = `
                     <div class="output-section error">
                         <h3>Error</h3>
-                        <pre>${args.join(' ')}</pre>
+                        <pre>${error.message}</pre>
                     </div>
                 `;
-            }
-        };
-
-        function runCode() {
-            output.innerHTML = '';
-            status.textContent = 'Running...';
-            status.className = 'status';
-
-            try {
-                const code = editor.getValue();
-                eval(code);
-                status.textContent = 'Success';
-                status.className = 'status success';
-            } catch (error) {
-                console.error(error.message);
                 status.textContent = 'Error';
                 status.className = 'status error';
             }
