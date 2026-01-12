@@ -1,0 +1,13 @@
+{
+  "name": "smiles-js-playground",
+  "version": "1.0.0",
+  "description": "Playground for SMILES-JS library",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test-playground.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jsdom": "^27.4.0"
+  }
+}
