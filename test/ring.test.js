@@ -59,7 +59,7 @@ test('Ring counts rings correctly', () => {
 test('Ring.attachAt creates toluene at position 1', async () => {
   const benzene = Ring('c', 6);
   const toluene = benzene.attachAt(1, 'C');
-  assert.strictEqual(toluene.smiles, 'c1ccccc1');
+  assert.strictEqual(toluene.smiles, 'c1(C)ccccc1');
   assert.ok(await isValidSMILES(toluene.smiles));
 });
 

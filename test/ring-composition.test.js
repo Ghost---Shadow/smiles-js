@@ -59,3 +59,16 @@ test('Ring composition counts rings correctly', async () => {
   assert.ok(await isValidSMILES(triphenyl.smiles));
   assert.strictEqual(triphenyl.rings, 3);
 });
+
+test('Phenol composition works correctly', async () => {
+  const benzene = Ring('c', 6);
+  const phenol = benzene.attachAt(1, 'O');
+  assert.ok(await isValidSMILES(phenol.smiles));
+  assert.strictEqual(phenol.smiles, 'c1(O)ccccc1');
+});
+
+test('Para-quinone (2,5-cyclohexadiene-1,4-dione) composition works correctly', async () => {
+  const result = Ring('c', 6).attachAt(1, '=O').attachAt(4, '=O');
+  assert.ok(await isValidSMILES(result.smiles));
+  assert.strictEqual(result.smiles, 'c1(=O)ccc(=O)cc1');
+});

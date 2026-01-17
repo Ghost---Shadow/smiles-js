@@ -60,9 +60,7 @@ export function Ring(atom, size, options = {}) {
       for (let i = 0; i < size; i++) {
         const currentAtom = replace[i] !== undefined ? replace[i] : atom;
 
-        if (i === 0) {
-          parts.push(currentAtom + '1');
-        } else if (newSubstituents[i]) {
+        if (newSubstituents[i]) {
           // Remap ring numbers in substituent to avoid conflicts
           const currentSmiles = parts.join('');
           const usedInCurrent = findUsedRingNumbers(currentSmiles);
@@ -83,11 +81,15 @@ export function Ring(atom, size, options = {}) {
           }
 
           // Add substituent at this position
-          if (i === size - 1) {
+          if (i === 0) {
+            parts.push(currentAtom + '1(' + remappedSubstituent + ')');
+          } else if (i === size - 1) {
             parts.push(currentAtom + '(' + remappedSubstituent + ')1');
           } else {
             parts.push(currentAtom + '(' + remappedSubstituent + ')');
           }
+        } else if (i === 0) {
+          parts.push(currentAtom + '1');
         } else if (i === size - 1) {
           parts.push(currentAtom + '1');
         } else {
