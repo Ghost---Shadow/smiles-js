@@ -7,6 +7,16 @@ export function validateSMILES(smiles) {
   for (let i = 0; i < smiles.length; i++) {
     const char = smiles[i];
 
+    if (char === '[') {
+      // Skip over bracketed atoms (e.g., [NH4+], [O-], [13C])
+      let closingBracket = smiles.indexOf(']', i);
+      if (closingBracket === -1) {
+        return { valid: false, error: 'Unclosed bracket' };
+      }
+      i = closingBracket;
+      continue;
+    }
+
     if (char === '(') {
       branchCount++;
     } else if (char === ')') {

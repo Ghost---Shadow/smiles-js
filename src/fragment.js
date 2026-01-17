@@ -39,6 +39,25 @@ export function Fragment(smiles) {
     fragment.molecularWeight = calculateMolecularWeight(currentSmiles);
     fragment.toString = () => currentSmiles;
     fragment[Symbol.toPrimitive] = () => currentSmiles;
+    
+    // Concat method for combining fragments linearly
+    fragment.concat = function(other) {
+      const otherSmiles = typeof other === 'function' ? other.smiles : String(other);
+      
+      // Handle ring number conflicts
+      const usedInCurrent = findUsedRingNumbers(currentSmiles);
+      const usedInOther = findUsedRingNumbers(otherSmiles);
+      
+      let remappedOther = otherSmiles;
+      for (const ringNum of usedInOther) {
+        if (usedInCurrent.has(ringNum)) {
+          const newNum = getNextRingNumber(currentSmiles + remappedOther);
+          remappedOther = remappedOther.replaceAll(ringNum, newNum.replace('%', ''));
+        }
+      }
+      
+      return createFragment(currentSmiles + remappedOther);
+    };
 
     return fragment;
   };
@@ -47,3 +66,9 @@ export function Fragment(smiles) {
 }
 
 Fragment.validate = validateSMILES;
+
+// Static concat method for convenience: Fragment.concat(a, b)
+Fragment.concat = function(a, b) {
+  const fragmentA = typeof a === 'string' ? Fragment(a) : a;
+  return fragmentA.concat(b);
+};

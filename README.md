@@ -22,10 +22,11 @@ console.log(toluene);  // c1ccccc1C
 
 ## Core Concepts
 
-Molecules are built by composing fragments. There are three composition operations:
+Molecules are built by composing fragments. There are four composition operations:
 
 | Operation | Syntax | Result |
 |-----------|--------|--------|
+| Concatenate | `a.concat(b)` | `a` and `b` joined linearly |
 | Branch | `a(b)` | `b` attached as branch to `a` |
 | Multiple branches | `a(b)(c)(d)` | `b`, `c`, `d` all branch from `a` |
 | Nested branches | `a(b(c))` | `c` branches from `b`, which branches from `a` |
@@ -59,6 +60,56 @@ const b = Fragment('CC');
 const c = Fragment('CCC');
 
 const molecule = a(b(c));  // C(CC(CCC))
+```
+
+#### Concatenation with `.concat()`
+
+The `concat` method joins fragments linearly (end-to-end) without branching:
+
+```js
+const ethyl = Fragment('CC');
+const propyl = Fragment('CCC');
+const pentane = ethyl.concat(propyl);  // CCCCC
+```
+
+**Method chaining:**
+
+```js
+const hexane = Fragment('CC')
+  .concat('CC')
+  .concat('CC');  // CCCCCC
+```
+
+**Static method:**
+
+```js
+const butane = Fragment.concat('CC', 'CC');  // CCCC
+```
+
+**Ring number handling:**
+
+When concatenating fragments with rings, conflicting ring numbers are automatically remapped:
+
+```js
+const ring1 = Fragment('C1CCC1');
+const ring2 = Fragment('C1CCC1');
+const twoRings = ring1.concat(ring2);  // C1CCC1C2CCC2
+```
+
+**Use cases:**
+
+- Building linear chains: `Fragment('C').concat('C').concat('C')` → `CCC`
+- Creating polymers: repeatedly concat to build long chains
+- Combining building blocks: `benzene.concat(methyl)` → `c1ccccc1C`
+
+**Difference from branching:**
+
+```js
+const a = Fragment('CC');
+const b = Fragment('O');
+
+a.concat(b);  // CCO (linear)
+a(b);          // CC(O) (branched)
 ```
 
 ### Ring(atom, size)
