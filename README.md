@@ -402,3 +402,14 @@ acetophenone: c1ccccc1C(=O)C
 const peg = Repeat('OCO', 10);
 console.log(peg);  // OCOOCOOCOOCOOCOOCOOCOOCOOCOOCO
 ```
+
+## Known issues
+
+### Directionality for attachment
+
+```js
+export const acetamidoLeft = Fragment('CC(=O)N');
+export const acetamidoRight = Fragment('NC(=O)C');
+export const acetaminophen = benzene.attachAt(1, acetamidoLeft).attachAt(4, 'O') ; // Wrong
+export const acetaminophen = benzene.attachAt(1, acetamidoRight).attachAt(4, 'O') ; // Right
+```
