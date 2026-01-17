@@ -29,5 +29,5 @@ export const furan = Ring('c', 5, { replace: { 0: 'o' } });
 export const thiophene = Ring('c', 5, { replace: { 0: 's' } });
 
 export const naphthalene = FusedRings([6, 6], 'c');
-export const indole = FusedRings([6, 5], 'c', { hetero: { 7: '[nH]' } });
+export const indole = FusedRings([6, 5], 'c', { hetero: { 4: '[nH]' } });
 export const quinoline = FusedRings([6, 6], 'c', { hetero: { 0: 'n' } });
