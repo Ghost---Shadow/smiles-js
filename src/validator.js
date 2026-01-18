@@ -1,15 +1,15 @@
 export function validateSMILES(smiles) {
   const errors = [];
   let branchCount = 0;
-  let ringNumbers = new Set();
-  let openRings = new Set();
+  const ringNumbers = new Set();
+  const openRings = new Set();
 
   for (let i = 0; i < smiles.length; i++) {
     const char = smiles[i];
 
     if (char === '[') {
       // Skip over bracketed atoms (e.g., [NH4+], [O-], [13C])
-      let closingBracket = smiles.indexOf(']', i);
+      const closingBracket = smiles.indexOf(']', i);
       if (closingBracket === -1) {
         return { valid: false, error: 'Unclosed bracket' };
       }

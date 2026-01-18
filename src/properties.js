@@ -1,8 +1,23 @@
 const ATOMIC_WEIGHTS = {
-  'H': 1.008, 'C': 12.011, 'N': 14.007, 'O': 15.999, 'F': 18.998,
-  'P': 30.974, 'S': 32.06, 'Cl': 35.45, 'Br': 79.904, 'I': 126.90,
-  'B': 10.81, 'Si': 28.085, 'Se': 78.971, 'Na': 22.990, 'K': 39.098,
-  'Ca': 40.078, 'Fe': 55.845, 'Zn': 65.38, 'Mg': 24.305
+  H: 1.008,
+  C: 12.011,
+  N: 14.007,
+  O: 15.999,
+  F: 18.998,
+  P: 30.974,
+  S: 32.06,
+  Cl: 35.45,
+  Br: 79.904,
+  I: 126.90,
+  B: 10.81,
+  Si: 28.085,
+  Se: 78.971,
+  Na: 22.990,
+  K: 39.098,
+  Ca: 40.078,
+  Fe: 55.845,
+  Zn: 65.38,
+  Mg: 24.305,
 };
 
 function parseAtom(smiles, index) {
@@ -56,8 +71,8 @@ export function countAtoms(smiles) {
   while (i < smiles.length) {
     const char = smiles[i];
 
-    if (char === '(' || char === ')' || char === '=' || char === '#' ||
-        char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
+    if (char === '(' || char === ')' || char === '=' || char === '#'
+        || char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
       i++;
       continue;
     }
@@ -124,8 +139,8 @@ export function calculateFormula(smiles) {
   while (i < smiles.length) {
     const char = smiles[i];
 
-    if (char === '(' || char === ')' || char === '=' || char === '#' ||
-        char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
+    if (char === '(' || char === ')' || char === '=' || char === '#'
+        || char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
       i++;
       continue;
     }
@@ -152,7 +167,7 @@ export function calculateFormula(smiles) {
 
   const implicitHydrogens = calculateImplicitHydrogens(smiles, elementCounts);
   if (implicitHydrogens > 0) {
-    elementCounts['H'] = (elementCounts['H'] || 0) + implicitHydrogens;
+    elementCounts.H = (elementCounts.H || 0) + implicitHydrogens;
   }
 
   const elements = Object.keys(elementCounts).sort();
@@ -167,7 +182,7 @@ export function calculateFormula(smiles) {
 
   elements.sort(hillOrder);
 
-  return elements.map(e => {
+  return elements.map((e) => {
     const count = elementCounts[e];
     return count === 1 ? e : `${e}${count}`;
   }).join('');
@@ -185,7 +200,7 @@ function calculateImplicitHydrogens(smiles, elementCounts) {
   const bonds = (smiles.match(/=/g) || []).length + (smiles.match(/#/g) || []).length * 2;
   totalHydrogens -= bonds * 2;
 
-  const explicitHCount = elementCounts['H'] || 0;
+  const explicitHCount = elementCounts.H || 0;
   totalHydrogens -= explicitHCount;
 
   return Math.max(0, totalHydrogens);

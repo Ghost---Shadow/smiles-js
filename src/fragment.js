@@ -1,5 +1,7 @@
 import { validateSMILES } from './validator.js';
-import { countAtoms, countRings, calculateFormula, calculateMolecularWeight } from './properties.js';
+import {
+  countAtoms, countRings, calculateFormula, calculateMolecularWeight,
+} from './properties.js';
 import { findUsedRingNumbers, getNextRingNumber } from './utils.js';
 
 export function Fragment(smiles) {
@@ -9,7 +11,7 @@ export function Fragment(smiles) {
   }
 
   const createFragment = (currentSmiles) => {
-    const fragment = function(...branches) {
+    const fragment = function (...branches) {
       let result = currentSmiles;
 
       for (const branch of branches) {
@@ -39,15 +41,15 @@ export function Fragment(smiles) {
     fragment.molecularWeight = calculateMolecularWeight(currentSmiles);
     fragment.toString = () => currentSmiles;
     fragment[Symbol.toPrimitive] = () => currentSmiles;
-    
+
     // Concat method for combining fragments linearly
-    fragment.concat = function(other) {
+    fragment.concat = function (other) {
       const otherSmiles = typeof other === 'function' ? other.smiles : String(other);
-      
+
       // Handle ring number conflicts
       const usedInCurrent = findUsedRingNumbers(currentSmiles);
       const usedInOther = findUsedRingNumbers(otherSmiles);
-      
+
       let remappedOther = otherSmiles;
       for (const ringNum of usedInOther) {
         if (usedInCurrent.has(ringNum)) {
@@ -55,7 +57,7 @@ export function Fragment(smiles) {
           remappedOther = remappedOther.replaceAll(ringNum, newNum.replace('%', ''));
         }
       }
-      
+
       return createFragment(currentSmiles + remappedOther);
     };
 
@@ -68,7 +70,7 @@ export function Fragment(smiles) {
 Fragment.validate = validateSMILES;
 
 // Static concat method for convenience: Fragment.concat(a, b)
-Fragment.concat = function(a, b) {
+Fragment.concat = function (a, b) {
   const fragmentA = typeof a === 'string' ? Fragment(a) : a;
   return fragmentA.concat(b);
 };

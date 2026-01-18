@@ -10,7 +10,7 @@ export function FusedRings(sizes, atom, options = {}) {
   let smiles = '';
   let atomPosition = 0;
 
-  smiles += (hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom) + '1';
+  smiles += `${hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom}1`;
   atomPosition++;
 
   const firstRingMiddleAtoms = sizes[0] - 4;
@@ -19,7 +19,7 @@ export function FusedRings(sizes, atom, options = {}) {
     atomPosition++;
   }
 
-  smiles += (hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom) + '2';
+  smiles += `${hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom}2`;
   atomPosition++;
 
   const ringSize = sizes[1];
@@ -29,10 +29,10 @@ export function FusedRings(sizes, atom, options = {}) {
     atomPosition++;
   }
 
-  smiles += (hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom) + '2';
+  smiles += `${hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom}2`;
   atomPosition++;
 
-  smiles += (hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom) + '1';
+  smiles += `${hetero[atomPosition] !== undefined ? hetero[atomPosition] : atom}1`;
 
   return Fragment(smiles);
 }

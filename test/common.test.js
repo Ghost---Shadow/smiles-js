@@ -6,7 +6,7 @@ import {
   hydroxyl, amino, carboxyl, carbonyl, nitro, cyano,
   fluoro, chloro, bromo, iodo,
   benzene, cyclohexane, pyridine, pyrrole, furan, thiophene,
-  naphthalene, indole, quinoline
+  naphthalene, indole, quinoline,
 } from '../src/common.js';
 
 test('Common alkyls are defined', async () => {
