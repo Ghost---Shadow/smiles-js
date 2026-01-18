@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Ring } from '../src/ring.js';
+import { Ring } from './ring.js';
 import { isValidSMILES } from './test-utils.js';
 
 test('Ring composition remaps ring numbers correctly', async () => {

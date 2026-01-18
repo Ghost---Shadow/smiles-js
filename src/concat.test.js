@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Fragment } from '../src/fragment.js';
+import { Fragment } from './fragment.js';
 import { isValidSMILES } from './test-utils.js';
 
 test('concat combines two simple fragments', async () => {

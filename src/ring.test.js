@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Ring } from '../src/ring.js';
-import { Fragment } from '../src/fragment.js';
+import { Ring } from './ring.js';
+import { Fragment } from './fragment.js';
 import { isValidSMILES } from './test-utils.js';
 
 test('Ring creates benzene', async () => {

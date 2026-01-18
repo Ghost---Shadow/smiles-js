@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Repeat } from '../src/repeat.js';
-import { Fragment } from '../src/fragment.js';
+import { Repeat } from './repeat.js';
+import { Fragment } from './fragment.js';
 import { isValidSMILES } from './test-utils.js';
 
 test('Repeat creates hexane', async () => {

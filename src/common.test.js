@@ -7,7 +7,7 @@ import {
   fluoro, chloro, bromo, iodo,
   benzene, cyclohexane, pyridine, pyrrole, furan, thiophene,
   naphthalene, indole, quinoline,
-} from '../src/common.js';
+} from './common.js';
 
 test('Common alkyls are defined', async () => {
   assert.strictEqual(methyl.smiles, 'C');

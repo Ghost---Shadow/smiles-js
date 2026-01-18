@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Fragment, Ring } from '../src/index.js';
+import { Fragment, Ring } from './index.js';
 import {
   benzene, methyl, hydroxyl, carboxyl,
-} from '../src/common.js';
+} from './common.js';
 import { isValidSMILES } from './test-utils.js';
 
 test('README example: toluene', async () => {

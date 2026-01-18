@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { FusedRings } from '../src/fused-rings.js';
-import { Fragment } from '../src/fragment.js';
-import { Ring } from '../src/ring.js';
-import { isValidSMILES } from './test-utils.js';
+import { FusedRings } from './index.js';
+import { Fragment } from '../fragment.js';
+import { Ring } from '../ring.js';
+import { isValidSMILES } from '../test-utils.js';
 
 test('FusedRings creates naphthalene', async () => {
   const naphthalene = FusedRings([6, 6], 'c');
@@ -101,6 +101,41 @@ test('FusedRings.attachAt attaches ring substituent', async () => {
   assert.ok(await isValidSMILES(phenylNaphthalene.smiles));
 });
 
+test('FusedRings.attachAt with options.at connects two naphthalenes', async () => {
+  const naphthalene = FusedRings([6, 6], 'c');
+  const binaphthyl = naphthalene.attachAt([0, 1], naphthalene, { at: [0, 2] });
+  assert.ok(await isValidSMILES(binaphthyl.smiles));
+});
+
+test('FusedRings.attachAt with options.at attaches at different ring positions', async () => {
+  const naphthalene = FusedRings([6, 6], 'c');
+  const connected = naphthalene.attachAt([1, 1], naphthalene, { at: [1, 2] });
+  assert.ok(await isValidSMILES(connected.smiles));
+});
+
+test('FusedRings.attachAt with options.at connects benzimidazoles', async () => {
+  const benzimidazole = FusedRings([6, 5], 'c', { hetero: { 4: 'n', 6: '[nH]' } });
+  const bisBenzimidazole = benzimidazole.attachAt([0, 3], benzimidazole, { at: [1, 1] });
+  assert.ok(await isValidSMILES(bisBenzimidazole.smiles));
+});
+
+test('FusedRings.attachAt with options.at throws on invalid position', () => {
+  const naphthalene = FusedRings([6, 6], 'c');
+  assert.throws(
+    () => naphthalene.attachAt([0, 0], naphthalene, { at: [5, 0] }),
+    /Attachment position \[5, 0\] not found/,
+  );
+});
+
+test('FusedRings.attachAt with options.at throws on non-FusedRings substituent', () => {
+  const naphthalene = FusedRings([6, 6], 'c');
+  const methyl = Fragment('C');
+  assert.throws(
+    () => naphthalene.attachAt([0, 0], methyl, { at: [0, 0] }),
+    /options.at is currently only supported for FusedRings substituents/,
+  );
+});
+
 // Integration test: Telmisartan built from components
 test('Telmisartan: build complete molecule from DSL components', async () => {
   // Benzimidazole core
@@ -121,4 +156,10 @@ test('Telmisartan: build complete molecule from DSL components', async () => {
 
   // Validate the complete molecule
   assert.ok(await isValidSMILES(telmisartan.smiles));
+});
+
+test('Telmisartan: build with options.at (from README)', async () => {
+  const benzimidazole = FusedRings([6, 5], 'c', { hetero: { 4: 'n', 6: '[nH]' } });
+  const bisBenzimidazole = benzimidazole.attachAt([0, 3], benzimidazole, { at: [1, 1] });
+  assert.ok(await isValidSMILES(bisBenzimidazole.smiles));
 });
