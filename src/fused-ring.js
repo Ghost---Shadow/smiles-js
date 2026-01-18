@@ -1,17 +1,15 @@
 /**
  * Fused rings builder
- * @param {number[]} rings - Array of ring sizes
- * @param {string[]} bonds - Array of bond types between atoms
+ * @param {Array<{type: string, size: number}>} rings - Array of ring descriptors
  * @returns {string} SMILES string
  */
-export function FusedRing(rings, bonds) {
+export function FusedRing(rings) {
   if (rings.length === 1) {
     // Single ring case
-    const size = rings[0];
-    const bondType = bonds[0];
+    const { type, size } = rings[0];
 
-    // Build the ring: bondType + '1' + (bondType repeated size-1 times) + '1'
-    return `${bondType}1${bondType.repeat(size - 1)}1`;
+    // Build the ring: type + '1' + (type repeated size-1 times) + '1'
+    return `${type}1${type.repeat(size - 1)}1`;
   }
 
   return '';

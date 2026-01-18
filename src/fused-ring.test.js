@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { FusedRing } from './fused-rings.js';
+import { FusedRing } from './fused-ring.js';
 
 test('FusedRing creates benzene', () => {
-  assert.strictEqual(FusedRing([6], ['c']), 'c1ccccc1');
+  const benzene = FusedRing([
+    {
+      type: 'c',
+      size: 6,
+    },
+  ]);
+  assert.strictEqual(benzene, 'c1ccccc1');
 });
