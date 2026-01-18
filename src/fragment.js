@@ -61,6 +61,11 @@ export function Fragment(smiles) {
       return createFragment(currentSmiles + remappedOther);
     };
 
+    // Fuse method - only available for rings created with FusedRing
+    fragment.fuse = function fuseFunction() {
+      throw new Error('Only rings created with FusedRing can be fused. This fragment does not have ring metadata.');
+    };
+
     return fragment;
   };
 

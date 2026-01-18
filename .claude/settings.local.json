@@ -4,7 +4,9 @@
       "Bash(npm test:*)",
       "Bash(ls:*)",
       "Bash(node -e:*)",
-      "Bash(bun test:*)"
+      "Bash(bun test:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

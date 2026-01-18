@@ -64,6 +64,46 @@ export function FusedRing(rings) {
   }
 
   const fragment = Fragment(atoms.join(''));
-  fragment.meta = rings;
+
+  // Track used ring numbers in meta
+  const usedRingNumbers = [];
+  for (let i = 1; i < nextRingNum; i += 1) {
+    usedRingNumbers.push(i);
+  }
+
+  fragment.meta = {
+    rings,
+    usedRingNumbers,
+  };
+
+  // Override fuse method for rings with metadata
+  fragment.fuse = function fuseFunction(other) {
+    // eslint-disable-next-line no-use-before-define
+    return fuseRings(fragment, other);
+  };
+
   return fragment;
+}
+
+/**
+ * Fuse two ring fragments together
+ * @param {Fragment} fragment1 - First ring fragment with meta
+ * @param {Fragment} fragment2 - Second ring fragment with meta
+ * @returns {Fragment} Fused ring fragment
+ */
+export function fuseRings(fragment1, fragment2) {
+  const fragment2Obj = typeof fragment2 === 'function' ? fragment2 : Fragment(String(fragment2));
+
+  // Get ring descriptors from meta
+  const rings1 = fragment1.meta?.rings || [];
+  const rings2 = fragment2Obj.meta?.rings || [];
+
+  if (rings1.length === 0 || rings2.length === 0) {
+    throw new Error('Both fragments must have ring meta information to fuse');
+  }
+
+  // Combine the ring descriptors
+  const combinedRings = [...rings1, ...rings2];
+
+  return FusedRing(combinedRings);
 }
