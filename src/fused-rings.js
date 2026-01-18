@@ -53,14 +53,17 @@ export function FusedRings(sizes, atom, options = {}) {
     return { smiles, atomPositions, totalAtoms: atomPosition + 1 };
   };
 
-  const { smiles: baseSmiles, atomPositions, totalAtoms } = buildBaseSmiles(hetero);
+  const { smiles: baseSmiles, atomPositions } = buildBaseSmiles(hetero);
   const fragment = Fragment(baseSmiles);
 
   // Track substituents for chaining
   const substituents = {};
 
   // Create attachAt method
-  const createAttachAt = (currentSubstituents, currentHetero) => function (position, substituent, attachOptions = {}) {
+  const createAttachAt = (
+    currentSubstituents,
+    currentHetero,
+  ) => function attachAtFunction(position, substituent, attachOptions = {}) {
     if (!Array.isArray(position) || position.length !== 2) {
       throw new Error('Position must be [ringIndex, atomIndex]');
     }
@@ -80,7 +83,13 @@ export function FusedRings(sizes, atom, options = {}) {
         break;
       }
       // Check for shared atoms (they belong to both rings)
-      if (pos.shared && ringIndex === 1 && atomIndex === 0 && pos.ring === 0 && pos.index === sizes[0] - 3) {
+      if (
+        pos.shared
+        && ringIndex === 1
+        && atomIndex === 0
+        && pos.ring === 0
+        && pos.index === sizes[0] - 3
+      ) {
         globalPosition = i;
         break;
       }
@@ -111,6 +120,28 @@ export function FusedRings(sizes, atom, options = {}) {
     }
 
     newSubstituents[globalPosition] = subSmiles;
+
+    // Remap ring numbers to avoid conflicts
+    const remapRingNumbers = (currentSmiles, subSmilesParam) => {
+      // FusedRings always uses ring markers 1 and 2, so always include them as reserved
+      const usedInCurrent = findUsedRingNumbers(currentSmiles);
+      usedInCurrent.add('1');
+      usedInCurrent.add('2');
+      const usedInSubstituent = findUsedRingNumbers(subSmilesParam);
+
+      let remapped = subSmilesParam;
+      usedInSubstituent.forEach((ringNum) => {
+        if (usedInCurrent.has(ringNum)) {
+          const newNum = getNextRingNumber(`${currentSmiles + remapped}12`);
+          if (ringNum.length > 1) {
+            remapped = remapped.replaceAll(`%${ringNum}`, newNum);
+          } else {
+            remapped = remapped.replaceAll(ringNum, newNum.replace('%', ''));
+          }
+        }
+      });
+      return remapped;
+    };
 
     // Rebuild SMILES with substituents
     const buildSmilesWithSubstituents = () => {
@@ -184,27 +215,6 @@ export function FusedRings(sizes, atom, options = {}) {
       }
 
       return result;
-    };
-
-    const remapRingNumbers = (currentSmiles, subSmiles) => {
-      // FusedRings always uses ring markers 1 and 2, so always include them as reserved
-      const usedInCurrent = findUsedRingNumbers(currentSmiles);
-      usedInCurrent.add('1');
-      usedInCurrent.add('2');
-      const usedInSubstituent = findUsedRingNumbers(subSmiles);
-
-      let remapped = subSmiles;
-      for (const ringNum of usedInSubstituent) {
-        if (usedInCurrent.has(ringNum)) {
-          const newNum = getNextRingNumber(`${currentSmiles + remapped}12`);
-          if (ringNum.length > 1) {
-            remapped = remapped.replaceAll(`%${ringNum}`, newNum);
-          } else {
-            remapped = remapped.replaceAll(ringNum, newNum.replace('%', ''));
-          }
-        }
-      }
-      return remapped;
     };
 
     const newSmiles = buildSmilesWithSubstituents();

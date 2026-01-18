@@ -26,12 +26,10 @@ function parseAtom(smiles, index) {
     if (end === -1) return null;
     const bracketContent = smiles.substring(index + 1, end);
 
-    let isotope = '';
     let atom = '';
     let i = 0;
 
     while (i < bracketContent.length && bracketContent[i] >= '0' && bracketContent[i] <= '9') {
-      isotope += bracketContent[i];
       i += 1;
     }
 
@@ -74,25 +72,18 @@ export function countAtoms(smiles) {
     if (char === '(' || char === ')' || char === '=' || char === '#'
         || char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
       i += 1;
-      continue;
-    }
-
-    if (char >= '0' && char <= '9') {
+    } else if (char >= '0' && char <= '9') {
       i += 1;
-      continue;
-    }
-
-    if (char === '%') {
+    } else if (char === '%') {
       i += 3;
-      continue;
-    }
-
-    const parsed = parseAtom(smiles, i);
-    if (parsed) {
-      count += 1;
-      i += parsed.length;
     } else {
-      i += 1;
+      const parsed = parseAtom(smiles, i);
+      if (parsed) {
+        count += 1;
+        i += parsed.length;
+      } else {
+        i += 1;
+      }
     }
   }
 
@@ -132,6 +123,24 @@ export function countRings(smiles) {
   return count;
 }
 
+function calculateImplicitHydrogens(smiles, elementCounts) {
+  let totalHydrogens = 0;
+
+  Object.entries(elementCounts).forEach(([element, count]) => {
+    if (element === 'C') {
+      totalHydrogens += count * 2 + 2;
+    }
+  });
+
+  const bonds = (smiles.match(/=/g) || []).length + (smiles.match(/#/g) || []).length * 2;
+  totalHydrogens -= bonds * 2;
+
+  const explicitHCount = elementCounts.H || 0;
+  totalHydrogens -= explicitHCount;
+
+  return Math.max(0, totalHydrogens);
+}
+
 export function calculateFormula(smiles) {
   const elementCounts = {};
   let i = 0;
@@ -142,26 +151,19 @@ export function calculateFormula(smiles) {
     if (char === '(' || char === ')' || char === '=' || char === '#'
         || char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
       i += 1;
-      continue;
-    }
-
-    if (char >= '0' && char <= '9') {
+    } else if (char >= '0' && char <= '9') {
       i += 1;
-      continue;
-    }
-
-    if (char === '%') {
+    } else if (char === '%') {
       i += 3;
-      continue;
-    }
-
-    const parsed = parseAtom(smiles, i);
-    if (parsed && parsed.atom) {
-      const element = parsed.atom;
-      elementCounts[element] = (elementCounts[element] || 0) + 1;
-      i += parsed.length;
     } else {
-      i += 1;
+      const parsed = parseAtom(smiles, i);
+      if (parsed && parsed.atom) {
+        const element = parsed.atom;
+        elementCounts[element] = (elementCounts[element] || 0) + 1;
+        i += parsed.length;
+      } else {
+        i += 1;
+      }
     }
   }
 
@@ -188,24 +190,6 @@ export function calculateFormula(smiles) {
   }).join('');
 }
 
-function calculateImplicitHydrogens(smiles, elementCounts) {
-  let totalHydrogens = 0;
-
-  for (const [element, count] of Object.entries(elementCounts)) {
-    if (element === 'C') {
-      totalHydrogens += count * 2 + 2;
-    }
-  }
-
-  const bonds = (smiles.match(/=/g) || []).length + (smiles.match(/#/g) || []).length * 2;
-  totalHydrogens -= bonds * 2;
-
-  const explicitHCount = elementCounts.H || 0;
-  totalHydrogens -= explicitHCount;
-
-  return Math.max(0, totalHydrogens);
-}
-
 export function calculateMolecularWeight(smiles) {
   const formula = calculateFormula(smiles);
   let weight = 0;
@@ -226,7 +210,7 @@ export function calculateMolecularWeight(smiles) {
       i += 1;
     }
 
-    const atomCount = count ? parseInt(count) : 1;
+    const atomCount = count ? parseInt(count, 10) : 1;
     weight += (ATOMIC_WEIGHTS[element] || 0) * atomCount;
   }
 

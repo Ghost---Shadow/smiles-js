@@ -30,7 +30,10 @@ export function Ring(atom, size, options = {}) {
   const substituents = {};
 
   // Add attachAt method to the fragment
-  const createAttachAt = (currentSubstituents) => function (position, substituent) {
+  const createAttachAt = (currentSubstituents) => function attachAtFunction(
+    position,
+    substituent,
+  ) {
     if (position < 1 || position > size) {
       throw new Error(`Position ${position} is out of range for ring of size ${size}`);
     }
@@ -66,18 +69,21 @@ export function Ring(atom, size, options = {}) {
         const usedInSubstituent = findUsedRingNumbers(newSubstituents[i]);
 
         let remappedSubstituent = newSubstituents[i];
-        for (const ringNum of usedInSubstituent) {
+        usedInSubstituent.forEach((ringNum) => {
           if (usedInCurrent.has(ringNum)) {
             const newNum = getNextRingNumber(currentSmiles + remappedSubstituent);
             // For %NN format, replace the whole %NN
-            // For single digit, replace all occurrences (this works because each ring number appears exactly twice)
+            // For single digit, replace all occurrences
             if (ringNum.length > 1) {
               remappedSubstituent = remappedSubstituent.replaceAll(`%${ringNum}`, newNum);
             } else {
-              remappedSubstituent = remappedSubstituent.replaceAll(ringNum, newNum.replace('%', ''));
+              remappedSubstituent = remappedSubstituent.replaceAll(
+                ringNum,
+                newNum.replace('%', ''),
+              );
             }
           }
-        }
+        });
 
         // Add substituent at this position
         if (i === 0) {

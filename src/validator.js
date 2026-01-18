@@ -1,10 +1,9 @@
 export function validateSMILES(smiles) {
-  const errors = [];
   let branchCount = 0;
-  const ringNumbers = new Set();
   const openRings = new Set();
 
-  for (let i = 0; i < smiles.length; i += 1) {
+  let i = 0;
+  while (i < smiles.length) {
     const char = smiles[i];
 
     if (char === '[') {
@@ -13,17 +12,16 @@ export function validateSMILES(smiles) {
       if (closingBracket === -1) {
         return { valid: false, error: 'Unclosed bracket' };
       }
-      i = closingBracket;
-      continue;
-    }
-
-    if (char === '(') {
+      i = closingBracket + 1;
+    } else if (char === '(') {
       branchCount += 1;
+      i += 1;
     } else if (char === ')') {
       branchCount -= 1;
       if (branchCount < 0) {
         return { valid: false, error: 'Unmatched closing branch' };
       }
+      i += 1;
     } else if (char >= '0' && char <= '9') {
       const num = char;
       if (openRings.has(num)) {
@@ -31,6 +29,7 @@ export function validateSMILES(smiles) {
       } else {
         openRings.add(num);
       }
+      i += 1;
     } else if (char === '%') {
       if (i + 2 < smiles.length) {
         const num = smiles.substring(i + 1, i + 3);
@@ -39,8 +38,12 @@ export function validateSMILES(smiles) {
         } else {
           openRings.add(num);
         }
-        i += 2;
+        i += 3;
+      } else {
+        i += 1;
       }
+    } else {
+      i += 1;
     }
   }
 

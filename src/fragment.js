@@ -11,25 +11,25 @@ export function Fragment(smiles) {
   }
 
   const createFragment = (currentSmiles) => {
-    const fragment = function (...branches) {
+    const fragment = function fragmentFunction(...branches) {
       let result = currentSmiles;
 
-      for (const branch of branches) {
+      branches.forEach((branch) => {
         const branchSmiles = typeof branch === 'function' ? branch.smiles : String(branch);
 
         const usedInParent = findUsedRingNumbers(result);
         const usedInBranch = findUsedRingNumbers(branchSmiles);
 
         let remappedBranch = branchSmiles;
-        for (const ringNum of usedInBranch) {
+        usedInBranch.forEach((ringNum) => {
           if (usedInParent.has(ringNum)) {
             const newNum = getNextRingNumber(result + remappedBranch);
             remappedBranch = remappedBranch.replaceAll(ringNum, newNum.replace('%', ''));
           }
-        }
+        });
 
         result += `(${remappedBranch})`;
-      }
+      });
 
       return createFragment(result);
     };
@@ -43,7 +43,7 @@ export function Fragment(smiles) {
     fragment[Symbol.toPrimitive] = () => currentSmiles;
 
     // Concat method for combining fragments linearly
-    fragment.concat = function (other) {
+    fragment.concat = function concatFunction(other) {
       const otherSmiles = typeof other === 'function' ? other.smiles : String(other);
 
       // Handle ring number conflicts
@@ -51,12 +51,12 @@ export function Fragment(smiles) {
       const usedInOther = findUsedRingNumbers(otherSmiles);
 
       let remappedOther = otherSmiles;
-      for (const ringNum of usedInOther) {
+      usedInOther.forEach((ringNum) => {
         if (usedInCurrent.has(ringNum)) {
           const newNum = getNextRingNumber(currentSmiles + remappedOther);
           remappedOther = remappedOther.replaceAll(ringNum, newNum.replace('%', ''));
         }
-      }
+      });
 
       return createFragment(currentSmiles + remappedOther);
     };
@@ -70,7 +70,7 @@ export function Fragment(smiles) {
 Fragment.validate = validateSMILES;
 
 // Static concat method for convenience: Fragment.concat(a, b)
-Fragment.concat = function (a, b) {
+Fragment.concat = function concatStatic(a, b) {
   const fragmentA = typeof a === 'string' ? Fragment(a) : a;
   return fragmentA.concat(b);
 };

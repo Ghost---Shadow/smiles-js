@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { Ring } from '../src/ring.js';
-import { Fragment } from '../src/fragment.js';
 import { isValidSMILES } from './test-utils.js';
 
 test('Ring composition remaps ring numbers correctly', async () => {

@@ -114,7 +114,6 @@ test('Ring.attachAt chains multiple rings', async () => {
 });
 
 test('Ring.attachAt validates with RDKit', async () => {
-  const { isValidSMILES } = await import('./test-utils.js');
   const benzene = Ring('c', 6);
 
   // Test simple ring attachment
