@@ -150,7 +150,7 @@ test('concat builds polymer-like chains', async () => {
   const ethylene = Fragment('CC');
   let polymer = ethylene;
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 4; i += 1) {
     polymer = polymer.concat(ethylene);
   }
 

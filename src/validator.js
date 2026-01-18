@@ -4,7 +4,7 @@ export function validateSMILES(smiles) {
   const ringNumbers = new Set();
   const openRings = new Set();
 
-  for (let i = 0; i < smiles.length; i++) {
+  for (let i = 0; i < smiles.length; i += 1) {
     const char = smiles[i];
 
     if (char === '[') {
@@ -18,9 +18,9 @@ export function validateSMILES(smiles) {
     }
 
     if (char === '(') {
-      branchCount++;
+      branchCount += 1;
     } else if (char === ')') {
-      branchCount--;
+      branchCount -= 1;
       if (branchCount < 0) {
         return { valid: false, error: 'Unmatched closing branch' };
       }

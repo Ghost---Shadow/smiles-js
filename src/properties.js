@@ -32,12 +32,12 @@ function parseAtom(smiles, index) {
 
     while (i < bracketContent.length && bracketContent[i] >= '0' && bracketContent[i] <= '9') {
       isotope += bracketContent[i];
-      i++;
+      i += 1;
     }
 
     if (i < bracketContent.length && bracketContent[i] >= 'A' && bracketContent[i] <= 'Z') {
       atom = bracketContent[i];
-      i++;
+      i += 1;
       if (i < bracketContent.length && bracketContent[i] >= 'a' && bracketContent[i] <= 'z') {
         atom += bracketContent[i];
       }
@@ -73,12 +73,12 @@ export function countAtoms(smiles) {
 
     if (char === '(' || char === ')' || char === '=' || char === '#'
         || char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
-      i++;
+      i += 1;
       continue;
     }
 
     if (char >= '0' && char <= '9') {
-      i++;
+      i += 1;
       continue;
     }
 
@@ -89,10 +89,10 @@ export function countAtoms(smiles) {
 
     const parsed = parseAtom(smiles, i);
     if (parsed) {
-      count++;
+      count += 1;
       i += parsed.length;
     } else {
-      i++;
+      i += 1;
     }
   }
 
@@ -109,23 +109,23 @@ export function countRings(smiles) {
 
     if (char >= '0' && char <= '9') {
       if (ringNumbers.has(char)) {
-        count++;
+        count += 1;
         ringNumbers.delete(char);
       } else {
         ringNumbers.add(char);
       }
-      i++;
+      i += 1;
     } else if (char === '%' && i + 2 < smiles.length) {
       const num = smiles.substring(i + 1, i + 3);
       if (ringNumbers.has(num)) {
-        count++;
+        count += 1;
         ringNumbers.delete(num);
       } else {
         ringNumbers.add(num);
       }
       i += 3;
     } else {
-      i++;
+      i += 1;
     }
   }
 
@@ -141,12 +141,12 @@ export function calculateFormula(smiles) {
 
     if (char === '(' || char === ')' || char === '=' || char === '#'
         || char === '/' || char === '\\' || char === '@' || char === '+' || char === '-') {
-      i++;
+      i += 1;
       continue;
     }
 
     if (char >= '0' && char <= '9') {
-      i++;
+      i += 1;
       continue;
     }
 
@@ -161,7 +161,7 @@ export function calculateFormula(smiles) {
       elementCounts[element] = (elementCounts[element] || 0) + 1;
       i += parsed.length;
     } else {
-      i++;
+      i += 1;
     }
   }
 
@@ -213,17 +213,17 @@ export function calculateMolecularWeight(smiles) {
 
   while (i < formula.length) {
     let element = formula[i];
-    i++;
+    i += 1;
 
     if (i < formula.length && formula[i] >= 'a' && formula[i] <= 'z') {
       element += formula[i];
-      i++;
+      i += 1;
     }
 
     let count = '';
     while (i < formula.length && formula[i] >= '0' && formula[i] <= '9') {
       count += formula[i];
-      i++;
+      i += 1;
     }
 
     const atomCount = count ? parseInt(count) : 1;

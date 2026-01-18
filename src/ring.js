@@ -8,7 +8,7 @@ export function Ring(atom, size, options = {}) {
   const buildRingSmiles = (replacements) => {
     const parts = [];
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < size; i += 1) {
       const currentAtom = replacements[i] !== undefined ? replacements[i] : atom;
 
       if (i === 0) {
@@ -56,7 +56,7 @@ export function Ring(atom, size, options = {}) {
     // Build SMILES with all substituents at the specified positions
     const parts = [];
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < size; i += 1) {
       const currentAtom = replace[i] !== undefined ? replace[i] : atom;
 
       if (newSubstituents[i]) {

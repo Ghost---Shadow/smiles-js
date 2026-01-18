@@ -112,7 +112,7 @@ a.concat(b);  // CCO (linear)
 a(b);          // CC(O) (branched)
 ```
 
-### Ring(atom, size)
+### Ring(atom, size, options?)
 
 Creates a simple ring.
 
@@ -136,6 +136,28 @@ const benzene = Ring('c', 6);
 const toluene = benzene(methyl);           // c1ccccc1C
 const xylene = benzene(methyl)(methyl);    // c1ccccc1(C)C
 ```
+
+#### Ring.attachAt(atomIndex, fragment)
+
+Attach a fragment at a specific position in the ring.
+
+```js
+const benzene = Ring('c', 6);
+const carboxyl = Fragment('C(=O)O');
+
+// Attach carboxyl at position 1
+const benzoicAcid = benzene.attachAt(1, carboxyl);
+
+// Chain multiple attachments
+const substituted = benzene
+  .attachAt(1, methyl)
+  .attachAt(4, hydroxyl);
+```
+
+**Parameters:**
+
+- `atomIndex` — Position in the ring (0-indexed, follows SMILES order)
+- `fragment` — Fragment to attach
 
 ### FusedRings(sizes, atom, options?)
 
@@ -165,6 +187,62 @@ const indole = FusedRings([6, 5], 'c', {
 const quinoline = FusedRings([6, 6], 'c', { 
   hetero: { 0: 'n' } 
 });
+
+// Benzimidazole
+const benzimidazole = FusedRings([6, 5], 'c', { 
+  hetero: { 4: 'n', 6: '[nH]' } 
+});
+```
+
+#### FusedRings.attachAt(position, fragment, options?)
+
+Attach a fragment to a specific position in a fused ring system.
+
+**Position format:** `[ringIndex, atomIndex]`
+
+- `ringIndex` — Which ring (0-indexed from sizes array)
+- `atomIndex` — Which atom within that ring (0-indexed, follows SMILES order)
+
+```js
+const benzimidazole = FusedRings([6, 5], 'c', { 
+  hetero: { 4: 'n', 6: '[nH]' } 
+});
+
+// Attach to ring 0 (6-membered), atom 2
+benzimidazole.attachAt([0, 2], methyl);
+
+// Attach to ring 1 (5-membered), atom 1
+benzimidazole.attachAt([1, 1], methyl);
+```
+
+**Attaching to heteroatoms:**
+
+When attaching to `[nH]`, the hydrogen is replaced:
+
+```js
+// N-methylation: [nH] becomes N-CH3
+benzimidazole.attachAt([1, 2], methyl);
+```
+
+**Connecting two fused ring systems:**
+
+Use `options.at` to specify the attachment point on the incoming fragment:
+
+```js
+const bis_benzimidazole = benzimidazole.attachAt(
+  [0, 3],
+  benzimidazole, 
+  { at: [1, 1] }
+);
+```
+
+**Chaining attachments:**
+
+```js
+const substituted = benzimidazole
+  .attachAt([0, 2], methyl)
+  .attachAt([1, 2], propyl)
+  .attachAt([0, 5], benzene);
 ```
 
 ### Repeat(fragment, count)
@@ -213,9 +291,9 @@ C(CC(CCC));  // C(CC(CCC))
 This creates:
 
 ```
-C ─ C ─ C
+C — C — C
         │
-        C ─ C ─ C
+        C — C — C
 ```
 
 A more complex example:
@@ -270,7 +348,7 @@ import {
   naphthalene,  // c1ccc2ccccc2c1
   indole,       // c1ccc2[nH]ccc2c1
   quinoline,    // n1ccc2ccccc2c1
-} from 'molecular-dsl/common';
+} from 'smiles-js/common';
 ```
 
 ## Properties
@@ -364,10 +442,31 @@ const ibuprofen = benzene(
 );
 ```
 
+### Telmisartan (using attachAt)
+
+```js
+// Benzimidazole core
+const benzimidazole = FusedRings([6, 5], 'c', { 
+  hetero: { 4: 'n', 6: '[nH]' } 
+});
+
+// Build bis-benzimidazole structure
+const bis_benzimidazole = benzimidazole.attachAt(
+  [0, 3],
+  benzimidazole,
+  { at: [1, 1] }
+);
+
+// Add substituents
+const telmisartan = bis_benzimidazole
+  .attachAt([0, 2], Fragment('CCC'))   // propyl chain
+  .attachAt([1, 2], methyl);            // N-methyl
+```
+
 ### Building a library
 
 ```js
-import { Fragment, benzene, methyl, hydroxyl, carboxyl } from 'molecular-dsl';
+import { Fragment, benzene, methyl, hydroxyl, carboxyl } from 'smiles-js';
 
 // Define your fragments
 const acetyl = Fragment('C(=O)C');
@@ -403,13 +502,16 @@ const peg = Repeat('OCO', 10);
 console.log(peg);  // OCOOCOOCOOCOOCOOCOOCOOCOOCOOCO
 ```
 
-## Known issues
+## Known Issues
 
 ### Directionality for attachment
 
+When attaching fragments, the first atom of the fragment connects to the ring. Consider fragment direction:
+
 ```js
-export const acetamidoLeft = Fragment('CC(=O)N');
-export const acetamidoRight = Fragment('NC(=O)C');
-export const acetaminophen = benzene.attachAt(1, acetamidoLeft).attachAt(4, 'O') ; // Wrong
-export const acetaminophen = benzene.attachAt(1, acetamidoRight).attachAt(4, 'O') ; // Right
+const acetamidoLeft = Fragment('CC(=O)N');   // Connects via first C
+const acetamidoRight = Fragment('NC(=O)C');  // Connects via N
+
+const wrong = benzene.attachAt(1, acetamidoLeft).attachAt(4, 'O');
+const correct = benzene.attachAt(1, acetamidoRight).attachAt(4, 'O');
 ```
