@@ -1,16 +1,30 @@
+import { Fragment } from './fragment.js';
+
 /**
  * Fused rings builder
- * @param {Array<{type: string, size: number}>} rings - Array of ring descriptors
- * @returns {string} SMILES string
+ * @param {Array<Object>} rings - Array of ring descriptors
+ * @returns {Fragment} Fragment object with SMILES string
  */
 export function FusedRing(rings) {
   if (rings.length === 1) {
     // Single ring case
-    const { type, size } = rings[0];
+    const { type, size, substitutions = {} } = rings[0];
 
-    // Build the ring: type + '1' + (type repeated size-1 times) + '1'
-    return `${type}1${type.repeat(size - 1)}1`;
+    // Build the ring with substitutions
+    let smiles = '';
+    for (let i = 1; i <= size; i += 1) {
+      const atom = substitutions[i] || type;
+      if (i === 1) {
+        smiles += `${atom}1`;
+      } else if (i === size) {
+        smiles += `${atom}1`;
+      } else {
+        smiles += atom;
+      }
+    }
+
+    return Fragment(smiles);
   }
 
-  return '';
+  return Fragment('');
 }
