@@ -249,3 +249,172 @@ describe('fuse method', () => {
     });
   });
 });
+
+describe('FusedRing.parse', () => {
+  describe('single rings', () => {
+    test('parses benzene', async () => {
+      const benzene = FusedRing.parse('c1ccccc1');
+
+      assert.strictEqual(benzene.smiles, 'c1ccccc1');
+      assert.ok(await isValidSMILES(benzene.smiles));
+
+      assert.deepStrictEqual(benzene.meta.rings, [
+        {
+          type: 'c',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+    });
+
+    test('parses 1,3,5-triazine', async () => {
+      const triazine = FusedRing.parse('c1ncncn1');
+
+      assert.strictEqual(triazine.smiles, 'c1ncncn1');
+      assert.ok(await isValidSMILES(triazine.smiles));
+
+      assert.deepStrictEqual(triazine.meta.rings[0], {
+        type: 'c',
+        size: 6,
+        offset: 0,
+        ringNumber: 1,
+        substitutions: {
+          2: 'n',
+          4: 'n',
+          6: 'n',
+        },
+        attachments: {},
+      });
+    });
+  });
+
+  describe('rings with attachments', () => {
+    test('parses para-xylene', async () => {
+      const xylene = FusedRing.parse('c1c(C)ccc(C)c1');
+
+      assert.strictEqual(xylene.smiles, 'c1c(C)ccc(C)c1');
+      assert.ok(await isValidSMILES(xylene.smiles));
+
+      assert.deepStrictEqual(xylene.meta.rings[0], {
+        type: 'c',
+        size: 6,
+        offset: 0,
+        ringNumber: 1,
+        substitutions: {},
+        attachments: {
+          2: 'C',
+          5: 'C',
+        },
+      });
+    });
+  });
+
+  describe('fused ring systems', () => {
+    test('parses naphthalene', async () => {
+      const naphthalene = FusedRing.parse('c1ccc2ccccc2c1');
+
+      assert.strictEqual(naphthalene.smiles, 'c1ccc2ccccc2c1');
+      assert.ok(await isValidSMILES(naphthalene.smiles));
+
+      assert.deepStrictEqual(naphthalene.meta.rings, [
+        {
+          type: 'c',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'c',
+          size: 6,
+          offset: 3,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+    });
+    test('parses todo', async () => {
+      const todo = FusedRing.parse('c12ccc2cccccc1');
+
+      assert.strictEqual(todo.smiles, 'c12ccc2cccccc1');
+      assert.ok(await isValidSMILES(todo.smiles));
+
+      assert.deepStrictEqual(todo.meta.rings, [
+        {
+          type: 'c',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'c',
+          size: 6,
+          offset: 3,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+    });
+    test('parses todo 42', async () => {
+      const todo = FusedRing.parse('c%42ccccccccc%42');
+
+      assert.strictEqual(todo.smiles, 'c%42ccccccccc%42');
+      assert.ok(await isValidSMILES(todo.smiles));
+
+      assert.deepStrictEqual(todo.meta.rings, [
+        {
+          type: 'c',
+          size: 6,
+          offset: 0,
+          ringNumber: 42,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+    });
+  });
+
+  describe('rings with ring attachments', () => {
+    test('parses terphenyl', async () => {
+      const terphenyl = FusedRing.parse('c1c(c2ccccc2)ccc(c3ccccc3)c1');
+
+      assert.strictEqual(terphenyl.smiles, 'c1c(c2ccccc2)ccc(c3ccccc3)c1');
+      assert.ok(await isValidSMILES(terphenyl.smiles));
+
+      assert.strictEqual(terphenyl.meta.rings, [
+        {
+          type: 'c',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'c',
+          size: 6,
+          offset: 3,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'c',
+          size: 6,
+          offset: 3,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+    });
+  });
+});

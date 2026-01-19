@@ -165,6 +165,7 @@ class FusedRingClass {
    * @returns {Object} Meta object with rings and usedRingNumbers
    */
   get meta() {
+    // TODO: usedRingNumbers needs to be recursive
     return {
       rings: this.rings.map((meta) => meta.toObject()),
       usedRingNumbers: this.rings.map((meta) => meta.ringNumber),
@@ -262,3 +263,111 @@ export function FusedRing(rings) {
 
 // Expose static methods on the factory function
 FusedRing.buildRing = FusedRingClass.buildRing.bind(FusedRingClass);
+
+/**
+ * Parse SMILES string to create a FusedRing with AST
+ * @param {string} smiles - SMILES string to parse
+ * @returns {FusedRingClass} FusedRing instance with parsed AST
+ */
+FusedRing.parse = function parse(smiles) {
+  if (!smiles || smiles.length === 0) {
+    throw new Error('Cannot parse empty SMILES');
+  }
+
+  // Find all ring closures (digits 1-9)
+  const ringMatches = smiles.match(/\d/g);
+  if (!ringMatches || ringMatches.length === 0) {
+    throw new Error('No rings found in SMILES');
+  }
+
+  // Track ring openings and closures using a stack
+  const ringStacks = {}; // { ringNumber: [positions] }
+  const rings = []; // Array of ring descriptors
+  const atoms = []; // Track all atoms with their positions
+
+  let atomIndex = 0;
+
+  // Parse SMILES character by character
+  for (let i = 0; i < smiles.length; i += 1) {
+    const char = smiles[i];
+
+    // Handle atoms (letters)
+    if (/[a-zA-Z]/.test(char)) {
+      atoms.push({ type: char, position: atomIndex });
+      atomIndex += 1;
+    } else if (/\d/.test(char)) {
+      // Handle ring closure digit
+      const ringNum = parseInt(char, 10);
+
+      if (!ringStacks[ringNum]) {
+        // Opening of ring - push current atom position onto stack
+        ringStacks[ringNum] = [];
+        ringStacks[ringNum].push(atomIndex - 1);
+      } else {
+        // Closing of ring - pop start position from stack and create ring
+        const startPos = ringStacks[ringNum].pop();
+        const endPos = atomIndex - 1;
+
+        // Calculate ring size by counting atoms between opening and closing
+        // For simple rings: all atoms between start and end
+        // For fused rings: need to exclude atoms that belong to other rings
+        let ringSize = endPos - startPos + 1;
+
+        // Check if any previously closed rings overlap with this range
+        rings.forEach((prevRing) => {
+          const prevStart = prevRing.startPos;
+          const prevEnd = prevRing.startPos + prevRing.size - 1;
+
+          // If previous ring is entirely within this ring's range
+          if (prevStart > startPos && prevEnd < endPos) {
+            // Subtract the overlapping atoms (but keep the shared edge atoms)
+            ringSize -= (prevRing.size - 2);
+          }
+        });
+
+        // Find base type
+        const baseType = atoms[startPos].type;
+
+        // Calculate offset for fused rings
+        let offset = 0;
+        if (rings.length > 0) {
+          // This is a fused ring - offset is where it starts
+          offset = startPos;
+        }
+
+        // Detect substitutions (atoms different from base type)
+        const substitutions = {};
+        for (let pos = startPos; pos <= endPos; pos += 1) {
+          const relativePos = pos - startPos + 1; // 1-based position in ring
+          if (atoms[pos].type !== baseType) {
+            substitutions[relativePos] = atoms[pos].type;
+          }
+        }
+
+        rings.push({
+          type: baseType,
+          size: ringSize,
+          offset,
+          ringNumber: ringNum,
+          substitutions,
+          attachments: {},
+          startPos, // Keep for sorting
+        });
+
+        delete ringStacks[ringNum];
+      }
+    }
+    // Skip other characters (branches, etc. for now)
+  }
+
+  // Sort rings by start position (so ring 1 comes before ring 2)
+  rings.sort((a, b) => a.startPos - b.startPos);
+
+  // Recalculate offsets based on sorted order and remove internal tracking fields
+  const cleanRings = rings.map(({ ringNumber, startPos, ...rest }) => ({
+    ...rest,
+    offset: startPos,
+  }));
+
+  return new FusedRingClass(cleanRings);
+};
