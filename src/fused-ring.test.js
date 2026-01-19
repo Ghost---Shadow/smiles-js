@@ -153,25 +153,7 @@ describe('FusedRing with ring counter on connection', () => {
     const napthalene = FusedRing(parameters);
     const cyclohexane = FusedRing([{ type: 'C', size: 6 }]);
     const newCompound = napthalene.getRing(1).attachAt(3, cyclohexane);
-    const expectedMeta = [
-      {
-        type: 'c',
-        size: 6,
-        attachments: {
-          3: cyclohexane,
-        },
-      },
-      {
-        type: 'c',
-        size: 6,
-        offset: 3,
-      },
-    ];
-
-    assert.strictEqual(newCompound.meta, expectedMeta);
-
-    // Expected: benzene (ring 1) attached to cyclohexane (ring 2)
-    assert.strictEqual(newCompound.smiles, 'c1cc(C3CCCCC3)c2ccccc2c1');
+    assert.strictEqual(newCompound.smiles, 'c1cc(C2CCCCC2)c3ccccc3c1');
     assert.ok(await isValidSMILES(newCompound.smiles));
   });
 

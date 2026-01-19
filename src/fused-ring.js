@@ -1,5 +1,6 @@
 import { Fragment } from './fragment.js';
 import { Meta } from './meta.js';
+import { deepMerge } from './utils.js';
 
 /**
  * Fused ring class for building complex ring systems
@@ -20,8 +21,8 @@ class FusedRingClass {
   /**
    * Assign unique ring numbers to each ring and its attachments via DFS
    * Treats meta as an AST and traverses it recursively
-   * @param {Array<Object>} rings - Array of ring descriptors
-   * @returns {Object} Object with ringsWithNumbers and usedRingNumbers arrays
+   * @param {Array<Meta>} rings - Array of ring descriptors
+   * @returns {Array<Meta>} Object with ringsWithNumbers and usedRingNumbers arrays
    */
   static assignRingNumbers(rings) {
     let nextRingNumber = 1;
@@ -154,6 +155,46 @@ class FusedRingClass {
 
   toString() {
     return this.smiles;
+  }
+
+  /**
+   * Get a specific ring by index (1-based) for attachment operations
+   * @param {number} ringIndex - 1-based ring index
+   * @returns {Object} Ring accessor with attachAt method
+   */
+  getRing(ringIndex) {
+    if (ringIndex < 1 || ringIndex > this.meta.rings.length) {
+      throw new Error(`Ring index ${ringIndex} out of bounds`);
+    }
+
+    const ringArrayIndex = ringIndex - 1;
+    const fusedRingInstance = this;
+
+    return {
+      /**
+       * Attach something at a specific position on this ring
+       * @param {number} position - Position on the ring (1-based)
+       * @param {*} attachment - What to attach (FusedRing, string, Fragment, etc.)
+       * @returns {FusedRingClass} New FusedRing with the attachment
+       */
+      attachAt(position, attachment) {
+        // Clone the rings array
+        const newRings = fusedRingInstance.meta.rings.map((ring, idx) => {
+          if (idx === ringArrayIndex) {
+            // This is the ring we're attaching to - deep merge attachments
+            return deepMerge(ring, {
+              attachments: {
+                [position]: attachment,
+              },
+            });
+          }
+          return ring;
+        });
+
+        // Create new FusedRing with modified rings
+        return new FusedRingClass(newRings);
+      },
+    };
   }
 
   /**

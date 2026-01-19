@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { findUsedRingNumbers, getNextRingNumber } from './utils.js';
+import { findUsedRingNumbers, getNextRingNumber, deepMerge } from './utils.js';
 
 // findUsedRingNumbers tests
 test('findUsedRingNumbers finds single digit ring numbers', () => {
@@ -129,4 +129,92 @@ test('getNextRingNumber throws error when all ring numbers exhausted', () => {
     smiles += `C%${i}CCC%${i}`;
   }
   assert.throws(() => getNextRingNumber(smiles), /Too many rings/);
+});
+
+// deepMerge tests
+test('deepMerge merges two flat objects', () => {
+  const target = { a: 1, b: 2 };
+  const source = { b: 3, c: 4 };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1, b: 3, c: 4 });
+});
+
+test('deepMerge does not mutate target', () => {
+  const target = { a: 1, b: 2 };
+  const source = { b: 3, c: 4 };
+  deepMerge(target, source);
+  assert.deepStrictEqual(target, { a: 1, b: 2 });
+});
+
+test('deepMerge merges nested objects', () => {
+  const target = { a: 1, b: { c: 2, d: 3 } };
+  const source = { b: { d: 4, e: 5 }, f: 6 };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1, b: { c: 2, d: 4, e: 5 }, f: 6 });
+});
+
+test('deepMerge overwrites primitives', () => {
+  const target = { a: 1, b: 'old' };
+  const source = { b: 'new', c: true };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1, b: 'new', c: true });
+});
+
+test('deepMerge overwrites arrays', () => {
+  const target = { a: [1, 2, 3], b: 2 };
+  const source = { a: [4, 5] };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: [4, 5], b: 2 });
+});
+
+test('deepMerge handles null values', () => {
+  const target = { a: 1, b: { c: 2 } };
+  const source = { b: null };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1, b: null });
+});
+
+test('deepMerge handles undefined in source', () => {
+  const target = { a: 1, b: 2 };
+  const source = { b: undefined };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1, b: undefined });
+});
+
+test('deepMerge merges deeply nested objects', () => {
+  const target = { a: { b: { c: { d: 1 } } } };
+  const source = { a: { b: { c: { e: 2 }, f: 3 } } };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: { b: { c: { d: 1, e: 2 }, f: 3 } } });
+});
+
+test('deepMerge handles empty objects', () => {
+  const target = { a: 1 };
+  const source = {};
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1 });
+});
+
+test('deepMerge merges into empty target', () => {
+  const target = {};
+  const source = { a: 1, b: 2 };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, { a: 1, b: 2 });
+});
+
+test('deepMerge handles object with nested attachments', () => {
+  const target = {
+    type: 'c',
+    size: 6,
+    attachments: { 1: 'Cl' },
+  };
+  const source = {
+    attachments: { 3: 'Br' },
+  };
+  const result = deepMerge(target, source);
+  assert.deepStrictEqual(result, {
+    type: 'c',
+    size: 6,
+    attachments: { 1: 'Cl', 3: 'Br' },
+  });
 });

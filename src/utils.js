@@ -37,3 +37,35 @@ export function getNextRingNumber(smiles) {
 
   throw new Error('Too many rings (exhausted ring numbers)');
 }
+
+/**
+ * Deep merge two objects
+ * @param {Object} target - Target object
+ * @param {Object} source - Source object to merge into target
+ * @returns {Object} Merged object
+ */
+export function deepMerge(target, source) {
+  const result = { ...target };
+
+  Object.keys(source).forEach((key) => {
+    const sourceValue = source[key];
+    const targetValue = result[key];
+
+    if (
+      sourceValue
+      && typeof sourceValue === 'object'
+      && !Array.isArray(sourceValue)
+      && targetValue
+      && typeof targetValue === 'object'
+      && !Array.isArray(targetValue)
+    ) {
+      // Both are plain objects, merge recursively
+      result[key] = deepMerge(targetValue, sourceValue);
+    } else {
+      // Primitive, array, or null - just overwrite
+      result[key] = sourceValue;
+    }
+  });
+
+  return result;
+}
