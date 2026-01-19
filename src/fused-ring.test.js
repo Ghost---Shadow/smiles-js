@@ -132,8 +132,8 @@ describe('FusedRing with ring counter on connection', () => {
       },
     ];
     const newCompound = FusedRing(parameters);
-    // Expected: benzene (ring 1) attached to cyclohexane (ring 2)
-    assert.strictEqual(newCompound.smiles, 'c1cc(C3CCCCC3)c2ccccc2c1');
+    // Expected: benzene (ring 1) with cyclohexane (ring 2), then naphthalene ring 2 becomes ring 3
+    assert.strictEqual(newCompound.smiles, 'c1cc(C2CCCCC2)c3ccccc3c1');
     assert.ok(await isValidSMILES(newCompound.smiles));
   });
 

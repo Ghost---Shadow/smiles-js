@@ -19,7 +19,7 @@ class FusedRingClass {
 
   /**
    * Assign unique ring numbers to each ring and its attachments via DFS
-   * First assigns to main rings, then to attached rings
+   * Treats meta as an AST and traverses it recursively
    * @param {Array<Object>} rings - Array of ring descriptors
    * @returns {Object} Object with ringsWithNumbers and usedRingNumbers arrays
    */
@@ -27,68 +27,51 @@ class FusedRingClass {
     let nextRingNumber = 1;
     const usedRingNumbers = [];
 
-    // First pass: assign numbers to main rings only
-    const ringsWithNumbers = rings.map((ringDesc) => {
+    /**
+     * DFS traversal: assign number to current ring, then recurse into attachments
+     */
+    const processRing = (ringDesc) => {
+      // Assign ring number to current ring
       const ringNumber = nextRingNumber;
       nextRingNumber += 1;
       usedRingNumbers.push(ringNumber);
-      return { ...ringDesc, ringNumber };
-    });
 
-    // Second pass: recursively assign numbers to attachments
-    const assignAttachmentNumbers = (ringDesc) => {
-      if (!ringDesc.attachments) {
-        return ringDesc;
+      const newRingDesc = { ...ringDesc, ringNumber };
+
+      // Recurse into attachments
+      if (ringDesc.attachments) {
+        const newAttachments = {};
+        Object.entries(ringDesc.attachments).forEach(([position, attachment]) => {
+          // Check if attachment is a FusedRing instance
+          if (attachment instanceof FusedRingClass) {
+            // Recurse into the FusedRing's rings
+            const attachedRingsWithNumbers = attachment.meta.rings.map((attachedRing) => {
+              // Remove old ringNumber before recursing
+              const { ringNumber: oldNumber, ...ringWithoutNumber } = attachedRing;
+              return processRing(ringWithoutNumber);
+            });
+            // Store as plain object with meta
+            newAttachments[position] = {
+              meta: {
+                rings: attachedRingsWithNumbers,
+                usedRingNumbers: attachedRingsWithNumbers.map((r) => r.ringNumber),
+              },
+            };
+          } else {
+            // Simple attachment (no recursion needed)
+            newAttachments[position] = attachment;
+          }
+        });
+        newRingDesc.attachments = newAttachments;
       }
 
-      const newAttachments = {};
-      Object.entries(ringDesc.attachments).forEach(([position, attachment]) => {
-        // Check if attachment is a FusedRing instance
-        if (attachment instanceof FusedRingClass) {
-          // Get the rings from the FusedRing and reassign numbers
-          const attachedRingsWithNumbers = attachment.meta.rings.map((attachedRing) => {
-            // Remove old ringNumber and assign new one
-            const { ringNumber: oldNumber, ...ringWithoutNumber } = attachedRing;
-            const ringNumber = nextRingNumber;
-            nextRingNumber += 1;
-            usedRingNumbers.push(ringNumber);
-            return assignAttachmentNumbers({ ...ringWithoutNumber, ringNumber });
-          });
-          // Store as plain object with meta (not a FusedRing instance)
-          newAttachments[position] = {
-            meta: {
-              rings: attachedRingsWithNumbers,
-              usedRingNumbers: attachedRingsWithNumbers.map((r) => r.ringNumber),
-            },
-            // Store the fragment so we can rebuild it later
-            fragment: attachment.fragment,
-          };
-        } else if (attachment.meta && attachment.meta.rings) {
-          // Handle plain objects with meta.rings
-          const attachedRingsWithNumbers = attachment.meta.rings.map((attachedRing) => {
-            const ringNumber = nextRingNumber;
-            nextRingNumber += 1;
-            usedRingNumbers.push(ringNumber);
-            return assignAttachmentNumbers({ ...attachedRing, ringNumber });
-          });
-          newAttachments[position] = {
-            ...attachment,
-            meta: {
-              ...attachment.meta,
-              rings: attachedRingsWithNumbers,
-            },
-          };
-        } else {
-          newAttachments[position] = attachment;
-        }
-      });
-
-      return { ...ringDesc, attachments: newAttachments };
+      return newRingDesc;
     };
 
-    const finalRings = ringsWithNumbers.map(assignAttachmentNumbers);
+    // DFS from each top-level ring
+    const ringsWithNumbers = rings.map(processRing);
 
-    return { ringsWithNumbers: finalRings, usedRingNumbers };
+    return { ringsWithNumbers, usedRingNumbers };
   }
 
   /**
