@@ -10,35 +10,85 @@ class FusedRingClass {
       throw new Error('FusedRing requires at least one ring');
     }
 
-    // Track used ring numbers
-    const usedRingNumbers = [];
-    for (let i = 0; i < rings.length; i += 1) {
-      usedRingNumbers.push(i + 1);
-    }
+    // Assign ring numbers via DFS
+    const { ringsWithNumbers, usedRingNumbers } = FusedRingClass.assignRingNumbers(rings);
 
-    this.meta = new Meta(rings, usedRingNumbers);
-    this.fragment = this.build(rings, usedRingNumbers);
+    this.meta = new Meta(ringsWithNumbers, usedRingNumbers);
+    this.fragment = this.build(ringsWithNumbers);
   }
 
   /**
-   * Build a fused ring structure from ring descriptors
+   * Assign unique ring numbers to each ring and its attachments via DFS
+   * First assigns to main rings, then to attached rings
    * @param {Array<Object>} rings - Array of ring descriptors
-   * @param {Array<number>} usedRingNumbers - Ring numbers to use
+   * @returns {Object} Object with ringsWithNumbers and usedRingNumbers arrays
+   */
+  static assignRingNumbers(rings) {
+    let nextRingNumber = 1;
+    const usedRingNumbers = [];
+
+    // First pass: assign numbers to main rings only
+    const ringsWithNumbers = rings.map((ringDesc) => {
+      const ringNumber = nextRingNumber;
+      nextRingNumber += 1;
+      usedRingNumbers.push(ringNumber);
+      return { ...ringDesc, ringNumber };
+    });
+
+    // Second pass: recursively assign numbers to attachments
+    const assignAttachmentNumbers = (ringDesc) => {
+      if (!ringDesc.attachments) {
+        return ringDesc;
+      }
+
+      const newAttachments = {};
+      Object.entries(ringDesc.attachments).forEach(([position, attachment]) => {
+        if (attachment.meta && attachment.meta.rings) {
+          // Recursively assign ring numbers to attached fused rings
+          const attachedRingsWithNumbers = attachment.meta.rings.map((attachedRing) => {
+            const ringNumber = nextRingNumber;
+            nextRingNumber += 1;
+            usedRingNumbers.push(ringNumber);
+            return assignAttachmentNumbers({ ...attachedRing, ringNumber });
+          });
+          newAttachments[position] = {
+            ...attachment,
+            meta: {
+              ...attachment.meta,
+              rings: attachedRingsWithNumbers,
+            },
+          };
+        } else {
+          newAttachments[position] = attachment;
+        }
+      });
+
+      return { ...ringDesc, attachments: newAttachments };
+    };
+
+    const finalRings = ringsWithNumbers.map(assignAttachmentNumbers);
+
+    return { ringsWithNumbers: finalRings, usedRingNumbers };
+  }
+
+  /**
+   * Build a fused ring structure from ring descriptors with assigned ring numbers
+   * @param {Array<Object>} rings - Array of ring descriptors with ringNumber field
    * @returns {Fragment} Built fragment
    */
-  build(rings, usedRingNumbers) {
+  build(rings) {
     // Sort rings from largest to smallest
     const sortedRings = [...rings].sort((a, b) => b.size - a.size);
 
     // Build the SMILES structure
-    let atoms = this.buildRing(sortedRings[0], usedRingNumbers[0]);
+    let atoms = this.buildRing(sortedRings[0]);
 
     // Wrap each subsequent ring around the previous structure
     for (let ringIdx = 1; ringIdx < sortedRings.length; ringIdx += 1) {
       const ring = sortedRings[ringIdx];
       const { offset } = ring;
 
-      const newRingAtoms = this.buildRing(ring, usedRingNumbers[ringIdx]);
+      const newRingAtoms = this.buildRing(ring);
 
       const beforeFusion = atoms.slice(0, offset);
       const afterFusion = atoms.slice(offset + 2);
@@ -55,13 +105,13 @@ class FusedRingClass {
 
   /**
    * Build a ring with attachments handling
-   * @param {Object} ringDesc - Ring descriptor with size, type, substitutions, and attachments
-   * @param {number} ringNumber - Ring closure number
+   * @param {Object} ringDesc - Ring descriptor with size, type, substitutions,
+   *                            attachments, and ringNumber
    * @returns {Array<string>} Array of atom strings
    */
-  buildRing(ringDesc, ringNumber) {
+  buildRing(ringDesc) {
     const {
-      size, type, substitutions = {}, attachments = {},
+      size, type, substitutions = {}, attachments = {}, ringNumber,
     } = ringDesc;
 
     // Build base ring structure
@@ -113,15 +163,13 @@ class FusedRingClass {
 
     const { rings } = fusedRing.meta;
 
-    // Build the structure with remapped ring numbers
-    const newUsedRingNumbers = [];
-    for (let i = 0; i < rings.length; i += 1) {
-      const originalRingNum = i + 1;
-      const mappedRingNum = ringNumberMap.get(originalRingNum) || originalRingNum;
-      newUsedRingNumbers.push(mappedRingNum);
-    }
+    // Remap the ring numbers in the descriptors
+    const remappedRings = rings.map((ring) => ({
+      ...ring,
+      ringNumber: ringNumberMap.get(ring.ringNumber) || ring.ringNumber,
+    }));
 
-    return this.build(rings, newUsedRingNumbers);
+    return this.build(remappedRings);
   }
 
   toString() {
@@ -152,9 +200,10 @@ class FusedRingClass {
    * @returns {Array<string>} Array of atom strings
    */
   static buildRing(ringDesc, ringNumber) {
-    // Create a temporary instance to use the instance method
-    const tempInstance = new FusedRingClass([ringDesc]);
-    return tempInstance.buildRing(ringDesc, ringNumber);
+    // Add ring number to descriptor and create temporary instance
+    const ringDescWithNumber = { ...ringDesc, ringNumber };
+    const tempInstance = new FusedRingClass([ringDescWithNumber]);
+    return tempInstance.buildRing(ringDescWithNumber);
   }
 }
 
