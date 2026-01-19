@@ -62,9 +62,11 @@ describe('FusedRing', () => {
     const napthalene = FusedRing(parameters);
     assert.strictEqual(napthalene.smiles, 'c1ccc2ccccc2c1');
     assert.deepStrictEqual(napthalene.meta.rings, [
-      { type: 'c', size: 6, ringNumber: 1 },
       {
-        type: 'c', size: 6, offset: 3, ringNumber: 2,
+        type: 'c', size: 6, offset: 0, ringNumber: 1, substitutions: {}, attachments: {},
+      },
+      {
+        type: 'c', size: 6, offset: 3, ringNumber: 2, substitutions: {}, attachments: {},
       },
     ]);
     assert.deepStrictEqual(napthalene.meta.usedRingNumbers, [1, 2]);
@@ -239,9 +241,11 @@ describe('fuse method', () => {
     const fused = ring1.fuse(ring2);
 
     assert.strictEqual(fused.meta.rings.length, 2);
-    assert.deepStrictEqual(fused.meta.rings[0], { type: 'c', size: 6, ringNumber: 1 });
+    assert.deepStrictEqual(fused.meta.rings[0], {
+      type: 'c', size: 6, offset: 0, ringNumber: 1, substitutions: {}, attachments: {},
+    });
     assert.deepStrictEqual(fused.meta.rings[1], {
-      type: 'c', size: 5, offset: 3, ringNumber: 2,
+      type: 'c', size: 5, offset: 3, ringNumber: 2, substitutions: {}, attachments: {},
     });
   });
 });

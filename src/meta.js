@@ -1,47 +1,55 @@
+import { deepMerge } from './utils.js';
+
 /**
- * Metadata class for tracking ring information in fragments
+ * Datatype class representing a ring descriptor with metadata
  */
 export class Meta {
-  constructor(rings = [], usedRingNumbers = []) {
-    this.rings = rings;
-    this.usedRingNumbers = usedRingNumbers;
+  constructor({
+    size,
+    type,
+    offset = 0,
+    ringNumber = null,
+    substitutions = {},
+    attachments = {},
+  }) {
+    this.size = size;
+    this.type = type;
+    this.offset = offset;
+    this.ringNumber = ringNumber;
+    this.substitutions = substitutions;
+    this.attachments = attachments;
   }
 
   /**
-   * Get the next available ring number that doesn't conflict
-   * @param {number} currentRingNumber - The current ring number being used
-   * @returns {number} Next available ring number
+   * Create a new Meta with updated properties (uses deep merge for nested objects)
+   * @param {Object} updates - Properties to update
+   * @returns {Meta} New Meta instance with updates applied
    */
-  getNextAvailableRingNumber(currentRingNumber = 0) {
-    return Math.max(...this.usedRingNumbers, currentRingNumber) + 1;
+  update(updates) {
+    const base = {
+      size: this.size,
+      type: this.type,
+      offset: this.offset,
+      ringNumber: this.ringNumber,
+      substitutions: this.substitutions,
+      attachments: this.attachments,
+    };
+
+    return new Meta(deepMerge(base, updates));
   }
 
   /**
-   * Check if a ring number is already used
-   * @param {number} ringNumber - Ring number to check
-   * @returns {boolean} True if the ring number is used
+   * Convert to plain object (for backward compatibility)
+   * @returns {Object} Plain object representation
    */
-  isRingNumberUsed(ringNumber) {
-    return this.usedRingNumbers.includes(ringNumber);
-  }
-
-  /**
-   * Create a ring number mapping for an attachment to avoid conflicts
-   * @param {Meta} attachmentMeta - Meta from the attachment fragment
-   * @param {number} currentRingNumber - Current ring number being used
-   * @returns {Map<number, number>} Map from old to new ring numbers
-   */
-  createRingNumberMapping(attachmentMeta, currentRingNumber) {
-    const ringNumberMap = new Map();
-    let nextAvailableRingNum = this.getNextAvailableRingNumber(currentRingNumber);
-
-    attachmentMeta.usedRingNumbers.forEach((attachRingNum) => {
-      if (this.isRingNumberUsed(attachRingNum) || attachRingNum === currentRingNumber) {
-        ringNumberMap.set(attachRingNum, nextAvailableRingNum);
-        nextAvailableRingNum += 1;
-      }
-    });
-
-    return ringNumberMap;
+  toObject() {
+    return {
+      size: this.size,
+      type: this.type,
+      offset: this.offset,
+      ringNumber: this.ringNumber,
+      substitutions: this.substitutions,
+      attachments: this.attachments,
+    };
   }
 }
