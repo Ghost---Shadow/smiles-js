@@ -37,6 +37,24 @@ class FusedRingClass {
    * @returns {Array<Meta>} Array of Meta instances with ringNumber assigned
    */
   static assignRingNumbers(rings) {
+    // Check if ring numbers are already assigned (e.g., from parsing)
+    const hasRingNumbers = rings.every((meta) => meta.ringNumber != null);
+    if (hasRingNumbers) {
+      // Ring numbers already assigned, just process attachments
+      return rings.map((meta) => {
+        const newAttachments = {};
+        Object.entries(meta.attachments).forEach(([position, attachment]) => {
+          if (attachment instanceof FusedRingClass) {
+            const attachedRingsWithNumbers = FusedRingClass.assignRingNumbers(attachment.rings);
+            newAttachments[position] = { rings: attachedRingsWithNumbers };
+          } else {
+            newAttachments[position] = attachment;
+          }
+        });
+        return meta.update({ attachments: newAttachments });
+      });
+    }
+
     let nextRingNumber = 1;
 
     /**
@@ -114,13 +132,16 @@ class FusedRingClass {
       size, type, substitutions, attachments, ringNumber,
     } = meta;
 
+    // Format ring number (use %NN notation for numbers > 9)
+    const ringNumStr = ringNumber > 9 ? `%${ringNumber}` : String(ringNumber);
+
     // Build base ring structure
     const atoms = [];
     for (let i = 0; i < size; i += 1) {
       const position = i + 1;
       const atomType = substitutions[position] || type;
       const isClosurePoint = i === 0 || i === size - 1;
-      atoms.push(isClosurePoint ? `${atomType}${ringNumber}` : atomType);
+      atoms.push(isClosurePoint ? `${atomType}${ringNumStr}` : atomType);
     }
 
     // Handle attachments
@@ -144,8 +165,8 @@ class FusedRingClass {
         atoms[i] = `${atoms[i]}(${attachSmiles})`;
       } else {
         // Other positions: strip ring number, add attachment, restore ring number
-        const atomWithoutRingNum = atoms[i].replace(String(ringNumber), '');
-        atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(String(ringNumber)) ? ringNumber : ''}`;
+        const atomWithoutRingNum = atoms[i].replace(ringNumStr, '');
+        atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(ringNumStr) ? ringNumStr : ''}`;
       }
     });
 

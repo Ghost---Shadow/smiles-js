@@ -1,6 +1,8 @@
 import { test, describe } from 'bun:test';
 import assert from 'bun:assert';
-import { handleAtoms, handleAttachment, handleRings } from './parse.js';
+import {
+  handleAtoms, handleAttachment, handleRings, handleLargeRings,
+} from './parse.js';
 import { FusedRing } from './fused-ring.js';
 import { isValidSMILES } from './test-utils.js';
 
@@ -262,6 +264,74 @@ describe('handleRings', () => {
   });
 });
 
+describe('handleLargeRings', () => {
+  test('handles 2-digit ring numbers', () => {
+    const context = {
+      smiles: '%10c',
+      ringStacks: {},
+      rings: [],
+      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atomIndex: 1,
+      i: 0,
+      char: '%',
+    };
+
+    handleLargeRings(context);
+
+    assert.strictEqual(context.char, '10');
+    assert.ok(context.ringStacks[10]);
+    assert.strictEqual(context.ringStacks[10][0], 0);
+    assert.strictEqual(context.i, 2); // Should skip to position 2
+  });
+
+  test('handles 3-digit ring numbers', () => {
+    const context = {
+      smiles: '%100c',
+      ringStacks: {},
+      rings: [],
+      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atomIndex: 1,
+      i: 0,
+      char: '%',
+    };
+
+    handleLargeRings(context);
+
+    assert.strictEqual(context.char, '100');
+    assert.ok(context.ringStacks[100]);
+    assert.strictEqual(context.ringStacks[100][0], 0);
+    assert.strictEqual(context.i, 3); // Should skip to position 3
+  });
+
+  test('closes ring with large ring number', () => {
+    const context = {
+      smiles: '%42',
+      ringStacks: {
+        42: [0], // Ring 42 opened at position 0
+      },
+      rings: [],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: [] },
+        { type: 'c', position: 2, attachments: [] },
+        { type: 'c', position: 3, attachments: [] },
+        { type: 'c', position: 4, attachments: [] },
+        { type: 'c', position: 5, attachments: [] },
+      ],
+      atomIndex: 6,
+      i: 0,
+      char: '%',
+    };
+
+    handleLargeRings(context);
+
+    assert.strictEqual(context.rings.length, 1);
+    assert.strictEqual(context.rings[0].ringNumber, 42);
+    assert.strictEqual(context.rings[0].size, 6);
+    assert.strictEqual(context.ringStacks[42], undefined); // Stack cleaned up
+  });
+});
+
 describe('FusedRing.parse', () => {
   describe('single rings', () => {
     test('parses benzene', async () => {
@@ -353,9 +423,6 @@ describe('FusedRing.parse', () => {
     test('parses todo', async () => {
       const todo = FusedRing.parse('c12ccc2cccccc1');
 
-      assert.strictEqual(todo.smiles, 'c12ccc2cccccc1');
-      assert.ok(await isValidSMILES(todo.smiles));
-
       assert.deepStrictEqual(todo.meta.rings, [
         {
           type: 'c',
@@ -374,6 +441,9 @@ describe('FusedRing.parse', () => {
           attachments: {},
         },
       ]);
+
+      assert.strictEqual(todo.smiles, 'c12ccc2cccccc1');
+      assert.ok(await isValidSMILES(todo.smiles));
     });
     test('parses todo 42', async () => {
       const todo = FusedRing.parse('c%42ccccccccc%42');

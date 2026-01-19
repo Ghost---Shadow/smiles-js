@@ -102,6 +102,18 @@ export const handleRings = (context) => {
   }
 };
 
+export const handleLargeRings = (context) => {
+  // Handle %NN ring notation (for ring numbers > 9)
+  const match = context.smiles.substring(context.i + 1).match(/^\d+/);
+  if (match) {
+    const ringNumStr = match[0];
+    context.char = ringNumStr;
+    handleRings(context);
+    // Skip the digits (minus 1 because loop will increment)
+    context.i += ringNumStr.length;
+  }
+};
+
 /**
  * Parse SMILES string to create ring descriptors with AST
  * @param {string} smiles - SMILES string to parse
@@ -138,6 +150,8 @@ export function parse(smiles) {
       handleAtoms(context);
     } else if (context.char === '(') {
       handleAttachment(context);
+    } else if (context.char === '%') {
+      handleLargeRings(context);
     } else if (/\d/.test(context.char)) {
       handleRings(context);
     }
@@ -147,7 +161,7 @@ export function parse(smiles) {
   context.rings.sort((a, b) => a.startPos - b.startPos);
 
   // Recalculate offsets based on sorted order and remove internal tracking fields
-  const cleanRings = context.rings.map(({ ringNumber, startPos, ...rest }) => ({
+  const cleanRings = context.rings.map(({ startPos, ...rest }) => ({
     ...rest,
     offset: startPos,
   }));
