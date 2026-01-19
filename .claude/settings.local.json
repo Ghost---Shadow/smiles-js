@@ -7,7 +7,8 @@
       "Bash(bun test:*)",
       "Bash(git checkout:*)",
       "Bash(npm run lint:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(bun run lint:*)"
     ]
   }
 }

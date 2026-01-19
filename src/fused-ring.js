@@ -293,8 +293,33 @@ FusedRing.parse = function parse(smiles) {
 
     // Handle atoms (letters)
     if (/[a-zA-Z]/.test(char)) {
-      atoms.push({ type: char, position: atomIndex });
+      atoms.push({ type: char, position: atomIndex, attachments: [] });
       atomIndex += 1;
+    } else if (char === '(') {
+      // Handle attachment - extract content within parentheses
+      let depth = 1;
+      let j = i + 1;
+      let attachmentContent = '';
+
+      while (j < smiles.length && depth > 0) {
+        if (smiles[j] === '(') {
+          depth += 1;
+        } else if (smiles[j] === ')') {
+          depth -= 1;
+        }
+        if (depth > 0) {
+          attachmentContent += smiles[j];
+        }
+        j += 1;
+      }
+
+      // Add attachment to the most recent atom
+      if (atoms.length > 0) {
+        atoms[atoms.length - 1].attachments.push(attachmentContent);
+      }
+
+      // Skip past the closing parenthesis
+      i = j - 1;
     } else if (/\d/.test(char)) {
       // Handle ring closure digit
       const ringNum = parseInt(char, 10);
@@ -344,13 +369,22 @@ FusedRing.parse = function parse(smiles) {
           }
         }
 
+        // Collect attachments
+        const attachments = {};
+        for (let pos = startPos; pos <= endPos; pos += 1) {
+          const relativePos = pos - startPos + 1; // 1-based position in ring
+          if (atoms[pos].attachments.length > 0) {
+            [attachments[relativePos]] = atoms[pos].attachments;
+          }
+        }
+
         rings.push({
           type: baseType,
           size: ringSize,
           offset,
           ringNumber: ringNum,
           substitutions,
-          attachments: {},
+          attachments,
           startPos, // Keep for sorting
         });
 
