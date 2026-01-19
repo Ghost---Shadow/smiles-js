@@ -43,8 +43,28 @@ class FusedRingClass {
 
       const newAttachments = {};
       Object.entries(ringDesc.attachments).forEach(([position, attachment]) => {
-        if (attachment.meta && attachment.meta.rings) {
-          // Recursively assign ring numbers to attached fused rings
+        // Check if attachment is a FusedRing instance
+        if (attachment instanceof FusedRingClass) {
+          // Get the rings from the FusedRing and reassign numbers
+          const attachedRingsWithNumbers = attachment.meta.rings.map((attachedRing) => {
+            // Remove old ringNumber and assign new one
+            const { ringNumber: oldNumber, ...ringWithoutNumber } = attachedRing;
+            const ringNumber = nextRingNumber;
+            nextRingNumber += 1;
+            usedRingNumbers.push(ringNumber);
+            return assignAttachmentNumbers({ ...ringWithoutNumber, ringNumber });
+          });
+          // Store as plain object with meta (not a FusedRing instance)
+          newAttachments[position] = {
+            meta: {
+              rings: attachedRingsWithNumbers,
+              usedRingNumbers: attachedRingsWithNumbers.map((r) => r.ringNumber),
+            },
+            // Store the fragment so we can rebuild it later
+            fragment: attachment.fragment,
+          };
+        } else if (attachment.meta && attachment.meta.rings) {
+          // Handle plain objects with meta.rings
           const attachedRingsWithNumbers = attachment.meta.rings.map((attachedRing) => {
             const ringNumber = nextRingNumber;
             nextRingNumber += 1;
@@ -128,13 +148,12 @@ class FusedRingClass {
       const i = Number(position) - 1;
 
       let attachSmiles;
-
-      if (attachment.meta) {
-        // Create ring number mapping using this.meta
-        const ringNumberMap = this.meta.createRingNumberMapping(attachment.meta, ringNumber);
-        const remappedFragment = this.remapRingNumbers(attachment, ringNumberMap);
-        attachSmiles = remappedFragment.smiles;
+      if (attachment.meta && attachment.meta.rings) {
+        // Rebuild the fused ring with the reassigned numbers
+        const rebuiltFragment = this.build(attachment.meta.rings);
+        attachSmiles = rebuiltFragment.smiles;
       } else {
+        // Get attachment SMILES for simple attachments
         attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
       }
 
@@ -148,28 +167,6 @@ class FusedRingClass {
 
   get smiles() {
     return this.fragment.smiles;
-  }
-
-  /**
-   * Remap ring numbers in a FusedRing by rebuilding it
-   * @param {FusedRingClass} fusedRing - FusedRing with meta.rings
-   * @param {Map<number, number>} ringNumberMap - Map from old to new ring numbers
-   * @returns {Fragment} Fragment with remapped ring numbers
-   */
-  remapRingNumbers(fusedRing, ringNumberMap) {
-    if (ringNumberMap.size === 0) {
-      return fusedRing.fragment;
-    }
-
-    const { rings } = fusedRing.meta;
-
-    // Remap the ring numbers in the descriptors
-    const remappedRings = rings.map((ring) => ({
-      ...ring,
-      ringNumber: ringNumberMap.get(ring.ringNumber) || ring.ringNumber,
-    }));
-
-    return this.build(remappedRings);
   }
 
   toString() {
