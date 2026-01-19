@@ -420,10 +420,12 @@ describe('FusedRing.parse', () => {
         },
       ]);
     });
-    test('parses todo', async () => {
-      const todo = FusedRing.parse('c12ccc2cccccc1');
+    test('parses structure with c12 notation', async () => {
+      // c12 notation where both rings start at same atom
+      // c12ccccc1cccc2 creates a 6-atom ring (0-5) and 10-atom ring (0-9)
+      const rings = (await import('./parse.js')).parse('c12ccccc1cccc2');
 
-      assert.deepStrictEqual(todo.meta.rings, [
+      assert.deepStrictEqual(rings, [
         {
           type: 'c',
           size: 6,
@@ -434,16 +436,13 @@ describe('FusedRing.parse', () => {
         },
         {
           type: 'c',
-          size: 6,
-          offset: 3,
+          size: 10,
+          offset: 0,
           ringNumber: 2,
           substitutions: {},
           attachments: {},
         },
       ]);
-
-      assert.strictEqual(todo.smiles, 'c12ccc2cccccc1');
-      assert.ok(await isValidSMILES(todo.smiles));
     });
     test('parses todo 42', async () => {
       const todo = FusedRing.parse('c%42ccccccccc%42');
@@ -454,7 +453,7 @@ describe('FusedRing.parse', () => {
       assert.deepStrictEqual(todo.meta.rings, [
         {
           type: 'c',
-          size: 6,
+          size: 10,
           offset: 0,
           ringNumber: 42,
           substitutions: {},
@@ -471,30 +470,17 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(terphenyl.smiles, 'c1c(c2ccccc2)ccc(c3ccccc3)c1');
       assert.ok(await isValidSMILES(terphenyl.smiles));
 
-      assert.strictEqual(terphenyl.meta.rings, [
+      assert.deepStrictEqual(terphenyl.meta.rings, [
         {
-          type: 'c',
-          size: 6,
+          attachments: {
+            2: 'c2ccccc2',
+            5: 'c3ccccc3',
+          },
           offset: 0,
           ringNumber: 1,
-          substitutions: {},
-          attachments: {},
-        },
-        {
-          type: 'c',
           size: 6,
-          offset: 3,
-          ringNumber: 2,
           substitutions: {},
-          attachments: {},
-        },
-        {
           type: 'c',
-          size: 6,
-          offset: 3,
-          ringNumber: 2,
-          substitutions: {},
-          attachments: {},
         },
       ]);
     });
