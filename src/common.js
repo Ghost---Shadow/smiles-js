@@ -1,6 +1,6 @@
 import { Fragment } from './fragment.js';
 import { Ring } from './ring.js';
-import { FusedRings } from './fused-rings/index.js';
+import { FusedRings } from './fused-ring/index.js';
 
 export const methyl = Fragment('C');
 export const ethyl = Fragment('CC');
