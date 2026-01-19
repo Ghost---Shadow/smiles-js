@@ -18,6 +18,16 @@ class FusedRingClass {
 
     this.rings = ringsWithNumbers;
     this.fragment = this.build(ringsWithNumbers);
+
+    // Make the instance callable by returning a function with instance methods
+    const callable = (attachment) => this.attach(attachment);
+
+    // Copy all properties and methods to the callable function
+    Object.setPrototypeOf(callable, Object.getPrototypeOf(this));
+    Object.assign(callable, this);
+
+    // eslint-disable-next-line no-constructor-return
+    return callable;
   }
 
   /**
@@ -127,9 +137,16 @@ class FusedRingClass {
         attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
       }
 
-      // Strip ring number from atom and add attachment
-      const atomWithoutRingNum = atoms[i].replace(String(ringNumber), '');
-      atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(String(ringNumber)) ? ringNumber : ''}`;
+      // For the last position (ring closure), attachment goes after ring number
+      // For other positions, strip ring number, add attachment, then ring number
+      if (i === size - 1) {
+        // Last position: keep ring number, add attachment after
+        atoms[i] = `${atoms[i]}(${attachSmiles})`;
+      } else {
+        // Other positions: strip ring number, add attachment, restore ring number
+        const atomWithoutRingNum = atoms[i].replace(String(ringNumber), '');
+        atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(String(ringNumber)) ? ringNumber : ''}`;
+      }
     });
 
     return atoms;
@@ -192,6 +209,18 @@ class FusedRingClass {
         return new FusedRingClass(newRings);
       },
     };
+  }
+
+  /**
+   * Attach another fragment to the last position of the last ring
+   * @param {*} attachment - What to attach (FusedRing, string, Fragment, etc.)
+   * @returns {FusedRingClass} New FusedRing with the attachment
+   */
+  attach(attachment) {
+    const lastRingIndex = this.rings.length;
+    const lastRing = this.rings[lastRingIndex - 1];
+    const lastPosition = lastRing.size;
+    return this.getRing(lastRingIndex).attachAt(lastPosition, attachment);
   }
 
   /**
