@@ -74,29 +74,24 @@ class FusedRingClass {
     }
 
     // Handle attachments
-    if (Object.keys(attachments).length > 0) {
-      for (let i = 0; i < atoms.length; i += 1) {
-        const position = i + 1;
-        const attachment = attachments[position];
+    Object.entries(attachments).forEach(([position, attachment]) => {
+      const i = Number(position) - 1;
 
-        if (attachment) {
-          let attachSmiles;
+      let attachSmiles;
 
-          if (attachment.meta) {
-            // Create ring number mapping using this.meta
-            const ringNumberMap = this.meta.createRingNumberMapping(attachment.meta, ringNumber);
-            const remappedFragment = this.remapRingNumbers(attachment, ringNumberMap);
-            attachSmiles = remappedFragment.smiles;
-          } else {
-            attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
-          }
-
-          // Strip ring number from atom and add attachment
-          const atomWithoutRingNum = atoms[i].replace(String(ringNumber), '');
-          atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(String(ringNumber)) ? ringNumber : ''}`;
-        }
+      if (attachment.meta) {
+        // Create ring number mapping using this.meta
+        const ringNumberMap = this.meta.createRingNumberMapping(attachment.meta, ringNumber);
+        const remappedFragment = this.remapRingNumbers(attachment, ringNumberMap);
+        attachSmiles = remappedFragment.smiles;
+      } else {
+        attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
       }
-    }
+
+      // Strip ring number from atom and add attachment
+      const atomWithoutRingNum = atoms[i].replace(String(ringNumber), '');
+      atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(String(ringNumber)) ? ringNumber : ''}`;
+    });
 
     return atoms;
   }
