@@ -1,109 +1,176 @@
 import { Fragment } from './fragment.js';
+import { Meta } from './meta.js';
 
 /**
- * Build a single ring as an array of atom strings
- * @param {Object} ringDesc - Ring descriptor with type, size, and optional substitutions
- * @param {number} ringNumber - The ring closure number to use
- * @returns {Array<string>} Array of atom strings
+ * Fused ring class for building complex ring systems
  */
-export function buildRing(ringDesc, ringNumber) {
-  const { type, size, substitutions = {} } = ringDesc;
-  const atoms = [];
-
-  for (let i = 1; i <= size; i += 1) {
-    const atom = substitutions[i] || type;
-    if (i === 1) {
-      atoms.push(`${atom}${ringNumber}`);
-    } else if (i === size) {
-      atoms.push(`${atom}${ringNumber}`);
-    } else {
-      atoms.push(atom);
+class FusedRingClass {
+  constructor(rings) {
+    if (rings.length === 0) {
+      throw new Error('FusedRing requires at least one ring');
     }
+
+    // Track used ring numbers
+    const usedRingNumbers = [];
+    for (let i = 0; i < rings.length; i += 1) {
+      usedRingNumbers.push(i + 1);
+    }
+
+    this.meta = new Meta(rings, usedRingNumbers);
+    this.fragment = this.build(rings, usedRingNumbers);
   }
 
-  return atoms;
+  /**
+   * Build a fused ring structure from ring descriptors
+   * @param {Array<Object>} rings - Array of ring descriptors
+   * @param {Array<number>} usedRingNumbers - Ring numbers to use
+   * @returns {Fragment} Built fragment
+   */
+  build(rings, usedRingNumbers) {
+    // Sort rings from largest to smallest
+    const sortedRings = [...rings].sort((a, b) => b.size - a.size);
+
+    // Build the SMILES structure
+    let atoms = this.buildRing(sortedRings[0], usedRingNumbers[0]);
+
+    // Wrap each subsequent ring around the previous structure
+    for (let ringIdx = 1; ringIdx < sortedRings.length; ringIdx += 1) {
+      const ring = sortedRings[ringIdx];
+      const { offset } = ring;
+
+      const newRingAtoms = this.buildRing(ring, usedRingNumbers[ringIdx]);
+
+      const beforeFusion = atoms.slice(0, offset);
+      const afterFusion = atoms.slice(offset + 2);
+
+      atoms = [
+        ...beforeFusion,
+        ...newRingAtoms,
+        ...afterFusion,
+      ];
+    }
+
+    return Fragment(atoms.join(''));
+  }
+
+  /**
+   * Build a ring with attachments handling
+   * @param {Object} ringDesc - Ring descriptor with size, type, substitutions, and attachments
+   * @param {number} ringNumber - Ring closure number
+   * @returns {Array<string>} Array of atom strings
+   */
+  buildRing(ringDesc, ringNumber) {
+    const {
+      size, type, substitutions = {}, attachments = {},
+    } = ringDesc;
+
+    // Build base ring structure
+    const atoms = [];
+    for (let i = 0; i < size; i += 1) {
+      const position = i + 1;
+      const atomType = substitutions[position] || type;
+      const isClosurePoint = i === 0 || i === size - 1;
+      atoms.push(isClosurePoint ? `${atomType}${ringNumber}` : atomType);
+    }
+
+    // Handle attachments
+    if (Object.keys(attachments).length > 0) {
+      for (let i = 0; i < atoms.length; i += 1) {
+        const position = i + 1;
+        const attachment = attachments[position];
+
+        if (attachment) {
+          let attachSmiles;
+
+          if (attachment.meta) {
+            // Create ring number mapping using this.meta
+            const ringNumberMap = this.meta.createRingNumberMapping(attachment.meta, ringNumber);
+            const remappedFragment = this.remapRingNumbers(attachment, ringNumberMap);
+            attachSmiles = remappedFragment.smiles;
+          } else {
+            attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
+          }
+
+          // Strip ring number from atom and add attachment
+          const atomWithoutRingNum = atoms[i].replace(String(ringNumber), '');
+          atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(String(ringNumber)) ? ringNumber : ''}`;
+        }
+      }
+    }
+
+    return atoms;
+  }
+
+  get smiles() {
+    return this.fragment.smiles;
+  }
+
+  /**
+   * Remap ring numbers in a FusedRing by rebuilding it
+   * @param {FusedRingClass} fusedRing - FusedRing with meta.rings
+   * @param {Map<number, number>} ringNumberMap - Map from old to new ring numbers
+   * @returns {Fragment} Fragment with remapped ring numbers
+   */
+  remapRingNumbers(fusedRing, ringNumberMap) {
+    if (ringNumberMap.size === 0) {
+      return fusedRing.fragment;
+    }
+
+    const { rings } = fusedRing.meta;
+
+    // Build the structure with remapped ring numbers
+    const newUsedRingNumbers = [];
+    for (let i = 0; i < rings.length; i += 1) {
+      const originalRingNum = i + 1;
+      const mappedRingNum = ringNumberMap.get(originalRingNum) || originalRingNum;
+      newUsedRingNumbers.push(mappedRingNum);
+    }
+
+    return this.build(rings, newUsedRingNumbers);
+  }
+
+  toString() {
+    return this.smiles;
+  }
+
+  /**
+   * Fuse this ring with another ring
+   * @param {FusedRingClass} other - Ring to fuse with
+   * @returns {FusedRingClass} New fused ring
+   */
+  fuse(other) {
+    if (!(other instanceof FusedRingClass)) {
+      throw new Error('Can only fuse with another FusedRing instance');
+    }
+
+    const rings1 = this.meta.rings;
+    const rings2 = other.meta.rings;
+
+    const combinedRings = [...rings1, ...rings2];
+    return new FusedRingClass(combinedRings);
+  }
+
+  /**
+   * Static helper to build a single ring (for testing/convenience)
+   * @param {Object} ringDesc - Ring descriptor
+   * @param {number} ringNumber - Ring closure number
+   * @returns {Array<string>} Array of atom strings
+   */
+  static buildRing(ringDesc, ringNumber) {
+    // Create a temporary instance to use the instance method
+    const tempInstance = new FusedRingClass([ringDesc]);
+    return tempInstance.buildRing(ringDesc, ringNumber);
+  }
 }
 
 /**
- * Fused rings builder
+ * Factory function that works with or without new
  * @param {Array<Object>} rings - Array of ring descriptors
- * @returns {Fragment} Fragment object with SMILES string
+ * @returns {FusedRingClass} FusedRing instance
  */
 export function FusedRing(rings) {
-  if (rings.length === 0) {
-    throw new Error('FusedRing requires at least one ring');
-  }
-
-  // Sort rings from largest to smallest
-  const sortedRings = [...rings].sort((a, b) => b.size - a.size);
-
-  // Start with the largest ring
-  let atoms = buildRing(sortedRings[0], 1);
-  let nextRingNum = 2;
-
-  // Wrap each subsequent ring around the previous structure
-  for (let ringIdx = 1; ringIdx < sortedRings.length; ringIdx += 1) {
-    const ring = sortedRings[ringIdx];
-    const { offset } = ring;
-
-    // Build the new ring
-    const newRingAtoms = buildRing(ring, nextRingNum);
-
-    // Split the outer ring structure, removing the two atoms that will be shared
-    const beforeFusion = atoms.slice(0, offset);
-    const afterFusion = atoms.slice(offset + 2);
-
-    // Reconstruct: outer ring before fusion + complete inner ring + outer ring after fusion
-    atoms = [
-      ...beforeFusion,
-      ...newRingAtoms,
-      ...afterFusion,
-    ];
-
-    nextRingNum += 1;
-  }
-
-  const fragment = Fragment(atoms.join(''));
-
-  // Track used ring numbers in meta
-  const usedRingNumbers = [];
-  for (let i = 1; i < nextRingNum; i += 1) {
-    usedRingNumbers.push(i);
-  }
-
-  fragment.meta = {
-    rings,
-    usedRingNumbers,
-  };
-
-  // Override fuse method for rings with metadata
-  fragment.fuse = function fuseFunction(other) {
-    // eslint-disable-next-line no-use-before-define
-    return fuseRings(fragment, other);
-  };
-
-  return fragment;
+  return new FusedRingClass(rings);
 }
 
-/**
- * Fuse two ring fragments together
- * @param {Fragment} fragment1 - First ring fragment with meta
- * @param {Fragment} fragment2 - Second ring fragment with meta
- * @returns {Fragment} Fused ring fragment
- */
-export function fuseRings(fragment1, fragment2) {
-  const fragment2Obj = typeof fragment2 === 'function' ? fragment2 : Fragment(String(fragment2));
-
-  // Get ring descriptors from meta
-  const rings1 = fragment1.meta?.rings || [];
-  const rings2 = fragment2Obj.meta?.rings || [];
-
-  if (rings1.length === 0 || rings2.length === 0) {
-    throw new Error('Both fragments must have ring meta information to fuse');
-  }
-
-  // Combine the ring descriptors
-  const combinedRings = [...rings1, ...rings2];
-
-  return FusedRing(combinedRings);
-}
+// Expose static methods on the factory function
+FusedRing.buildRing = FusedRingClass.buildRing.bind(FusedRingClass);

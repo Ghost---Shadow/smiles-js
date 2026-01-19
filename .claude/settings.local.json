@@ -6,7 +6,8 @@
       "Bash(node -e:*)",
       "Bash(bun test:*)",
       "Bash(git checkout:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(git mv:*)"
     ]
   }
 }
