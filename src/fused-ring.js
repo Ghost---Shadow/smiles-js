@@ -28,7 +28,7 @@ class FusedRingClass {
     // Assign ring numbers via DFS
     const ringsWithNumbers = FusedRingClass.assignRingNumbers(metaRings);
 
-    this.rings = ringsWithNumbers;
+    this.meta = ringsWithNumbers;
     this.fragment = this.build(ringsWithNumbers);
 
     // Make the instance callable by returning a function with instance methods
@@ -66,11 +66,11 @@ class FusedRingClass {
         const newAttachments = {};
         Object.entries(meta.attachments).forEach(([position, attachment]) => {
           if (attachment instanceof FusedRingClass) {
-            const attachedRingsWithNumbers = FusedRingClass.assignRingNumbers(attachment.rings);
-            newAttachments[position] = { rings: attachedRingsWithNumbers };
-          } else if (attachment?.rings) {
-            // Handle parsed ring attachments (plain objects with rings array)
-            const convertedRings = attachment.rings.map((ring) => {
+            const attachedRingsWithNumbers = FusedRingClass.assignRingNumbers(attachment.meta);
+            newAttachments[position] = { meta: attachedRingsWithNumbers };
+          } else if (attachment?.meta) {
+            // Handle parsed ring attachments (plain objects with meta array)
+            const convertedRings = attachment.meta.map((ring) => {
               const { type, ...rest } = ring;
               return new Meta({
                 type: MetaType.RING,
@@ -78,7 +78,7 @@ class FusedRingClass {
                 ...rest,
               });
             });
-            newAttachments[position] = { rings: convertedRings };
+            newAttachments[position] = { meta: convertedRings };
           } else {
             newAttachments[position] = attachment;
           }
@@ -102,12 +102,12 @@ class FusedRingClass {
       Object.entries(meta.attachments).forEach(([position, attachment]) => {
         // Check if attachment is a FusedRing instance
         if (attachment instanceof FusedRingClass) {
-          // Recurse into the FusedRing's rings
-          const attachedRingsWithNumbers = attachment.rings
+          // Recurse into the FusedRing's meta
+          const attachedRingsWithNumbers = attachment.meta
             .map((attachedMeta) => processRing(attachedMeta.update({ ringNumber: null })));
-          // Store as plain object with rings array
+          // Store as plain object with meta array
           newAttachments[position] = {
-            rings: attachedRingsWithNumbers,
+            meta: attachedRingsWithNumbers,
           };
         } else {
           // Simple attachment (no recursion needed)
@@ -181,9 +181,9 @@ class FusedRingClass {
       const i = Number(position) - 1;
 
       let attachSmiles;
-      if (attachment.rings) {
+      if (attachment.meta) {
         // Rebuild the fused ring with the reassigned numbers
-        const rebuiltFragment = this.build(attachment.rings);
+        const rebuiltFragment = this.build(attachment.meta);
         attachSmiles = rebuiltFragment.smiles;
       } else {
         // Get attachment SMILES for simple attachments
@@ -214,24 +214,12 @@ class FusedRingClass {
   }
 
   /**
-   * Get meta (backward compatibility and convenience)
-   * @returns {Object} Meta object with rings and usedRingNumbers
-   */
-  get meta() {
-    // TODO: usedRingNumbers needs to be recursive
-    return {
-      rings: this.rings.map((meta) => meta.toObject()),
-      usedRingNumbers: this.rings.map((meta) => meta.ringNumber),
-    };
-  }
-
-  /**
    * Get a specific ring by index (1-based) for attachment operations
    * @param {number} ringIndex - 1-based ring index
    * @returns {Object} Ring accessor with attachAt method
    */
   getRing(ringIndex) {
-    if (ringIndex < 1 || ringIndex > this.rings.length) {
+    if (ringIndex < 1 || ringIndex > this.meta.length) {
       throw new Error(`Ring index ${ringIndex} out of bounds`);
     }
 
@@ -246,8 +234,8 @@ class FusedRingClass {
        * @returns {FusedRingClass} New FusedRing with the attachment
        */
       attachAt(position, attachment) {
-        // Clone the rings array
-        const newRings = fusedRingInstance.rings.map((meta, idx) => {
+        // Clone the meta array
+        const newRings = fusedRingInstance.meta.map((meta, idx) => {
           if (idx === ringArrayIndex) {
             // This is the ring we're attaching to - use update() to deep merge
             return meta.update({
@@ -271,8 +259,8 @@ class FusedRingClass {
    * @returns {FusedRingClass} New FusedRing with the attachment
    */
   attach(attachment) {
-    const lastRingIndex = this.rings.length;
-    const lastRing = this.rings[lastRingIndex - 1];
+    const lastRingIndex = this.meta.length;
+    const lastRing = this.meta[lastRingIndex - 1];
     const lastPosition = lastRing.size;
     return this.getRing(lastRingIndex).attachAt(lastPosition, attachment);
   }
@@ -288,7 +276,7 @@ class FusedRingClass {
     }
 
     // Combine rings (constructor will purge and reassign ring numbers)
-    const combinedRings = [...this.rings, ...other.rings];
+    const combinedRings = [...this.meta, ...other.meta];
     return new FusedRingClass(combinedRings);
   }
 

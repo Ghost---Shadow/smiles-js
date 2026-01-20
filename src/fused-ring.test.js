@@ -43,7 +43,7 @@ describe('FusedRing', () => {
       },
     ]);
     assert.strictEqual(benzeneWithCl.smiles, 'c1cc(Cl)ccc1');
-    assert.strictEqual(benzeneWithCl.meta.rings[0].ringNumber, 1);
+    assert.strictEqual(benzeneWithCl.meta[0].ringNumber, 1);
     assert.ok(await isValidSMILES(benzeneWithCl.smiles));
   });
 
@@ -61,15 +61,13 @@ describe('FusedRing', () => {
     ];
     const napthalene = FusedRing(parameters);
     assert.strictEqual(napthalene.smiles, 'c1ccc2ccccc2c1');
-    assert.deepStrictEqual(napthalene.meta.rings, [
-      {
-        type: 'ring', atoms: 'c', size: 6, ringNumber: 1,
-      },
-      {
-        type: 'ring', atoms: 'c', size: 6, offset: 3, ringNumber: 2,
-      },
-    ]);
-    assert.deepStrictEqual(napthalene.meta.usedRingNumbers, [1, 2]);
+    assert.strictEqual(napthalene.meta.length, 2);
+    assert.deepStrictEqual(napthalene.meta[0].toObject(), {
+      type: 'ring', atoms: 'c', size: 6, ringNumber: 1,
+    });
+    assert.deepStrictEqual(napthalene.meta[1].toObject(), {
+      type: 'ring', atoms: 'c', size: 6, offset: 3, ringNumber: 2,
+    });
     assert.ok(await isValidSMILES(napthalene.smiles));
   });
 
@@ -197,9 +195,10 @@ describe('FusedRing with ring counter on connection', () => {
       { type: 'c', size: 6, offset: 3 },
     ]);
 
-    // Naphthalene uses rings 1 and 2, should track this in meta
-    assert.ok(naphthalene.meta.usedRingNumbers);
-    assert.deepStrictEqual(naphthalene.meta.usedRingNumbers, [1, 2]);
+    // Naphthalene uses rings 1 and 2
+    assert.strictEqual(naphthalene.meta.length, 2);
+    assert.strictEqual(naphthalene.meta[0].ringNumber, 1);
+    assert.strictEqual(naphthalene.meta[1].ringNumber, 2);
   });
 });
 
@@ -240,21 +239,19 @@ describe('fuse method', () => {
 
     const fused = ring1.fuse(ring2);
 
-    assert.strictEqual(fused.meta.rings.length, 2);
-    assert.deepStrictEqual(fused.meta.rings, [
-      {
-        type: 'ring',
-        atoms: 'c',
-        size: 6,
-        ringNumber: 1,
-      },
-      {
-        type: 'ring',
-        atoms: 'c',
-        size: 5,
-        offset: 3,
-        ringNumber: 2,
-      },
-    ]);
+    assert.strictEqual(fused.meta.length, 2);
+    assert.deepStrictEqual(fused.meta[0].toObject(), {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+    });
+    assert.deepStrictEqual(fused.meta[1].toObject(), {
+      type: 'ring',
+      atoms: 'c',
+      size: 5,
+      offset: 3,
+      ringNumber: 2,
+    });
   });
 });

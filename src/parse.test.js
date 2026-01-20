@@ -340,7 +340,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(benzene.smiles, 'c1ccccc1');
       assert.ok(await isValidSMILES(benzene.smiles));
 
-      assert.deepStrictEqual(benzene.meta.rings, [
+      assert.deepStrictEqual(benzene.meta.map((m) => m.toObject()), [
         {
           type: 'ring',
           atoms: 'c',
@@ -356,7 +356,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(triazine.smiles, 'c1ncncn1');
       assert.ok(await isValidSMILES(triazine.smiles));
 
-      assert.deepStrictEqual(triazine.meta.rings[0], {
+      assert.deepStrictEqual(triazine.meta[0].toObject(), {
         type: 'ring',
         atoms: 'c',
         size: 6,
@@ -377,7 +377,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(xylene.smiles, 'c1c(C)ccc(C)c1');
       assert.ok(await isValidSMILES(xylene.smiles));
 
-      assert.deepStrictEqual(xylene.meta.rings[0], {
+      assert.deepStrictEqual(xylene.meta[0].toObject(), {
         type: 'ring',
         atoms: 'c',
         size: 6,
@@ -397,7 +397,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(naphthalene.smiles, 'c1ccc2ccccc2c1');
       assert.ok(await isValidSMILES(naphthalene.smiles));
 
-      assert.deepStrictEqual(naphthalene.meta.rings, [
+      assert.deepStrictEqual(naphthalene.meta.map((m) => m.toObject()), [
         {
           type: 'ring',
           atoms: 'c',
@@ -443,7 +443,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(todo.smiles, 'c%42ccccccccc%42');
       assert.ok(await isValidSMILES(todo.smiles));
 
-      assert.deepStrictEqual(todo.meta.rings, [
+      assert.deepStrictEqual(todo.meta.map((m) => m.toObject()), [
         {
           type: 'ring',
           atoms: 'c',
@@ -461,7 +461,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(terphenyl.smiles, 'c1c(c2ccccc2)ccc(c3ccccc3)c1');
       assert.ok(await isValidSMILES(terphenyl.smiles));
 
-      assert.deepStrictEqual(terphenyl.meta.rings, [
+      assert.deepStrictEqual(terphenyl.meta.map((m) => m.toObject()), [
         {
           type: 'ring',
           atoms: 'c',
@@ -469,7 +469,7 @@ describe('FusedRing.parse', () => {
           ringNumber: 1,
           attachments: {
             2: {
-              rings: [
+              meta: [
                 {
                   type: 'ring',
                   atoms: 'c',
@@ -479,7 +479,7 @@ describe('FusedRing.parse', () => {
               ],
             },
             5: {
-              rings: [
+              meta: [
                 {
                   type: 'ring',
                   atoms: 'c',

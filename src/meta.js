@@ -91,10 +91,10 @@ export class Meta {
       Object.entries(this.attachments).forEach(([position, attachment]) => {
         if (attachment instanceof Meta) {
           convertedAttachments[position] = attachment.toObject();
-        } else if (attachment?.rings) {
-          // Handle FusedRing attachments with rings array
+        } else if (attachment?.meta) {
+          // Handle FusedRing attachments with meta array
           convertedAttachments[position] = {
-            rings: attachment.rings.map((ring) => (ring instanceof Meta ? ring.toObject() : ring)),
+            meta: attachment.meta.map((ring) => (ring instanceof Meta ? ring.toObject() : ring)),
           };
         } else {
           convertedAttachments[position] = attachment;

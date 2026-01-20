@@ -92,7 +92,7 @@ export const handleRings = (context) => {
             // Recursively parse the ring attachment
             // eslint-disable-next-line no-use-before-define
             const parsedRings = parse(attachmentSmiles);
-            attachments[relativePos] = { rings: parsedRings };
+            attachments[relativePos] = { meta: parsedRings };
           } catch {
             // If parsing fails, store as string (might be non-ring attachment)
             attachments[relativePos] = attachmentSmiles;
