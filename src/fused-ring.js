@@ -5,13 +5,18 @@ import { Meta } from './meta.js';
  * Fused ring class for building complex ring systems
  */
 class FusedRingClass {
-  constructor(rings) {
+  constructor(rings, { purgeRingNumbers = true } = {}) {
     if (rings.length === 0) {
       throw new Error('FusedRing requires at least one ring');
     }
 
     // Convert to Meta instances
-    const metaRings = rings.map((ring) => new Meta(ring));
+    let metaRings = rings.map((ring) => new Meta(ring));
+
+    // Purge ring numbers if requested (default behavior)
+    if (purgeRingNumbers) {
+      metaRings = FusedRingClass.purgeRingNumbers(metaRings);
+    }
 
     // Assign ring numbers via DFS
     const ringsWithNumbers = FusedRingClass.assignRingNumbers(metaRings);
@@ -28,6 +33,15 @@ class FusedRingClass {
 
     // eslint-disable-next-line no-constructor-return
     return callable;
+  }
+
+  /**
+   * Clear all ring numbers from Meta instances
+   * @param {Array<Meta>} rings - Array of Meta instances
+   * @returns {Array<Meta>} Array of Meta instances with ringNumber set to null
+   */
+  static purgeRingNumbers(rings) {
+    return rings.map((meta) => meta.update({ ringNumber: null }));
   }
 
   /**
@@ -227,7 +241,7 @@ class FusedRingClass {
           return meta;
         });
 
-        // Create new FusedRing with modified rings
+        // Create new FusedRing (constructor purges and reassigns ring numbers)
         return new FusedRingClass(newRings);
       },
     };
@@ -255,13 +269,8 @@ class FusedRingClass {
       throw new Error('Can only fuse with another FusedRing instance');
     }
 
-    // Clear ring numbers so they get reassigned in the combined structure
-    const clearRingNumbers = (rings) => rings.map((meta) => meta.update({ ringNumber: null }));
-
-    const combinedRings = [
-      ...clearRingNumbers(this.rings),
-      ...clearRingNumbers(other.rings),
-    ];
+    // Combine rings (constructor will purge and reassign ring numbers)
+    const combinedRings = [...this.rings, ...other.rings];
     return new FusedRingClass(combinedRings);
   }
 
@@ -282,10 +291,13 @@ class FusedRingClass {
 /**
  * Factory function that works with or without new
  * @param {Array<Object>} rings - Array of ring descriptors
+ * @param {Object} options - Constructor options
+ * @param {boolean} options.purgeRingNumbers - Whether to purge ring numbers
+ *   before assignment (default: true)
  * @returns {FusedRingClass} FusedRing instance
  */
-export function FusedRing(rings) {
-  return new FusedRingClass(rings);
+export function FusedRing(rings, options) {
+  return new FusedRingClass(rings, options);
 }
 
 // Expose static methods on the factory function
@@ -296,5 +308,5 @@ import { parse } from './parse.js';
 
 FusedRing.parse = function parseSMILES(smiles) {
   const cleanRings = parse(smiles);
-  return new FusedRingClass(cleanRings);
+  return new FusedRingClass(cleanRings, { purgeRingNumbers: false });
 };
