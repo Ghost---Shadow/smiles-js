@@ -3,31 +3,43 @@ export const handleAtoms = (context) => {
   context.atomIndex += 1;
 };
 
-export const handleAttachment = (context) => {
-  // Handle attachment - extract content within parentheses
+/**
+ * Extract content within parentheses (for branches/attachments)
+ * @param {string} smiles - SMILES string
+ * @param {number} startIndex - Index of opening parenthesis
+ * @returns {Object} Object with content and endIndex
+ */
+export const extractParenthesesContent = (smiles, startIndex) => {
   let depth = 1;
-  let j = context.i + 1;
-  let attachmentContent = '';
+  let j = startIndex + 1;
+  let content = '';
 
-  while (j < context.smiles.length && depth > 0) {
-    if (context.smiles[j] === '(') {
+  while (j < smiles.length && depth > 0) {
+    if (smiles[j] === '(') {
       depth += 1;
-    } else if (context.smiles[j] === ')') {
+    } else if (smiles[j] === ')') {
       depth -= 1;
     }
     if (depth > 0) {
-      attachmentContent += context.smiles[j];
+      content += smiles[j];
     }
     j += 1;
   }
 
+  return { content, endIndex: j };
+};
+
+export const handleAttachment = (context) => {
+  // Handle attachment - extract content within parentheses
+  const { content, endIndex } = extractParenthesesContent(context.smiles, context.i);
+
   // Add attachment to the most recent atom
   if (context.atoms.length > 0) {
-    context.atoms[context.atoms.length - 1].attachments.push(attachmentContent);
+    context.atoms[context.atoms.length - 1].attachments.push(content);
   }
 
   // Skip past the closing parenthesis
-  context.i = j - 1;
+  context.i = endIndex - 1;
 };
 
 export const handleRings = (context) => {
@@ -131,11 +143,71 @@ export const handleLargeRings = (context) => {
 };
 
 /**
+ * Parse SMILES string for linear structures
+ * @param {string} smiles - SMILES string to parse
+ * @returns {Object} Linear structure descriptor
+ */
+export function parseLinear(smiles) {
+  const atoms = [];
+  const attachments = {};
+  let atomIndex = 1; // 1-based indexing
+
+  let i = 0;
+  while (i < smiles.length) {
+    const char = smiles[i];
+
+    if (char === '(') {
+      // Extract attachment content
+      const { content, endIndex } = extractParenthesesContent(smiles, i);
+
+      // Recursively parse attachment
+      if (atoms.length > 0) {
+        attachments[atomIndex - 1] = parseLinear(content);
+      }
+
+      i = endIndex;
+    } else if (char === '[') {
+      // Handle bracketed atoms
+      let j = i + 1;
+      while (j < smiles.length && smiles[j] !== ']') {
+        j += 1;
+      }
+      atoms.push(smiles.substring(i, j + 1));
+      atomIndex += 1;
+      i = j + 1;
+    } else if (/[A-Z]/.test(char)) {
+      // Handle atoms
+      let atom = char;
+      if (i + 1 < smiles.length && /[a-z]/.test(smiles[i + 1])) {
+        atom += smiles[i + 1];
+        i += 1;
+      }
+      atoms.push(atom);
+      atomIndex += 1;
+      i += 1;
+    } else if (char === '=' || char === '#') {
+      // Bond symbols
+      atoms.push(char);
+      i += 1;
+    } else {
+      // Skip other characters
+      i += 1;
+    }
+  }
+
+  return {
+    type: 'linear',
+    atoms: atoms.join(''),
+    attachments,
+  };
+}
+
+/**
  * Parse SMILES string to create ring descriptors with AST
  * @param {string} smiles - SMILES string to parse
  * @returns {Array} Array of ring descriptors
  */
-export function parse(smiles) {
+export function parseRings(smiles) {
   if (!smiles || smiles.length === 0) {
     throw new Error('Cannot parse empty SMILES');
   }
@@ -183,4 +255,37 @@ export function parse(smiles) {
   }));
 
   return cleanRings;
+}
+
+/**
+ * Main parse function - detects structure type and routes to appropriate parser
+ * @param {string} smiles - SMILES string to parse
+ * @returns {Object|Array} Linear structure descriptor or array of ring descriptors
+ */
+export function parse(smiles) {
+  if (!smiles || smiles.length === 0) {
+    throw new Error('Cannot parse empty SMILES');
+  }
+
+  // Check if SMILES contains ring closures (digits that aren't in brackets)
+  // This is a simple heuristic: if there are digits outside brackets, it's likely a ring
+  let hasRingClosures = false;
+  let inBracket = false;
+
+  for (let i = 0; i < smiles.length; i += 1) {
+    if (smiles[i] === '[') {
+      inBracket = true;
+    } else if (smiles[i] === ']') {
+      inBracket = false;
+    } else if (!inBracket && /\d/.test(smiles[i])) {
+      hasRingClosures = true;
+      break;
+    }
+  }
+
+  // Route to appropriate parser
+  if (hasRingClosures) {
+    return parseRings(smiles);
+  }
+  return parseLinear(smiles);
 }

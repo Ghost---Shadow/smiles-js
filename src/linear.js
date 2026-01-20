@@ -1,4 +1,5 @@
 import { Meta, MetaType } from './meta.js';
+import { parseLinear } from './parse.js';
 
 /**
  * Linear structure class
@@ -22,98 +23,36 @@ class LinearClass {
     let parsed;
     if (hasComplexFeatures) {
       // Store as-is without parsing branches
-      parsed = { atoms: smiles, attachments: {} };
+      parsed = { type: 'linear', atoms: smiles, attachments: {} };
     } else {
-      // Parse branches normally
-      parsed = LinearClass.parseSmiles(smiles);
+      // Use shared parse logic
+      parsed = parseLinear(smiles);
     }
 
     this.smiles = smiles;
-    this.meta = new Meta({
-      type: MetaType.LINEAR,
-      smiles: null,
-      atoms: parsed.atoms,
-      attachments: parsed.attachments,
-    });
+    this.meta = LinearClass.convertToMeta(parsed);
   }
 
   /**
-   * Parse SMILES string into atoms and attachments
-   * @param {string} smiles - SMILES string
-   * @returns {Object} Parsed structure with atoms and attachments
+   * Convert parsed linear structure to Meta instance
+   * @param {Object} parsed - Parsed structure from parseLinear
+   * @returns {Meta} Meta instance
    */
-  static parseSmiles(smiles) {
-    const atoms = [];
-    const attachments = {};
-    let atomIndex = 1; // 1-based indexing
+  static convertToMeta(parsed) {
+    const { atoms, attachments } = parsed;
 
-    let i = 0;
-    while (i < smiles.length) {
-      const char = smiles[i];
+    // Convert nested attachments to Meta instances
+    const metaAttachments = {};
+    Object.entries(attachments).forEach(([pos, attachment]) => {
+      metaAttachments[pos] = LinearClass.convertToMeta(attachment);
+    });
 
-      if (char === '(') {
-        // Extract attachment content
-        let depth = 1;
-        let j = i + 1;
-        let attachmentContent = '';
-
-        while (j < smiles.length && depth > 0) {
-          if (smiles[j] === '(') {
-            depth += 1;
-          } else if (smiles[j] === ')') {
-            depth -= 1;
-          }
-          if (depth > 0) {
-            attachmentContent += smiles[j];
-          }
-          j += 1;
-        }
-
-        // Recursively parse attachment
-        if (atoms.length > 0) {
-          const parsed = LinearClass.parseSmiles(attachmentContent);
-          attachments[atomIndex - 1] = new Meta({
-            type: MetaType.LINEAR,
-            smiles: null,
-            atoms: parsed.atoms,
-            attachments: parsed.attachments,
-          });
-        }
-
-        i = j;
-      } else if (char === '[') {
-        // Handle bracketed atoms
-        let j = i + 1;
-        while (j < smiles.length && smiles[j] !== ']') {
-          j += 1;
-        }
-        atoms.push(smiles.substring(i, j + 1));
-        atomIndex += 1;
-        i = j + 1;
-      } else if (/[A-Z]/.test(char)) {
-        // Handle atoms
-        let atom = char;
-        if (i + 1 < smiles.length && /[a-z]/.test(smiles[i + 1])) {
-          atom += smiles[i + 1];
-          i += 1;
-        }
-        atoms.push(atom);
-        atomIndex += 1;
-        i += 1;
-      } else if (char === '=' || char === '#') {
-        // Bond symbols
-        atoms.push(char);
-        i += 1;
-      } else {
-        // Skip other characters
-        i += 1;
-      }
-    }
-
-    return {
-      atoms: atoms.join(''),
-      attachments,
-    };
+    return new Meta({
+      type: MetaType.LINEAR,
+      smiles: null,
+      atoms,
+      attachments: metaAttachments,
+    });
   }
 
   /**

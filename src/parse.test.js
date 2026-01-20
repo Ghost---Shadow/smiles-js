@@ -1,7 +1,7 @@
 import { test, describe } from 'bun:test';
 import assert from 'bun:assert';
 import {
-  handleAtoms, handleAttachment, handleRings, handleLargeRings,
+  handleAtoms, handleAttachment, handleRings, handleLargeRings, parse,
 } from './parse.js';
 import { FusedRing } from './fused-ring.js';
 import { isValidSMILES } from './test-utils.js';
@@ -491,6 +491,53 @@ describe('FusedRing.parse', () => {
           },
         },
       ]);
+    });
+  });
+});
+
+describe('parse', () => {
+  describe('linear structures', () => {
+    test('parses vinyl (ethylene) C=C', () => {
+      const result = parse('C=C');
+      assert.deepStrictEqual(result, {
+        type: 'linear',
+        atoms: 'C=C',
+        attachments: {},
+      });
+    });
+
+    test('parses simple alkane CCC', () => {
+      const result = parse('CCC');
+      assert.deepStrictEqual(result, {
+        type: 'linear',
+        atoms: 'CCC',
+        attachments: {},
+      });
+    });
+
+    test('parses branched structure CC(C)C', () => {
+      const result = parse('CC(C)C');
+      assert.deepStrictEqual(result, {
+        type: 'linear',
+        atoms: 'CCC',
+        attachments: {
+          2: {
+            type: 'linear',
+            atoms: 'C',
+            attachments: {},
+          },
+        },
+      });
+    });
+  });
+
+  describe('ring structures', () => {
+    test('parses benzene c1ccccc1', () => {
+      const result = parse('c1ccccc1');
+      assert.ok(Array.isArray(result));
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].type, 'c');
+      assert.strictEqual(result[0].size, 6);
     });
   });
 });
