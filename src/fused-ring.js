@@ -1,5 +1,5 @@
 import { Fragment } from './fragment.js';
-import { Meta } from './meta.js';
+import { Meta, MetaType } from './meta.js';
 
 /**
  * Fused ring class for building complex ring systems
@@ -10,8 +10,15 @@ class FusedRingClass {
       throw new Error('FusedRing requires at least one ring');
     }
 
-    // Convert to Meta instances
-    let metaRings = rings.map((ring) => new Meta(ring));
+    // Convert to Meta instances, mapping 'type' to 'atoms' for backward compatibility
+    let metaRings = rings.map((ring) => {
+      const { type, ...rest } = ring;
+      return new Meta({
+        type: MetaType.RING,
+        atoms: type,
+        ...rest,
+      });
+    });
 
     // Purge ring numbers if requested (default behavior)
     if (purgeRingNumbers) {
@@ -61,6 +68,17 @@ class FusedRingClass {
           if (attachment instanceof FusedRingClass) {
             const attachedRingsWithNumbers = FusedRingClass.assignRingNumbers(attachment.rings);
             newAttachments[position] = { rings: attachedRingsWithNumbers };
+          } else if (attachment?.rings) {
+            // Handle parsed ring attachments (plain objects with rings array)
+            const convertedRings = attachment.rings.map((ring) => {
+              const { type, ...rest } = ring;
+              return new Meta({
+                type: MetaType.RING,
+                atoms: type,
+                ...rest,
+              });
+            });
+            newAttachments[position] = { rings: convertedRings };
           } else {
             newAttachments[position] = attachment;
           }
@@ -143,19 +161,19 @@ class FusedRingClass {
    */
   buildRing(meta) {
     const {
-      size, type, substitutions, attachments, ringNumber,
+      size, atoms, substitutions, attachments, ringNumber,
     } = meta;
 
     // Format ring number (use %NN notation for numbers > 9)
     const ringNumStr = ringNumber > 9 ? `%${ringNumber}` : String(ringNumber);
 
     // Build base ring structure
-    const atoms = [];
+    const atomsArray = [];
     for (let i = 0; i < size; i += 1) {
       const position = i + 1;
-      const atomType = substitutions[position] || type;
+      const atomType = substitutions[position] || atoms;
       const isClosurePoint = i === 0 || i === size - 1;
-      atoms.push(isClosurePoint ? `${atomType}${ringNumStr}` : atomType);
+      atomsArray.push(isClosurePoint ? `${atomType}${ringNumStr}` : atomType);
     }
 
     // Handle attachments
@@ -176,15 +194,15 @@ class FusedRingClass {
       // For other positions, strip ring number, add attachment, then ring number
       if (i === size - 1) {
         // Last position: keep ring number, add attachment after
-        atoms[i] = `${atoms[i]}(${attachSmiles})`;
+        atomsArray[i] = `${atomsArray[i]}(${attachSmiles})`;
       } else {
         // Other positions: strip ring number, add attachment, restore ring number
-        const atomWithoutRingNum = atoms[i].replace(ringNumStr, '');
-        atoms[i] = `${atomWithoutRingNum}(${attachSmiles})${atoms[i].includes(ringNumStr) ? ringNumStr : ''}`;
+        const atomWithoutRingNum = atomsArray[i].replace(ringNumStr, '');
+        atomsArray[i] = `${atomWithoutRingNum}(${attachSmiles})${atomsArray[i].includes(ringNumStr) ? ringNumStr : ''}`;
       }
     });
 
-    return atoms;
+    return atomsArray;
   }
 
   get smiles() {
@@ -281,9 +299,15 @@ class FusedRingClass {
    * @returns {Array<string>} Array of atom strings
    */
   static buildRing(ringDesc, ringNumber) {
-    // Create Meta instance with ring number
-    const meta = new Meta({ ...ringDesc, ringNumber });
-    const tempInstance = new FusedRingClass([meta]);
+    // Create Meta instance with ring number, mapping type to atoms
+    const { type, ...rest } = ringDesc;
+    const meta = new Meta({
+      type: MetaType.RING,
+      atoms: type,
+      ...rest,
+      ringNumber,
+    });
+    const tempInstance = new FusedRingClass([{ type, ...rest }]);
     return tempInstance.buildRing(meta);
   }
 }

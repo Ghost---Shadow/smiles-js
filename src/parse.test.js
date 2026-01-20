@@ -333,42 +333,6 @@ describe('handleLargeRings', () => {
 });
 
 describe('FusedRing.parse', () => {
-  // describe('no rings', () => {
-  //   test('parses ethane', async () => {
-  //     const ethaneString = 'CC';
-  //     const ethane = FusedRing.parse(ethaneString);
-  //     assert.strictEqual(ethane.smiles, ethaneString);
-  //     assert.ok(await isValidSMILES(ethane.smiles));
-
-  //     assert.deepStrictEqual(ethane.meta, [
-  //       {
-  //         type: 'CC',
-  //         size: 2,
-  //         offset: 0,
-  //         ringNumber: null,
-  //         substitutions: {},
-  //         attachments: {},
-  //       },
-  //     ]);
-  //   });
-  //   test('parses ethene', async () => {
-  //     const ethaneString = 'C=C';
-  //     const ethane = FusedRing.parse(ethaneString);
-  //     assert.strictEqual(ethane.smiles, ethaneString);
-  //     assert.ok(await isValidSMILES(ethane.smiles));
-
-  //     assert.deepStrictEqual(ethane.meta, [
-  //       {
-  //         type: 'C=C',
-  //         size: 6,
-  //         offset: 0,
-  //         ringNumber: null,
-  //         substitutions: {},
-  //         attachments: {},
-  //       },
-  //     ]);
-  //   });
-  // });
   describe('single rings', () => {
     test('parses benzene', async () => {
       const benzene = FusedRing.parse('c1ccccc1');
@@ -378,12 +342,10 @@ describe('FusedRing.parse', () => {
 
       assert.deepStrictEqual(benzene.meta.rings, [
         {
-          type: 'c',
+          type: 'ring',
+          atoms: 'c',
           size: 6,
-          offset: 0,
           ringNumber: 1,
-          substitutions: {},
-          attachments: {},
         },
       ]);
     });
@@ -395,16 +357,15 @@ describe('FusedRing.parse', () => {
       assert.ok(await isValidSMILES(triazine.smiles));
 
       assert.deepStrictEqual(triazine.meta.rings[0], {
-        type: 'c',
+        type: 'ring',
+        atoms: 'c',
         size: 6,
-        offset: 0,
         ringNumber: 1,
         substitutions: {
           2: 'n',
           4: 'n',
           6: 'n',
         },
-        attachments: {},
       });
     });
   });
@@ -417,11 +378,10 @@ describe('FusedRing.parse', () => {
       assert.ok(await isValidSMILES(xylene.smiles));
 
       assert.deepStrictEqual(xylene.meta.rings[0], {
-        type: 'c',
+        type: 'ring',
+        atoms: 'c',
         size: 6,
-        offset: 0,
         ringNumber: 1,
-        substitutions: {},
         attachments: {
           2: 'C',
           5: 'C',
@@ -439,20 +399,17 @@ describe('FusedRing.parse', () => {
 
       assert.deepStrictEqual(naphthalene.meta.rings, [
         {
-          type: 'c',
+          type: 'ring',
+          atoms: 'c',
           size: 6,
-          offset: 0,
           ringNumber: 1,
-          substitutions: {},
-          attachments: {},
         },
         {
-          type: 'c',
+          type: 'ring',
+          atoms: 'c',
           size: 6,
           offset: 3,
           ringNumber: 2,
-          substitutions: {},
-          attachments: {},
         },
       ]);
     });
@@ -488,12 +445,10 @@ describe('FusedRing.parse', () => {
 
       assert.deepStrictEqual(todo.meta.rings, [
         {
-          type: 'c',
+          type: 'ring',
+          atoms: 'c',
           size: 10,
-          offset: 0,
           ringNumber: 42,
-          substitutions: {},
-          attachments: {},
         },
       ]);
     });
@@ -508,37 +463,32 @@ describe('FusedRing.parse', () => {
 
       assert.deepStrictEqual(terphenyl.meta.rings, [
         {
+          type: 'ring',
+          atoms: 'c',
+          size: 6,
+          ringNumber: 1,
           attachments: {
             2: {
               rings: [
                 {
-                  attachments: {},
-                  offset: 0,
-                  ringNumber: 2,
+                  type: 'ring',
+                  atoms: 'c',
                   size: 6,
-                  substitutions: {},
-                  type: 'c',
+                  ringNumber: 2,
                 },
               ],
             },
             5: {
               rings: [
                 {
-                  attachments: {},
-                  offset: 0,
-                  ringNumber: 3,
+                  type: 'ring',
+                  atoms: 'c',
                   size: 6,
-                  substitutions: {},
-                  type: 'c',
+                  ringNumber: 3,
                 },
               ],
             },
           },
-          offset: 0,
-          ringNumber: 1,
-          size: 6,
-          substitutions: {},
-          type: 'c',
         },
       ]);
     });

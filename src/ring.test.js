@@ -156,10 +156,10 @@ describe('fuse method', () => {
 
     assert.strictEqual(fused.meta.rings.length, 2);
     assert.deepStrictEqual(fused.meta.rings[0], {
-      type: 'c', size: 6, offset: 0, ringNumber: 1, substitutions: {}, attachments: {},
+      type: 'ring', atoms: 'c', size: 6, ringNumber: 1,
     });
     assert.deepStrictEqual(fused.meta.rings[1], {
-      type: 'c', size: 5, offset: 3, ringNumber: 2, substitutions: {}, attachments: {},
+      type: 'ring', atoms: 'c', size: 5, offset: 3, ringNumber: 2,
     });
   });
 });
