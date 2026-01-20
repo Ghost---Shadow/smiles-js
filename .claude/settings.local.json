@@ -1,17 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test:*)",
+      "Bash(npm:*)",
       "Bash(ls:*)",
-      "Bash(node -e:*)",
-      "Bash(bun test:*)",
-      "Bash(git checkout:*)",
-      "Bash(npm run lint:*)",
-      "Bash(git mv:*)",
-      "Bash(bun run lint:*)",
       "Bash(node:*)",
       "Bash(bun:*)",
-      "Bash(grep:*)"
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "Bash(grep:*)",
+      "Bash(npx:*)"
     ]
   }
 }
