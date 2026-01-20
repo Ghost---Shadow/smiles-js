@@ -79,12 +79,28 @@ export const handleRings = (context) => {
       }
     }
 
-    // Collect attachments
+    // Collect attachments and recursively parse ring attachments
     const attachments = {};
     for (let pos = startPos; pos <= endPos; pos += 1) {
       const relativePos = pos - startPos + 1; // 1-based position in ring
       if (context.atoms[pos].attachments.length > 0) {
-        [attachments[relativePos]] = context.atoms[pos].attachments;
+        const attachmentSmiles = context.atoms[pos].attachments[0];
+
+        // Check if attachment contains a ring (has digits)
+        if (/\d/.test(attachmentSmiles)) {
+          try {
+            // Recursively parse the ring attachment
+            // eslint-disable-next-line no-use-before-define
+            const parsedRings = parse(attachmentSmiles);
+            attachments[relativePos] = { rings: parsedRings };
+          } catch {
+            // If parsing fails, store as string (might be non-ring attachment)
+            attachments[relativePos] = attachmentSmiles;
+          }
+        } else {
+          // Simple attachment (no rings)
+          attachments[relativePos] = attachmentSmiles;
+        }
       }
     }
 

@@ -506,12 +506,33 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(terphenyl.smiles, 'c1c(c2ccccc2)ccc(c3ccccc3)c1');
       assert.ok(await isValidSMILES(terphenyl.smiles));
 
-      // TODO: Attachments should be recursively parsed
       assert.deepStrictEqual(terphenyl.meta.rings, [
         {
           attachments: {
-            2: 'c2ccccc2',
-            5: 'c3ccccc3',
+            2: {
+              rings: [
+                {
+                  attachments: {},
+                  offset: 0,
+                  ringNumber: 2,
+                  size: 6,
+                  substitutions: {},
+                  type: 'c',
+                },
+              ],
+            },
+            5: {
+              rings: [
+                {
+                  attachments: {},
+                  offset: 0,
+                  ringNumber: 3,
+                  size: 6,
+                  substitutions: {},
+                  type: 'c',
+                },
+              ],
+            },
           },
           offset: 0,
           ringNumber: 1,
