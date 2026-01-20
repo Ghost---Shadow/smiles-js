@@ -333,6 +333,42 @@ describe('handleLargeRings', () => {
 });
 
 describe('FusedRing.parse', () => {
+  // describe('no rings', () => {
+  //   test('parses ethane', async () => {
+  //     const ethaneString = 'CC';
+  //     const ethane = FusedRing.parse(ethaneString);
+  //     assert.strictEqual(ethane.smiles, ethaneString);
+  //     assert.ok(await isValidSMILES(ethane.smiles));
+
+  //     assert.deepStrictEqual(ethane.meta, [
+  //       {
+  //         type: 'CC',
+  //         size: 2,
+  //         offset: 0,
+  //         ringNumber: null,
+  //         substitutions: {},
+  //         attachments: {},
+  //       },
+  //     ]);
+  //   });
+  //   test('parses ethene', async () => {
+  //     const ethaneString = 'C=C';
+  //     const ethane = FusedRing.parse(ethaneString);
+  //     assert.strictEqual(ethane.smiles, ethaneString);
+  //     assert.ok(await isValidSMILES(ethane.smiles));
+
+  //     assert.deepStrictEqual(ethane.meta, [
+  //       {
+  //         type: 'C=C',
+  //         size: 6,
+  //         offset: 0,
+  //         ringNumber: null,
+  //         substitutions: {},
+  //         attachments: {},
+  //       },
+  //     ]);
+  //   });
+  // });
   describe('single rings', () => {
     test('parses benzene', async () => {
       const benzene = FusedRing.parse('c1ccccc1');
@@ -470,6 +506,7 @@ describe('FusedRing.parse', () => {
       assert.strictEqual(terphenyl.smiles, 'c1c(c2ccccc2)ccc(c3ccccc3)c1');
       assert.ok(await isValidSMILES(terphenyl.smiles));
 
+      // TODO: Attachments should be recursively parsed
       assert.deepStrictEqual(terphenyl.meta.rings, [
         {
           attachments: {

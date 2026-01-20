@@ -255,7 +255,13 @@ class FusedRingClass {
       throw new Error('Can only fuse with another FusedRing instance');
     }
 
-    const combinedRings = [...this.rings, ...other.rings];
+    // Clear ring numbers so they get reassigned in the combined structure
+    const clearRingNumbers = (rings) => rings.map((meta) => meta.update({ ringNumber: null }));
+
+    const combinedRings = [
+      ...clearRingNumbers(this.rings),
+      ...clearRingNumbers(other.rings),
+    ];
     return new FusedRingClass(combinedRings);
   }
 

@@ -7,7 +7,7 @@ import {
 import { isValidSMILES } from './test-utils.js';
 
 test('README example: toluene', async () => {
-  const benzeneRing = Ring('c', 6);
+  const benzeneRing = Ring({ type: 'c', size: 6 });
   const methylGroup = Fragment('C');
   const toluene = benzeneRing(methylGroup);
   assert.ok(await isValidSMILES(toluene.smiles));
@@ -39,14 +39,14 @@ test('README example: nested branching', async () => {
 });
 
 test('README example: aspirin', async () => {
-  const benzeneRing = Ring('c', 6);
+  const benzeneRing = Ring({ type: 'c', size: 6 });
   const aspirin = benzeneRing.attachAt(2, carboxyl).attachAt(3, Fragment('OC(=O)C'));
   assert.ok(await isValidSMILES(aspirin.smiles));
   assert.strictEqual(aspirin.smiles, 'c1c(C(=O)O)c(OC(=O)C)ccc1');
 });
 
 test('README example: ibuprofen', async () => {
-  const benzeneRing = Ring('c', 6);
+  const benzeneRing = Ring({ type: 'c', size: 6 });
   const ibuprofen = benzeneRing.attachAt(2, Fragment('CC(C)C')).attachAt(5, Fragment('CC(C)C(=O)O'));
   assert.ok(await isValidSMILES(ibuprofen.smiles));
   assert.strictEqual(ibuprofen.smiles, 'c1c(CC(C)C)ccc(CC(C)C(=O)O)c1');

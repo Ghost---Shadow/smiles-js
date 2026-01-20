@@ -10,7 +10,8 @@
       "Bash(git mv:*)",
       "Bash(bun run lint:*)",
       "Bash(node:*)",
-      "Bash(bun:*)"
+      "Bash(bun:*)",
+      "Bash(grep:*)"
     ]
   }
 }

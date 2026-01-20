@@ -1,6 +1,5 @@
 import { Fragment } from './fragment.js';
-import { Ring } from './ring.js';
-import { FusedRings } from './fused-ring/index.js';
+import { FusedRing } from './fused-ring.js';
 
 export const methyl = Fragment('C');
 export const ethyl = Fragment('CC');
@@ -21,13 +20,24 @@ export const chloro = Fragment('Cl');
 export const bromo = Fragment('Br');
 export const iodo = Fragment('I');
 
-export const benzene = Ring('c', 6);
-export const cyclohexane = Ring('C', 6);
-export const pyridine = Ring('c', 6, { replace: { 0: 'n' } });
-export const pyrrole = Ring('c', 5, { replace: { 0: '[nH]' } });
-export const furan = Ring('c', 5, { replace: { 0: 'o' } });
-export const thiophene = Ring('c', 5, { replace: { 0: 's' } });
+export const benzene = FusedRing([{ type: 'c', size: 6 }]);
+export const cyclohexane = FusedRing([{ type: 'C', size: 6 }]);
+export const pyridine = FusedRing([{ type: 'c', size: 6, substitutions: { 1: 'n' } }]);
+export const pyrrole = FusedRing([{ type: 'c', size: 5, substitutions: { 1: '[nH]' } }]);
+export const furan = FusedRing([{ type: 'c', size: 5, substitutions: { 1: 'o' } }]);
+export const thiophene = FusedRing([{ type: 'c', size: 5, substitutions: { 1: 's' } }]);
 
-export const naphthalene = FusedRings([6, 6], 'c');
-export const indole = FusedRings([6, 5], 'c', { hetero: { 4: '[nH]' } });
-export const quinoline = FusedRings([6, 6], 'c', { hetero: { 0: 'n' } });
+export const naphthalene = FusedRing([
+  { type: 'c', size: 6 },
+  { type: 'c', size: 6, offset: 3 },
+]);
+export const indole = FusedRing([
+  { type: 'c', size: 6 },
+  {
+    type: 'c', size: 5, offset: 3, substitutions: { 2: '[nH]' },
+  },
+]);
+export const quinoline = FusedRing([
+  { type: 'c', size: 6, substitutions: { 1: 'n' } },
+  { type: 'c', size: 6, offset: 3 },
+]);

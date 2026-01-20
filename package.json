@@ -9,7 +9,7 @@
     "./common": "./src/common.js"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "bun test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
