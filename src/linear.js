@@ -49,7 +49,6 @@ class LinearClass {
 
     return new Meta({
       type: MetaType.LINEAR,
-      smiles: null,
       atoms,
       attachments: metaAttachments,
     });
@@ -160,7 +159,6 @@ class LinearClass {
     // Create new meta
     const newMeta = new Meta({
       type: MetaType.LINEAR,
-      smiles: null,
       atoms: newAtoms,
       attachments: newAttachments,
     });
@@ -208,7 +206,6 @@ class LinearClass {
     // Create new meta
     const newMeta = new Meta({
       type: MetaType.LINEAR,
-      smiles: null,
       atoms: this.meta.atoms,
       attachments: newAttachments,
     });

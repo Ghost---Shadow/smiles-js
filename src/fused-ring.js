@@ -1,4 +1,3 @@
-import { Fragment } from './fragment.js';
 import { Meta, MetaType } from './meta.js';
 
 /**
@@ -151,7 +150,9 @@ class FusedRingClass {
       ];
     }
 
-    return Fragment(atoms.join(''));
+    // Return simple object instead of Fragment to avoid circular dependency
+    const smiles = atoms.join('');
+    return { smiles };
   }
 
   /**

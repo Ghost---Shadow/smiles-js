@@ -6,10 +6,10 @@ describe('Meta constructor', () => {
   test('creates linear meta', () => {
     const meta = new Meta({
       type: MetaType.LINEAR,
-      smiles: 'CCC',
+      atoms: 'CCC',
     });
     assert.strictEqual(meta.type, 'linear');
-    assert.strictEqual(meta.smiles, 'CCC');
+    assert.strictEqual(meta.atoms, 'CCC');
   });
 
   test('creates ring meta', () => {
@@ -30,11 +30,11 @@ describe('Meta.update', () => {
   test('updates linear meta', () => {
     const meta = new Meta({
       type: MetaType.LINEAR,
-      smiles: 'CC',
+      atoms: 'CC',
     });
-    const updated = meta.update({ smiles: 'CCO' });
-    assert.strictEqual(updated.smiles, 'CCO');
-    assert.strictEqual(meta.smiles, 'CC');
+    const updated = meta.update({ atoms: 'CCO' });
+    assert.strictEqual(updated.atoms, 'CCO');
+    assert.strictEqual(meta.atoms, 'CC');
   });
 
   test('updates ring meta', () => {
@@ -53,11 +53,11 @@ describe('Meta.toObject', () => {
   test('converts linear meta to object', () => {
     const meta = new Meta({
       type: MetaType.LINEAR,
-      smiles: 'CCC',
+      atoms: 'CCC',
     });
     assert.deepStrictEqual(meta.toObject(), {
       type: 'linear',
-      smiles: 'CCC',
+      atoms: 'CCC',
     });
   });
 
@@ -79,20 +79,20 @@ describe('Meta.toObject', () => {
   test('recursively converts nested meta', () => {
     const inner = new Meta({
       type: MetaType.LINEAR,
-      smiles: 'CC',
+      atoms: 'CC',
     });
     const outer = new Meta({
       type: MetaType.LINEAR,
-      smiles: 'CC',
+      atoms: 'CC',
       attachments: { 1: inner },
     });
     assert.deepStrictEqual(outer.toObject(), {
       type: 'linear',
-      smiles: 'CC',
+      atoms: 'CC',
       attachments: {
         1: {
           type: 'linear',
-          smiles: 'CC',
+          atoms: 'CC',
         },
       },
     });

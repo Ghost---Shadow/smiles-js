@@ -3,6 +3,7 @@ import {
   countAtoms, countRings, calculateFormula, calculateMolecularWeight,
 } from './properties.js';
 import { findUsedRingNumbers, getNextRingNumber } from './utils.js';
+import { parse } from './parse.js';
 
 export function Fragment(smiles) {
   const validation = validateSMILES(smiles);
@@ -10,7 +11,10 @@ export function Fragment(smiles) {
     throw new Error(validation.error);
   }
 
-  const createFragment = (currentSmiles) => {
+  // Parse the SMILES to build AST
+  const ast = parse(smiles);
+
+  const createFragment = (currentSmiles, currentAst) => {
     const fragment = function fragmentFunction(...branches) {
       let result = currentSmiles;
 
@@ -31,10 +35,13 @@ export function Fragment(smiles) {
         result += `(${remappedBranch})`;
       });
 
-      return createFragment(result);
+      // Re-parse after adding branches
+      const newAst = parse(result);
+      return createFragment(result, newAst);
     };
 
     fragment.smiles = currentSmiles;
+    fragment.ast = currentAst; // Store AST separately from meta
     fragment.atoms = countAtoms(currentSmiles);
     fragment.rings = countRings(currentSmiles);
     fragment.formula = calculateFormula(currentSmiles);
@@ -58,7 +65,9 @@ export function Fragment(smiles) {
         }
       });
 
-      return createFragment(currentSmiles + remappedOther);
+      const newSmiles = currentSmiles + remappedOther;
+      const newAst = parse(newSmiles);
+      return createFragment(newSmiles, newAst);
     };
 
     // Fuse method - only available for rings created with FusedRing
@@ -69,7 +78,7 @@ export function Fragment(smiles) {
     return fragment;
   };
 
-  return createFragment(smiles);
+  return createFragment(smiles, ast);
 }
 
 Fragment.validate = validateSMILES;

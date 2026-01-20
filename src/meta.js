@@ -14,7 +14,6 @@ export const MetaType = {
 export class Meta {
   constructor({
     type,
-    smiles,
     size = null,
     atoms = null,
     offset = 0,
@@ -23,7 +22,6 @@ export class Meta {
     attachments = {},
   }) {
     this.type = type;
-    this.smiles = smiles;
     this.size = size;
     this.atoms = atoms;
     this.offset = offset;
@@ -40,7 +38,6 @@ export class Meta {
   update(updates) {
     const base = {
       type: this.type,
-      smiles: this.smiles,
       size: this.size,
       atoms: this.atoms,
       offset: this.offset,
@@ -78,7 +75,6 @@ export class Meta {
     };
 
     // Add fields if they should be included
-    if (Meta.shouldInclude(this.smiles)) obj.smiles = this.smiles;
     if (Meta.shouldInclude(this.size)) obj.size = this.size;
     if (Meta.shouldInclude(this.atoms)) obj.atoms = this.atoms;
     if (Meta.shouldInclude(this.offset, 0)) obj.offset = this.offset;
