@@ -260,7 +260,7 @@ export function parseRings(smiles) {
 /**
  * Main parse function - detects structure type and routes to appropriate parser
  * @param {string} smiles - SMILES string to parse
- * @returns {Object|Array} Linear structure descriptor or array of ring descriptors
+ * @returns {Array} Array of Meta descriptors (rings or single linear descriptor)
  */
 export function parse(smiles) {
   if (!smiles || smiles.length === 0) {
@@ -287,5 +287,6 @@ export function parse(smiles) {
   if (hasRingClosures) {
     return parseRings(smiles);
   }
-  return parseLinear(smiles);
+  // Wrap linear result in array for consistency
+  return [parseLinear(smiles)];
 }

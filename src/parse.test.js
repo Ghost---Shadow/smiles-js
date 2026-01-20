@@ -499,25 +499,25 @@ describe('parse', () => {
   describe('linear structures', () => {
     test('parses vinyl (ethylene) C=C', () => {
       const result = parse('C=C');
-      assert.deepStrictEqual(result, {
+      assert.deepStrictEqual(result, [{
         type: 'linear',
         atoms: 'C=C',
         attachments: {},
-      });
+      }]);
     });
 
     test('parses simple alkane CCC', () => {
       const result = parse('CCC');
-      assert.deepStrictEqual(result, {
+      assert.deepStrictEqual(result, [{
         type: 'linear',
         atoms: 'CCC',
         attachments: {},
-      });
+      }]);
     });
 
     test('parses branched structure CC(C)C', () => {
       const result = parse('CC(C)C');
-      assert.deepStrictEqual(result, {
+      assert.deepStrictEqual(result, [{
         type: 'linear',
         atoms: 'CCC',
         attachments: {
@@ -527,7 +527,7 @@ describe('parse', () => {
             attachments: {},
           },
         },
-      });
+      }]);
     });
   });
 

@@ -182,12 +182,14 @@ class FusedRingClass {
       const i = Number(position) - 1;
 
       let attachSmiles;
-      if (attachment.meta) {
+      // Check if attachment is a plain object with meta array (fused ring attachment)
+      // vs a Fragment/FusedRing instance that also has .meta
+      if (attachment.meta && !attachment.smiles && typeof attachment !== 'function') {
         // Rebuild the fused ring with the reassigned numbers
         const rebuiltFragment = this.build(attachment.meta);
         attachSmiles = rebuiltFragment.smiles;
       } else {
-        // Get attachment SMILES for simple attachments
+        // Get attachment SMILES for simple attachments (Fragment, FusedRing, string)
         attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
       }
 
