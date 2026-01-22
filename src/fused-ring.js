@@ -1,4 +1,5 @@
 import { Meta, MetaType } from './meta.js';
+import { MetaList } from './meta-list.js';
 
 /**
  * Fused ring class for building complex ring systems
@@ -9,15 +10,18 @@ class FusedRingClass {
       throw new Error('FusedRing requires at least one ring');
     }
 
-    // Convert to Meta instances, mapping 'type' to 'atoms' for backward compatibility
+    // Convert to Meta instances
     let metaRings = rings.map((ring) => {
-      const { type, attachments = {}, ...rest } = ring;
+      const {
+        type, atoms, attachments = {}, ...rest
+      } = ring;
 
-      // Convert attachments to arrays and convert strings to Meta instances
+      // Normalize attachments to arrays
       const normalizedAttachments = {};
       Object.entries(attachments).forEach(([pos, attachment]) => {
+        // Check if already an array
         if (Array.isArray(attachment)) {
-          // Convert each item in array to Meta if it's a string
+          // Already an array, process each item
           normalizedAttachments[pos] = attachment.map((item) => {
             if (typeof item === 'string') {
               return new Meta({ type: MetaType.LINEAR, atoms: item });
@@ -25,16 +29,17 @@ class FusedRingClass {
             return item;
           });
         } else if (typeof attachment === 'string') {
-          // Wrap attachment in array and convert to Meta if string
+          // Single string - convert to Meta and wrap in array
           normalizedAttachments[pos] = [new Meta({ type: MetaType.LINEAR, atoms: attachment })];
         } else {
+          // Single item (FusedRingClass, Meta, etc.) - wrap in array
           normalizedAttachments[pos] = [attachment];
         }
       });
 
       return new Meta({
         type: MetaType.RING,
-        atoms: type,
+        atoms: atoms || type,
         attachments: normalizedAttachments,
         ...rest,
       });
@@ -48,7 +53,7 @@ class FusedRingClass {
     // Assign ring numbers via DFS
     const ringsWithNumbers = FusedRingClass.assignRingNumbers(metaRings);
 
-    this.meta = ringsWithNumbers;
+    this.meta = MetaList.from(ringsWithNumbers);
     this.fragment = this.build(ringsWithNumbers);
 
     // Make the instance callable by returning a function with instance methods
@@ -63,11 +68,12 @@ class FusedRingClass {
   }
 
   /**
-   * Clear all ring numbers from Meta instances
+   * Clear all ring numbers from Meta instances recursively
    * @param {Array<Meta>} rings - Array of Meta instances
    * @returns {Array<Meta>} Array of Meta instances with ringNumber set to null
    */
   static purgeRingNumbers(rings) {
+    // Just clear the ring number - attachments will be processed during assignRingNumbers
     return rings.map((meta) => meta.update({ ringNumber: null }));
   }
 
@@ -81,65 +87,7 @@ class FusedRingClass {
     // Check if ring numbers are already assigned (e.g., from parsing)
     const hasRingNumbers = rings.every((meta) => meta.ringNumber != null);
     if (hasRingNumbers) {
-      // Ring numbers already assigned, just process attachments
-      return rings.map((meta) => {
-        const newAttachments = {};
-        Object.entries(meta.attachments).forEach(([position, attachment]) => {
-          // Handle arrays of attachments
-          if (Array.isArray(attachment)) {
-            newAttachments[position] = attachment.map((item) => {
-              if (item instanceof FusedRingClass) {
-                const attachedRingsWithNumbers = FusedRingClass.assignRingNumbers(item.meta);
-                return { meta: attachedRingsWithNumbers };
-              }
-              if (Array.isArray(item)) {
-                // Parsed ring attachments (array of ring descriptors from parse.js)
-                const convertedRings = item.map((ring) => {
-                  const { type, ...rest } = ring;
-                  return new Meta({
-                    type: MetaType.RING,
-                    atoms: type,
-                    ...rest,
-                  });
-                });
-                return { meta: convertedRings };
-              }
-              if (item?.meta) {
-                // Handle parsed ring attachments (plain objects with meta array)
-                const convertedRings = item.meta.map((ring) => {
-                  const { type, ...rest } = ring;
-                  return new Meta({
-                    type: MetaType.RING,
-                    atoms: type,
-                    ...rest,
-                  });
-                });
-                return { meta: convertedRings };
-              }
-              return item;
-            });
-          } else if (attachment instanceof FusedRingClass) {
-            // Legacy single attachment case (convert to array)
-            const attachedRingsWithNumbers = FusedRingClass.assignRingNumbers(attachment.meta);
-            newAttachments[position] = [{ meta: attachedRingsWithNumbers }];
-          } else if (attachment?.meta) {
-            // Legacy parsed ring attachment (convert to array)
-            const convertedRings = attachment.meta.map((ring) => {
-              const { type, ...rest } = ring;
-              return new Meta({
-                type: MetaType.RING,
-                atoms: type,
-                ...rest,
-              });
-            });
-            newAttachments[position] = [{ meta: convertedRings }];
-          } else {
-            // Simple attachment (convert to array)
-            newAttachments[position] = [attachment];
-          }
-        });
-        return meta.update({ attachments: newAttachments });
-      });
+      return rings;
     }
 
     let nextRingNumber = 1;
@@ -154,41 +102,17 @@ class FusedRingClass {
 
       // Recurse into attachments
       const newAttachments = {};
-      Object.entries(meta.attachments).forEach(([position, attachment]) => {
-        // Handle arrays of attachments
-        if (Array.isArray(attachment)) {
-          newAttachments[position] = attachment.map((item) => {
-            if (item instanceof FusedRingClass) {
-              // Recurse into the FusedRing's meta
-              const attachedRingsWithNumbers = item.meta
-                .map((attachedMeta) => processRing(attachedMeta.update({ ringNumber: null })));
-              return { meta: attachedRingsWithNumbers };
-            }
-            if (Array.isArray(item)) {
-              // Parsed ring attachments (array of ring descriptors)
-              const convertedRings = item.map((ring) => {
-                const { type, ...rest } = ring;
-                const ringMeta = new Meta({
-                  type: MetaType.RING,
-                  atoms: type,
-                  ...rest,
-                });
-                return processRing(ringMeta.update({ ringNumber: null }));
-              });
-              return { meta: convertedRings };
-            }
-            // Simple attachment (Meta instance or string)
-            return item;
-          });
-        } else if (attachment instanceof FusedRingClass) {
-          // Legacy single attachment case (convert to array)
-          const attachedRingsWithNumbers = attachment.meta
-            .map((attachedMeta) => processRing(attachedMeta.update({ ringNumber: null })));
-          newAttachments[position] = [{ meta: attachedRingsWithNumbers }];
-        } else {
-          // Simple attachment (no recursion needed) - convert to array
-          newAttachments[position] = [attachment];
-        }
+      Object.entries(meta.attachments).forEach(([position, attachmentArray]) => {
+        newAttachments[position] = attachmentArray.map((item) => {
+          if (item instanceof FusedRingClass) {
+            // Recurse into the FusedRing's meta
+            const attachedRingsWithNumbers = item.meta
+              .map((attachedMeta) => processRing(attachedMeta.update({ ringNumber: null })));
+            return { meta: attachedRingsWithNumbers };
+          }
+          // Simple attachment (Meta instance)
+          return item;
+        });
       });
 
       return meta.update({ ringNumber, attachments: newAttachments });
@@ -255,37 +179,43 @@ class FusedRingClass {
     }
 
     // Handle attachments
-    Object.entries(attachments).forEach(([position, attachmentData]) => {
+    Object.entries(attachments).forEach(([position, attachmentArray]) => {
       const i = Number(position) - 1;
-
-      // Handle arrays of attachments
-      const attachmentArray = Array.isArray(attachmentData) ? attachmentData : [attachmentData];
 
       let allAttachmentsSmiles = '';
       attachmentArray.forEach((attachment) => {
         let attachSmiles;
-        if (Array.isArray(attachment)) {
-          // Parsed ring attachments (array of ring descriptors) - shouldn't happen here
-          // but handle it just in case
-          attachSmiles = '[ARRAY]';
-        } else if (attachment?.meta && !attachment.smiles && typeof attachment !== 'function') {
-          // Check if attachment is a plain object with meta array (fused ring attachment)
-          // vs a Fragment/FusedRing instance that also has .meta
-          // Rebuild the fused ring with the reassigned numbers
+        if (attachment instanceof Meta) {
+          // Meta instance (linear attachment)
+          attachSmiles = attachment.atoms;
+        } else if (attachment instanceof FusedRingClass) {
+          // FusedRing instance
+          attachSmiles = attachment.smiles;
+        } else if (attachment?.smiles) {
+          // Fragment or other object with smiles property
+          attachSmiles = attachment.smiles;
+        } else if (Array.isArray(attachment)) {
+          // Parsed ring attachment (array of ring descriptors) - convert to Meta and build
+          const metaRings = attachment.map((ring) => {
+            if (ring instanceof Meta) {
+              return ring;
+            }
+            const { type, atoms: ringAtoms, ...rest } = ring;
+            return new Meta({
+              type: MetaType.RING,
+              atoms: ringAtoms || type,
+              ...rest,
+            });
+          });
+          const rebuiltFragment = this.build(metaRings);
+          attachSmiles = rebuiltFragment.smiles;
+        } else if (attachment?.meta) {
+          // Fused ring attachment (plain object with meta array) - rebuild with reassigned numbers
           const rebuiltFragment = this.build(attachment.meta);
           attachSmiles = rebuiltFragment.smiles;
-        } else if (attachment instanceof Meta) {
-          // Handle Meta instances (convert to SMILES)
-          attachSmiles = attachment.atoms;
-        } else if (typeof attachment === 'string') {
-          // Simple string attachment
-          attachSmiles = attachment;
-        } else if (attachment instanceof FusedRingClass || typeof attachment === 'function') {
-          // Handle FusedRing instances (callable functions)
-          attachSmiles = attachment.smiles;
         } else {
-          // Get attachment SMILES for other complex attachments (Fragment)
-          attachSmiles = attachment.smiles || attachment.fragment?.smiles || String(attachment);
+          // Unknown attachment type
+          attachSmiles = String(attachment);
         }
         allAttachmentsSmiles += `(${attachSmiles})`;
       });
@@ -334,15 +264,13 @@ class FusedRingClass {
        * @returns {FusedRingClass} New FusedRing with the attachment
        */
       attachAt(position, attachment) {
-        // Clone the meta array
+        // Build plain ring descriptors from Meta instances
         const newRings = fusedRingInstance.meta.map((meta, idx) => {
           if (idx === ringArrayIndex) {
             // Clone existing attachments
             const newAttachments = {};
             Object.entries(meta.attachments).forEach(([pos, attachmentArray]) => {
-              newAttachments[pos] = Array.isArray(attachmentArray)
-                ? [...attachmentArray]
-                : [attachmentArray];
+              newAttachments[pos] = [...attachmentArray];
             });
 
             // Add new attachment to the array at this position
@@ -352,9 +280,25 @@ class FusedRingClass {
               newAttachments[position] = [attachment];
             }
 
-            return meta.update({ attachments: newAttachments });
+            // Return plain descriptor object with atoms mapped from meta
+            return {
+              type: meta.type,
+              atoms: meta.atoms,
+              size: meta.size,
+              offset: meta.offset,
+              substitutions: meta.substitutions,
+              attachments: newAttachments,
+            };
           }
-          return meta;
+          // Return plain descriptor object for unchanged rings
+          return {
+            type: meta.type,
+            atoms: meta.atoms,
+            size: meta.size,
+            offset: meta.offset,
+            substitutions: meta.substitutions,
+            attachments: meta.attachments,
+          };
         });
 
         // Create new FusedRing (constructor purges and reassigns ring numbers)
