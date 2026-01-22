@@ -98,15 +98,21 @@ class FusedRingClass {
       const newAttachments = {};
       Object.entries(meta.attachments).forEach(([position, attachmentArray]) => {
         newAttachments[position] = attachmentArray.map((item) => {
-          if (item instanceof FusedRingClass) {
-            // Purge ring numbers from attached FusedRing and assign new ones
-            const purgedMeta = FusedRingClass.purgeRingNumbers(item.meta);
-            const renumberedMeta = purgedMeta.map((attachedMeta) => processRing(attachedMeta));
+          // Check if this is a FusedRing instance
+          // FusedRing has .meta array with Meta instances of type RING
+          if (item.meta && Array.isArray(item.meta) && item.meta.length > 0
+              && item.meta[0] instanceof Meta && item.meta[0].type === MetaType.RING) {
+            // Renumber rings in the attached FusedRing
+            const renumberedMeta = item.meta.map((attachedMeta) => processRing(attachedMeta));
             // Create new FusedRing with renumbered meta
             // eslint-disable-next-line no-use-before-define
-            return FusedRing(renumberedMeta.map((m) => m.toObject()), { purgeRingNumbers: false });
+            const tempRing = FusedRing(
+              renumberedMeta.map((m) => m.toObject()),
+              { purgeRingNumbers: false },
+            );
+            return tempRing;
           }
-          // Simple attachment (Meta instance)
+          // Simple attachment (Meta instance or Fragment)
           return item;
         });
       });

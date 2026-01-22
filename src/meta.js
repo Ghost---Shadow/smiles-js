@@ -51,9 +51,22 @@ export class Meta {
         atoms: obj,
       });
     }
+    // Array of ring descriptors (from parsing) - convert to FusedRing
+    // Ring descriptors have a 'size' property (number of atoms in ring)
+    if (Array.isArray(obj) && obj.length > 0 && obj[0].size !== undefined) {
+      // eslint-disable-next-line global-require
+      const { FusedRing } = require('./fused-ring.js');
+      return FusedRing(obj, { purgeRingNumbers: false });
+    }
     // Plain object with RING type needs special handling
     if (obj.type === MetaType.RING) {
       // Import FusedRing here to avoid circular dependency
+      // eslint-disable-next-line global-require
+      const { FusedRing } = require('./fused-ring.js');
+      return FusedRing([obj], { purgeRingNumbers: false });
+    }
+    // Plain ring descriptor object (has size property)
+    if (obj.size !== undefined) {
       // eslint-disable-next-line global-require
       const { FusedRing } = require('./fused-ring.js');
       return FusedRing([obj], { purgeRingNumbers: false });
@@ -73,8 +86,10 @@ export class Meta {
   get smiles() {
     if (this.type === MetaType.LINEAR) {
       return this.atoms;
+    } if (this.type === MetaType.RING) {
+      return this.atoms; // TODO
     }
-    return null;
+    throw new Error(`Unknown type ${this.type}`);
   }
 
   /**
