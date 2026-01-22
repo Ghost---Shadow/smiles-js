@@ -46,7 +46,12 @@ describe('FusedRing', () => {
       atoms: 'c',
       size: 6,
       attachments: {
-        3: 'Cl',
+        3: [
+          {
+            type: 'linear',
+            atoms: 'Cl',
+          },
+        ],
       },
     };
     const benzeneWithCl = FusedRing([parameters]);
@@ -157,7 +162,8 @@ describe('FusedRing with ring counter on connection', () => {
         type: 'c',
         size: 6,
         attachments: {
-          3: cyclohexane,
+          // toObject should always return array
+          3: cyclohexane.toObject(),
         },
       },
       {
