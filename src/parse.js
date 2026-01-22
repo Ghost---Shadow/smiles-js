@@ -96,23 +96,29 @@ export const handleRings = (context) => {
     for (let pos = startPos; pos <= endPos; pos += 1) {
       const relativePos = pos - startPos + 1; // 1-based position in ring
       if (context.atoms[pos].attachments.length > 0) {
-        const attachmentSmiles = context.atoms[pos].attachments[0];
-
-        // Check if attachment contains a ring (has digits)
-        if (/\d/.test(attachmentSmiles)) {
-          try {
-            // Recursively parse the ring attachment
-            // eslint-disable-next-line no-use-before-define
-            const parsedRings = parse(attachmentSmiles);
-            attachments[relativePos] = { meta: parsedRings };
-          } catch {
-            // If parsing fails, store as string (might be non-ring attachment)
-            attachments[relativePos] = attachmentSmiles;
-          }
-        } else {
-          // Simple attachment (no rings)
-          attachments[relativePos] = attachmentSmiles;
+        // Initialize array for this position if not exists
+        if (!attachments[relativePos]) {
+          attachments[relativePos] = [];
         }
+        // Process all attachments at this position
+        context.atoms[pos].attachments.forEach((attachmentSmiles) => {
+          // Check if attachment contains a ring (has digits)
+          if (/\d/.test(attachmentSmiles)) {
+            try {
+              // Recursively parse the ring attachment
+              // eslint-disable-next-line no-use-before-define
+              const parsedRings = parse(attachmentSmiles);
+              // Store parsed rings directly without meta wrapper
+              attachments[relativePos].push(parsedRings);
+            } catch {
+              // If parsing fails, store as string (might be non-ring attachment)
+              attachments[relativePos].push(attachmentSmiles);
+            }
+          } else {
+            // Simple attachment (no rings)
+            attachments[relativePos].push(attachmentSmiles);
+          }
+        });
       }
     }
 
@@ -162,7 +168,11 @@ export function parseLinear(smiles) {
 
       // Recursively parse attachment
       if (atoms.length > 0) {
-        attachments[atomIndex - 1] = parseLinear(content);
+        const position = atomIndex - 1;
+        if (!attachments[position]) {
+          attachments[position] = [];
+        }
+        attachments[position].push(parseLinear(content));
       }
 
       i = endIndex;

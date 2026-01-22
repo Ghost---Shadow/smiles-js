@@ -20,12 +20,18 @@ export const chloro = Fragment('Cl');
 export const bromo = Fragment('Br');
 export const iodo = Fragment('I');
 
-export const benzene = FusedRing([{ type: 'c', size: 6 }]);
-export const cyclohexane = FusedRing([{ type: 'C', size: 6 }]);
-export const pyridine = FusedRing([{ type: 'c', size: 6, substitutions: { 1: 'n' } }]);
-export const pyrrole = FusedRing([{ type: 'c', size: 5, substitutions: { 1: '[nH]' } }]);
-export const furan = FusedRing([{ type: 'c', size: 5, substitutions: { 1: 'o' } }]);
-export const thiophene = FusedRing([{ type: 'c', size: 5, substitutions: { 1: 's' } }]);
+export const benzene = FusedRing([{ type: 'c', size: 6 },
+]);
+export const cyclohexane = FusedRing([{ type: 'C', size: 6 },
+]);
+export const pyridine = FusedRing([{ type: 'c', size: 6, substitutions: { 1: 'n' } },
+]);
+export const pyrrole = FusedRing([{ type: 'c', size: 5, substitutions: { 1: '[nH]' } },
+]);
+export const furan = FusedRing([{ type: 'c', size: 5, substitutions: { 1: 'o' } },
+]);
+export const thiophene = FusedRing([{ type: 'c', size: 5, substitutions: { 1: 's' } },
+]);
 
 export const naphthalene = FusedRing([
   { type: 'c', size: 6 },

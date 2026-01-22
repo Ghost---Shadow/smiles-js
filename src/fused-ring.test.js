@@ -43,7 +43,20 @@ describe('FusedRing', () => {
       },
     ]);
     assert.strictEqual(benzeneWithCl.smiles, 'c1cc(Cl)ccc1');
-    assert.strictEqual(benzeneWithCl.meta[0].ringNumber, 1);
+    assert.deepStrictEqual(benzeneWithCl.meta[0].toObject(), {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      attachments: {
+        3: [
+          {
+            type: 'linear',
+            atoms: 'Cl',
+          },
+        ],
+      },
+    });
     assert.ok(await isValidSMILES(benzeneWithCl.smiles));
   });
 
@@ -105,8 +118,12 @@ describe('buildRing method', () => {
 
 describe('FusedRing with ring counter on connection', () => {
   test('independent FusedRing always starts at ring 1', async () => {
-    const benzene1 = FusedRing([{ type: 'c', size: 6 }]);
-    const benzene2 = FusedRing([{ type: 'c', size: 6 }]);
+    const benzene1 = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
+    const benzene2 = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
     // Both independent, both use ring number 1
     assert.strictEqual(benzene1.smiles, 'c1ccccc1');
     assert.strictEqual(benzene2.smiles, 'c1ccccc1');
@@ -116,7 +133,9 @@ describe('FusedRing with ring counter on connection', () => {
 
   test('avoids ring numbers when attached via branching on create', async () => {
     // This test will work once Fragment.attach() respects ring numbers
-    const cyclohexane = FusedRing([{ type: 'C', size: 6 }]);
+    const cyclohexane = FusedRing([
+      { type: 'C', size: 6 },
+    ]);
     const parameters = [
       {
         type: 'c',
@@ -151,7 +170,9 @@ describe('FusedRing with ring counter on connection', () => {
       },
     ];
     const napthalene = FusedRing(parameters);
-    const cyclohexane = FusedRing([{ type: 'C', size: 6 }]);
+    const cyclohexane = FusedRing([
+      { type: 'C', size: 6 },
+    ]);
     const newCompound = napthalene.getRing(1).attachAt(3, cyclohexane);
     assert.strictEqual(newCompound.smiles, 'c1cc(C2CCCCC2)c3ccccc3c1');
     assert.ok(await isValidSMILES(newCompound.smiles));
@@ -159,8 +180,12 @@ describe('FusedRing with ring counter on connection', () => {
 
   test('avoids ring numbers when attached via branching', async () => {
     // This test will work once Fragment.attach() respects ring numbers
-    const benzene = FusedRing([{ type: 'c', size: 6 }]);
-    const cyclohexane = FusedRing([{ type: 'C', size: 6 }]);
+    const benzene = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
+    const cyclohexane = FusedRing([
+      { type: 'C', size: 6 },
+    ]);
 
     // When attached, the second fragment should use ring number 2
     const attached = benzene(cyclohexane); // overloaded function
@@ -171,15 +196,19 @@ describe('FusedRing with ring counter on connection', () => {
 
   test('avoids ring numbers when attached via fusing', async () => {
     // This test will work once Fragment.attach() respects ring numbers
-    const napthalenePart1 = FusedRing([{
-      type: 'c',
-      size: 6,
-    }]);
-    const napthalenePart2 = FusedRing([{
-      type: 'c',
-      size: 6,
-      offset: 3,
-    }]);
+    const napthalenePart1 = FusedRing([
+      {
+        type: 'c',
+        size: 6,
+      },
+    ]);
+    const napthalenePart2 = FusedRing([
+      {
+        type: 'c',
+        size: 6,
+        offset: 3,
+      },
+    ]);
 
     // Picks up offset automatically
     const newCompound = napthalenePart1.fuse(napthalenePart2);
@@ -204,8 +233,12 @@ describe('FusedRing with ring counter on connection', () => {
 
 describe('fuse method', () => {
   test('fuses two benzene rings to create naphthalene', async () => {
-    const benzene1 = FusedRing([{ type: 'c', size: 6 }]);
-    const benzene2 = FusedRing([{ type: 'c', size: 6, offset: 3 }]);
+    const benzene1 = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
+    const benzene2 = FusedRing([
+      { type: 'c', size: 6, offset: 3 },
+    ]);
 
     const naphthalene = benzene1.fuse(benzene2);
 
@@ -215,7 +248,9 @@ describe('fuse method', () => {
 
   test('throws error when trying to fuse with non-FusedRing', () => {
     const regularFragment = Fragment('C');
-    const benzene = FusedRing([{ type: 'c', size: 6 }]);
+    const benzene = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
 
     assert.throws(
       () => benzene.fuse(regularFragment),
@@ -224,8 +259,12 @@ describe('fuse method', () => {
   });
 
   test('accepts FusedRing as second parameter', async () => {
-    const benzene1 = FusedRing([{ type: 'c', size: 6 }]);
-    const benzene2 = FusedRing([{ type: 'c', size: 6, offset: 3 }]);
+    const benzene1 = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
+    const benzene2 = FusedRing([
+      { type: 'c', size: 6, offset: 3 },
+    ]);
 
     const naphthalene = benzene1.fuse(benzene2);
 
@@ -234,8 +273,12 @@ describe('fuse method', () => {
   });
 
   test('combines ring descriptors from both fragments', () => {
-    const ring1 = FusedRing([{ type: 'c', size: 6 }]);
-    const ring2 = FusedRing([{ type: 'c', size: 5, offset: 3 }]);
+    const ring1 = FusedRing([
+      { type: 'c', size: 6 },
+    ]);
+    const ring2 = FusedRing([
+      { type: 'c', size: 5, offset: 3 },
+    ]);
 
     const fused = ring1.fuse(ring2);
 

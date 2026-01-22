@@ -8,6 +8,13 @@ test('Fragment creates basic fragments', async () => {
   assert.strictEqual(methyl.smiles, 'C');
   assert.ok(await isValidSMILES(methyl.smiles));
   assert.strictEqual(String(methyl), 'C');
+  assert.deepStrictEqual(methyl.meta, [
+    {
+      type: 'linear',
+      atoms: 'C',
+      attachments: {},
+    },
+  ]);
 });
 
 test('Fragment validates SMILES on creation', () => {
@@ -28,6 +35,21 @@ test('Fragment supports branching', async () => {
   const result = methyl(ethyl);
   assert.strictEqual(result.smiles, 'C(CC)');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'C',
+      attachments: {
+        1: [
+          {
+            type: 'linear',
+            atoms: 'CC',
+            attachments: {},
+          },
+        ],
+      },
+    },
+  ]);
 });
 
 test('Fragment supports multiple branches', async () => {
@@ -36,6 +58,26 @@ test('Fragment supports multiple branches', async () => {
   const result = methyl(ethyl)(ethyl);
   assert.strictEqual(result.smiles, 'C(CC)(CC)');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'C',
+      attachments: {
+        1: [
+          {
+            type: 'linear',
+            atoms: 'CC',
+            attachments: {},
+          },
+          {
+            type: 'linear',
+            atoms: 'CC',
+            attachments: {},
+          },
+        ],
+      },
+    },
+  ]);
 });
 
 test('Fragment supports nested branches', async () => {
@@ -45,6 +87,29 @@ test('Fragment supports nested branches', async () => {
   const result = a(b(c));
   assert.strictEqual(result.smiles, 'C(CC(CCC))');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'C',
+      attachments: {
+        1: [
+          {
+            type: 'linear',
+            atoms: 'CC',
+            attachments: {
+              2: [
+                {
+                  type: 'linear',
+                  atoms: 'CCC',
+                  attachments: {},
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ]);
 });
 
 test('Fragment counts atoms correctly', async () => {
@@ -121,6 +186,13 @@ test('concat combines two simple fragments', async () => {
   const result = a.concat(b);
   assert.strictEqual(result.smiles, 'CCCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat works with method chaining', async () => {
@@ -130,6 +202,13 @@ test('concat works with method chaining', async () => {
   const result = a.concat(b).concat(c);
   assert.strictEqual(result.smiles, 'CCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat handles string arguments', async () => {
@@ -137,6 +216,13 @@ test('concat handles string arguments', async () => {
   const result = a.concat('CC');
   assert.strictEqual(result.smiles, 'CCCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat preserves properties', async () => {
@@ -147,6 +233,13 @@ test('concat preserves properties', async () => {
   assert.strictEqual(result.atoms, 2);
   assert.strictEqual(result.formula, 'C2H6');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat handles fragments with branches', async () => {
@@ -155,6 +248,21 @@ test('concat handles fragments with branches', async () => {
   const result = a.concat(b);
   assert.strictEqual(result.smiles, 'C(C)CCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {
+        1: [
+          {
+            type: 'linear',
+            atoms: 'C',
+            attachments: {},
+          },
+        ],
+      },
+    },
+  ]);
 });
 
 test('concat handles rings without conflicts', async () => {
@@ -163,6 +271,16 @@ test('concat handles rings without conflicts', async () => {
   const result = a.concat(b);
   assert.strictEqual(result.smiles, 'C1CCC1CC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'C',
+      size: 4,
+      offset: 0,
+      ringNumber: 1,
+      substitutions: {},
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat remaps conflicting ring numbers', async () => {
@@ -173,6 +291,23 @@ test('concat remaps conflicting ring numbers', async () => {
   // The second ring should be remapped to ring 2
   assert.strictEqual(result.smiles, 'C1CCC1C2CCC2');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'C',
+      size: 4,
+      offset: 0,
+      ringNumber: 1,
+      substitutions: {},
+      attachments: {},
+    }, {
+      type: 'C',
+      size: 4,
+      offset: 4,
+      ringNumber: 2,
+      substitutions: {},
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat handles multiple ring conflicts', async () => {
@@ -183,6 +318,37 @@ test('concat handles multiple ring conflicts', async () => {
   // Rings should be remapped to 3 and 4
   assert.strictEqual(result.smiles, 'C1CCC1C2CCC2C3CCC3C4CCC4');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'C',
+      size: 4,
+      offset: 0,
+      ringNumber: 1,
+      substitutions: {},
+      attachments: {},
+    }, {
+      type: 'C',
+      size: 4,
+      offset: 4,
+      ringNumber: 2,
+      substitutions: {},
+      attachments: {},
+    }, {
+      type: 'C',
+      size: 4,
+      offset: 8,
+      ringNumber: 3,
+      substitutions: {},
+      attachments: {},
+    }, {
+      type: 'C',
+      size: 4,
+      offset: 12,
+      ringNumber: 4,
+      substitutions: {},
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat handles aromatic rings', async () => {
@@ -192,6 +358,23 @@ test('concat handles aromatic rings', async () => {
 
   assert.strictEqual(result.smiles, 'c1ccccc1c2ccccc2');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'c',
+      size: 6,
+      offset: 0,
+      ringNumber: 1,
+      substitutions: {},
+      attachments: {},
+    }, {
+      type: 'c',
+      size: 6,
+      offset: 6,
+      ringNumber: 2,
+      substitutions: {},
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat works with complex molecules', async () => {
@@ -201,6 +384,16 @@ test('concat works with complex molecules', async () => {
 
   assert.strictEqual(result.smiles, 'c1ccccc1C');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'c',
+      size: 6,
+      offset: 0,
+      ringNumber: 1,
+      substitutions: {},
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat can be used multiple times', async () => {
@@ -210,6 +403,13 @@ test('concat can be used multiple times', async () => {
   assert.strictEqual(result.smiles, 'CCCC');
   assert.strictEqual(result.atoms, 4);
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('Static Fragment.concat works', async () => {
@@ -219,12 +419,26 @@ test('Static Fragment.concat works', async () => {
 
   assert.strictEqual(result.smiles, 'CCCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('Static Fragment.concat accepts strings', async () => {
   const result = Fragment.concat('CC', 'CC');
   assert.strictEqual(result.smiles, 'CCCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat with functional groups', async () => {
@@ -235,6 +449,13 @@ test('concat with functional groups', async () => {
   assert.strictEqual(result.smiles, 'CCO');
   assert.strictEqual(result.formula, 'C2H6O');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCO',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat preserves original fragments', async () => {
@@ -247,6 +468,13 @@ test('concat preserves original fragments', async () => {
   assert.strictEqual(b.smiles, 'CC');
   assert.strictEqual(result.smiles, 'CCCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat with heterocycles', async () => {
@@ -256,6 +484,22 @@ test('concat with heterocycles', async () => {
 
   assert.strictEqual(result.smiles, 'n1ccccc1C');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'n',
+      size: 6,
+      offset: 0,
+      ringNumber: 1,
+      substitutions: {
+        2: 'c',
+        3: 'c',
+        4: 'c',
+        5: 'c',
+        6: 'c',
+      },
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat builds polymer-like chains', async () => {
@@ -269,6 +513,13 @@ test('concat builds polymer-like chains', async () => {
   assert.strictEqual(polymer.smiles, 'CCCCCCCCCC'); // 5 ethylene units = 10 carbons
   assert.strictEqual(polymer.atoms, 10);
   assert.ok(await isValidSMILES(polymer.smiles));
+  assert.deepStrictEqual(polymer.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCCCCCCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat with charged species', async () => {
@@ -278,6 +529,13 @@ test('concat with charged species', async () => {
 
   assert.strictEqual(result.smiles, '[NH3+]C');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: '[NH3+]C',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat handles double and triple bonds', async () => {
@@ -287,6 +545,13 @@ test('concat handles double and triple bonds', async () => {
 
   assert.strictEqual(result.smiles, 'C=CC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'C=CC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat with stereochemistry', async () => {
@@ -296,6 +561,21 @@ test('concat with stereochemistry', async () => {
 
   assert.strictEqual(result.smiles, 'C[C@H](O)CC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'C[C@H]CC',
+      attachments: {
+        2: [
+          {
+            type: 'linear',
+            atoms: 'O',
+            attachments: {},
+          },
+        ],
+      },
+    },
+  ]);
 });
 
 test('concat example from requirement: Fragment("CC") + Fragment("CC")', async () => {
@@ -306,6 +586,13 @@ test('concat example from requirement: Fragment("CC") + Fragment("CC")', async (
   assert.strictEqual(result.smiles, 'CCCC');
   assert.strictEqual(String(result), 'CCCC');
   assert.ok(await isValidSMILES(result.smiles));
+  assert.deepStrictEqual(result.meta, [
+    {
+      type: 'linear',
+      atoms: 'CCCC',
+      attachments: {},
+    },
+  ]);
 });
 
 test('concat returns a new Fragment with all methods', async () => {

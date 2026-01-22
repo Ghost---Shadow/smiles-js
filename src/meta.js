@@ -86,19 +86,54 @@ export class Meta {
       const convertedAttachments = {};
       Object.entries(this.attachments).forEach(([position, attachment]) => {
         if (Array.isArray(attachment)) {
-          // Handle arrays of Meta instances
-          convertedAttachments[position] = attachment.map((item) => (
-            item instanceof Meta ? item.toObject() : item
-          ));
+          // Handle arrays of attachments
+          const converted = attachment.map((item) => {
+            if (item instanceof Meta) {
+              return item.toObject();
+            }
+            if (Array.isArray(item)) {
+              // Parsed ring attachments (array of ring descriptors)
+              return item;
+            }
+            if (item?.meta && Array.isArray(item.meta)) {
+              // Handle Fragment instances (has meta array)
+              // Single meta item without ring numbers (Fragment) - unwrap
+              if (item.meta.length === 1 && !item.smiles?.includes('1')) {
+                return item.meta[0] instanceof Meta
+                  ? item.meta[0].toObject()
+                  : item.meta[0];
+              }
+              // FusedRing attachments with meta array
+              return {
+                meta: item.meta.map((ring) => (ring instanceof Meta ? ring.toObject() : ring)),
+              };
+            }
+            return item;
+          });
+          convertedAttachments[position] = converted;
         } else if (attachment instanceof Meta) {
-          convertedAttachments[position] = attachment.toObject();
+          convertedAttachments[position] = [attachment.toObject()];
         } else if (attachment?.meta) {
-          // Handle FusedRing attachments with meta array
-          convertedAttachments[position] = {
-            meta: attachment.meta.map((ring) => (ring instanceof Meta ? ring.toObject() : ring)),
-          };
+          // Handle FusedRing attachments with meta array or Fragment
+          // instances (legacy single attachment)
+          if (Array.isArray(attachment.meta)) {
+            if (attachment.meta.length === 1 && !attachment.smiles?.includes('1')) {
+              // Single meta item without ring numbers (Fragment)
+              // - unwrap and wrap in array
+              const converted = attachment.meta[0] instanceof Meta
+                ? attachment.meta[0].toObject()
+                : attachment.meta[0];
+              convertedAttachments[position] = [converted];
+            } else {
+              // FusedRing attachments with meta array
+              const metaArray = attachment.meta.map(
+                (ring) => (ring instanceof Meta ? ring.toObject() : ring),
+              );
+              convertedAttachments[position] = [{ meta: metaArray }];
+            }
+          }
         } else {
-          convertedAttachments[position] = attachment;
+          convertedAttachments[position] = [attachment];
         }
       });
       obj.attachments = convertedAttachments;

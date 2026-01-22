@@ -27,7 +27,9 @@ describe('handleAtoms', () => {
 
   test('increments atomIndex', () => {
     const context = {
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       char: 'n',
       atomIndex: 1,
     };
@@ -57,7 +59,9 @@ describe('handleAttachment', () => {
   test('extracts simple attachment content', () => {
     const context = {
       smiles: 'c(C)cc',
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       i: 1,
     };
 
@@ -71,7 +75,9 @@ describe('handleAttachment', () => {
   test('handles nested parentheses', () => {
     const context = {
       smiles: 'c(C(C)C)cc',
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       i: 1,
     };
 
@@ -85,7 +91,9 @@ describe('handleAttachment', () => {
   test('handles attachment with ring notation', () => {
     const context = {
       smiles: 'c(c1ccccc1)cc',
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       i: 1,
     };
 
@@ -113,7 +121,9 @@ describe('handleRings', () => {
       char: '1',
       ringStacks: {},
       rings: [],
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       atomIndex: 1,
     };
 
@@ -200,8 +210,8 @@ describe('handleRings', () => {
     handleRings(context);
 
     assert.deepStrictEqual(context.rings[0].attachments, {
-      2: 'C',
-      5: 'C',
+      2: ['C'],
+      5: ['C'],
     });
   });
 
@@ -270,7 +280,9 @@ describe('handleLargeRings', () => {
       smiles: '%10c',
       ringStacks: {},
       rings: [],
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       atomIndex: 1,
       i: 0,
       char: '%',
@@ -289,7 +301,9 @@ describe('handleLargeRings', () => {
       smiles: '%100c',
       ringStacks: {},
       rings: [],
-      atoms: [{ type: 'c', position: 0, attachments: [] }],
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+      ],
       atomIndex: 1,
       i: 0,
       char: '%',
@@ -383,8 +397,14 @@ describe('FusedRing.parse', () => {
         size: 6,
         ringNumber: 1,
         attachments: {
-          2: 'C',
-          5: 'C',
+          2: [{
+            type: 'linear',
+            atoms: 'C',
+          }],
+          5: [{
+            type: 'linear',
+            atoms: 'C',
+          }],
         },
       });
     });
@@ -468,26 +488,22 @@ describe('FusedRing.parse', () => {
           size: 6,
           ringNumber: 1,
           attachments: {
-            2: {
-              meta: [
-                {
-                  type: 'ring',
-                  atoms: 'c',
-                  size: 6,
-                  ringNumber: 2,
-                },
-              ],
-            },
-            5: {
-              meta: [
-                {
-                  type: 'ring',
-                  atoms: 'c',
-                  size: 6,
-                  ringNumber: 3,
-                },
-              ],
-            },
+            2: [
+              {
+                type: 'ring',
+                atoms: 'c',
+                size: 6,
+                ringNumber: 2,
+              },
+            ],
+            5: [
+              {
+                type: 'ring',
+                atoms: 'c',
+                size: 6,
+                ringNumber: 3,
+              },
+            ],
           },
         },
       ]);
@@ -499,35 +515,43 @@ describe('parse', () => {
   describe('linear structures', () => {
     test('parses vinyl (ethylene) C=C', () => {
       const result = parse('C=C');
-      assert.deepStrictEqual(result, [{
-        type: 'linear',
-        atoms: 'C=C',
-        attachments: {},
-      }]);
+      assert.deepStrictEqual(result, [
+        {
+          type: 'linear',
+          atoms: 'C=C',
+          attachments: {},
+        },
+      ]);
     });
 
     test('parses simple alkane CCC', () => {
       const result = parse('CCC');
-      assert.deepStrictEqual(result, [{
-        type: 'linear',
-        atoms: 'CCC',
-        attachments: {},
-      }]);
+      assert.deepStrictEqual(result, [
+        {
+          type: 'linear',
+          atoms: 'CCC',
+          attachments: {},
+        },
+      ]);
     });
 
     test('parses branched structure CC(C)C', () => {
       const result = parse('CC(C)C');
-      assert.deepStrictEqual(result, [{
-        type: 'linear',
-        atoms: 'CCC',
-        attachments: {
-          2: {
-            type: 'linear',
-            atoms: 'C',
-            attachments: {},
+      assert.deepStrictEqual(result, [
+        {
+          type: 'linear',
+          atoms: 'CCC',
+          attachments: {
+            2: [
+              {
+                type: 'linear',
+                atoms: 'C',
+                attachments: {},
+              },
+            ],
           },
         },
-      }]);
+      ]);
     });
   });
 

@@ -41,6 +41,7 @@ class FragmentClass {
       result += `(${remappedBranch})`;
     });
 
+    // eslint-disable-next-line no-use-before-define
     return Fragment(result);
   }
 
@@ -59,11 +60,13 @@ class FragmentClass {
     });
 
     const newSmiles = this.smiles + remappedOther;
+    // eslint-disable-next-line no-use-before-define
     return Fragment(newSmiles);
   }
 
   fuse() {
-    throw new Error('Only rings created with FusedRing can be fused. This fragment does not have ring metadata.');
+    // Intentionally throws error - this.smiles not used but method needs to be instance method
+    throw new Error(`Only rings created with FusedRing can be fused. This fragment (${this.smiles}) does not have ring metadata.`);
   }
 
   toString() {

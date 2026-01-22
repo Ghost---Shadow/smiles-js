@@ -78,12 +78,71 @@ test('Common fragments can be composed', async () => {
   const toluene = benzene(methyl);
   assert.strictEqual(toluene.smiles, 'c1ccccc1(C)');
   assert.ok(await isValidSMILES(toluene.smiles));
+  assert.deepStrictEqual(toluene.meta.map((m) => m.toObject()), [
+    {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      attachments: {
+        6: [
+          {
+            type: 'linear',
+            atoms: 'C',
+            attachments: {},
+          },
+        ],
+      },
+    },
+  ]);
 
   const phenol = benzene(hydroxyl);
   assert.strictEqual(phenol.smiles, 'c1ccccc1(O)');
   assert.ok(await isValidSMILES(phenol.smiles));
+  assert.deepStrictEqual(phenol.meta.map((m) => m.toObject()), [
+    {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      attachments: {
+        6: [
+          {
+            type: 'linear',
+            atoms: 'O',
+            attachments: {},
+          },
+        ],
+      },
+    },
+  ]);
 
   const benzoicAcid = benzene(carboxyl);
   assert.strictEqual(benzoicAcid.smiles, 'c1ccccc1(C(=O)O)');
   assert.ok(await isValidSMILES(benzoicAcid.smiles));
+  assert.deepStrictEqual(benzoicAcid.meta.map((m) => m.toObject()), [
+    {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      attachments: {
+        6: [
+          {
+            type: 'linear',
+            atoms: 'CO',
+            attachments: {
+              1: [
+                {
+                  type: 'linear',
+                  atoms: '=O',
+                  attachments: {},
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ]);
 });

@@ -90,10 +90,10 @@ describe('Meta.toObject', () => {
       type: 'linear',
       atoms: 'CC',
       attachments: {
-        1: {
+        1: [{
           type: 'linear',
           atoms: 'CC',
-        },
+        }],
       },
     });
   });
