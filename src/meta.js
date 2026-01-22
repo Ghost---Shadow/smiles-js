@@ -31,6 +31,53 @@ export class Meta {
   }
 
   /**
+   * Factory method that ensures we don't double-wrap Meta instances
+   * @param {*} obj - Plain object or existing Meta/FusedRing instance
+   * @returns {Meta|*} Meta instance or original if already wrapped
+   */
+  static from(obj) {
+    // Already a Meta
+    if (obj instanceof Meta) {
+      return obj;
+    }
+    // Check if it's a FusedRing instance (has .smiles property or .meta property)
+    if (typeof obj === 'function' || obj.smiles !== undefined || obj.meta !== undefined) {
+      return obj;
+    }
+    // Primitive value (string) - treat as linear atoms
+    if (typeof obj === 'string') {
+      return new Meta({
+        type: MetaType.LINEAR,
+        atoms: obj,
+      });
+    }
+    // Plain object with RING type needs special handling
+    if (obj.type === MetaType.RING) {
+      // Import FusedRing here to avoid circular dependency
+      // eslint-disable-next-line global-require
+      const { FusedRing } = require('./fused-ring.js');
+      return FusedRing([obj], { purgeRingNumbers: false });
+    }
+    // Plain object - convert to Meta
+    return new Meta({
+      type: obj.type || MetaType.LINEAR,
+      atoms: obj.atoms,
+      size: obj.size,
+    });
+  }
+
+  /**
+   * Get SMILES representation for linear Meta types
+   * @returns {string} SMILES string
+   */
+  get smiles() {
+    if (this.type === MetaType.LINEAR) {
+      return this.atoms;
+    }
+    return null;
+  }
+
+  /**
    * Create a new Meta with updated properties (uses deep merge for nested objects)
    * @param {Object} updates - Properties to update
    * @returns {Meta} New Meta instance with updates applied

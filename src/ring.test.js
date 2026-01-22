@@ -33,7 +33,12 @@ describe('Ring', () => {
       type: 'c',
       size: 6,
       attachments: {
-        3: 'Cl',
+        3: [
+          {
+            type: 'linear',
+            atoms: 'Cl',
+          },
+        ],
       },
     });
     assert.strictEqual(benzeneWithCl.smiles, 'c1cc(Cl)ccc1');
@@ -53,7 +58,11 @@ describe('buildRing method', () => {
       {
         type: 'c',
         size: 6,
-        substitutions: { 2: 'n', 4: 'n', 6: 'n' },
+        substitutions: {
+          2: 'n',
+          4: 'n',
+          6: 'n',
+        },
       },
       1,
     );
@@ -112,12 +121,19 @@ describe('Ring with ring counter on connection', () => {
     const naphthalene = benzene.fuse(Ring({ type: 'c', size: 6, offset: 3 }));
 
     // Naphthalene uses rings 1 and 2, should track this in meta
-    assert.deepStrictEqual(naphthalene.meta.map((m) => m.toObject()), [
+    assert.deepStrictEqual(naphthalene.meta.toObject(), [
       {
-        type: 'ring', atoms: 'c', size: 6, ringNumber: 1,
+        type: 'ring',
+        atoms: 'c',
+        size: 6,
+        ringNumber: 1,
       },
       {
-        type: 'ring', atoms: 'c', size: 6, offset: 3, ringNumber: 2,
+        type: 'ring',
+        atoms: 'c',
+        size: 6,
+        offset: 3,
+        ringNumber: 2,
       },
     ]);
   });
@@ -161,11 +177,18 @@ describe('fuse method', () => {
     const fused = ring1.fuse(ring2);
 
     assert.strictEqual(fused.meta.length, 2);
-    assert.deepStrictEqual(fused.meta[0].toObject(), {
-      type: 'ring', atoms: 'c', size: 6, ringNumber: 1,
-    });
-    assert.deepStrictEqual(fused.meta[1].toObject(), {
-      type: 'ring', atoms: 'c', size: 5, offset: 3, ringNumber: 2,
-    });
+    assert.deepStrictEqual(fused.meta.toObject(), [{
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+    },
+    {
+      type: 'ring',
+      atoms: 'c',
+      size: 5,
+      offset: 3,
+      ringNumber: 2,
+    }]);
   });
 });
