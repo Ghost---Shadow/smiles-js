@@ -162,7 +162,6 @@ describe('FusedRing with ring counter on connection', () => {
         type: 'c',
         size: 6,
         attachments: {
-          // toObject should always return array
           3: cyclohexane.toObject(),
         },
       },

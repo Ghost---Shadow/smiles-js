@@ -16,10 +16,10 @@ class FusedRingClass {
         type, atoms, attachments = {}, ...rest
       } = ring;
 
-      // Normalize attachments to arrays
+      // Normalize attachments to arrays and convert to Meta instances
       const normalizedAttachments = {};
       Object.entries(attachments).forEach(([pos, attachment]) => {
-        normalizedAttachments[pos] = [attachment];
+        normalizedAttachments[pos] = attachment.map((att) => Meta.from(att));
       });
 
       return new Meta({
@@ -39,7 +39,7 @@ class FusedRingClass {
     const ringsWithNumbers = FusedRingClass.assignRingNumbers(metaRings);
 
     this.meta = MetaList.from(ringsWithNumbers);
-    this.fragment = this.build(ringsWithNumbers);
+    this.fragment = FusedRingClass.build(ringsWithNumbers);
 
     // Make the instance callable by returning a function with instance methods
     const callable = (attachment) => this.attach(attachment);
@@ -47,6 +47,15 @@ class FusedRingClass {
     // Copy all properties and methods to the callable function
     Object.setPrototypeOf(callable, Object.getPrototypeOf(this));
     Object.assign(callable, this);
+
+    // Copy getters explicitly - use callable.fragment since Object.assign copied it
+    Object.defineProperty(callable, 'smiles', {
+      get() {
+        return callable.fragment.smiles;
+      },
+      enumerable: true,
+      configurable: true,
+    });
 
     // eslint-disable-next-line no-constructor-return
     return callable;
@@ -90,10 +99,12 @@ class FusedRingClass {
       Object.entries(meta.attachments).forEach(([position, attachmentArray]) => {
         newAttachments[position] = attachmentArray.map((item) => {
           if (item instanceof FusedRingClass) {
-            // Recurse into the FusedRing's meta
-            const attachedRingsWithNumbers = item.meta
-              .map((attachedMeta) => processRing(attachedMeta.update({ ringNumber: null })));
-            return { meta: attachedRingsWithNumbers };
+            // Purge ring numbers from attached FusedRing and assign new ones
+            const purgedMeta = FusedRingClass.purgeRingNumbers(item.meta);
+            const renumberedMeta = purgedMeta.map((attachedMeta) => processRing(attachedMeta));
+            // Create new FusedRing with renumbered meta
+            // eslint-disable-next-line no-use-before-define
+            return FusedRing(renumberedMeta.map((m) => m.toObject()), { purgeRingNumbers: false });
           }
           // Simple attachment (Meta instance)
           return item;
@@ -112,19 +123,19 @@ class FusedRingClass {
    * @param {Array<Meta>} rings - Array of Meta instances with ringNumber field
    * @returns {Fragment} Built fragment
    */
-  build(rings) {
+  static build(rings) {
     // Sort rings from largest to smallest
     const sortedRings = [...rings].sort((a, b) => b.size - a.size);
 
     // Build the SMILES structure
-    let atoms = this.buildRing(sortedRings[0]);
+    let atoms = FusedRingClass.buildRing(sortedRings[0]);
 
     // Wrap each subsequent ring around the previous structure
     for (let ringIdx = 1; ringIdx < sortedRings.length; ringIdx += 1) {
       const meta = sortedRings[ringIdx];
       const { offset } = meta;
 
-      const newRingAtoms = this.buildRing(meta);
+      const newRingAtoms = FusedRingClass.buildRing(meta);
 
       const beforeFusion = atoms.slice(0, offset);
       const afterFusion = atoms.slice(offset + 2);
@@ -207,6 +218,10 @@ class FusedRingClass {
 
   get smiles() {
     return this.fragment.smiles;
+  }
+
+  toObject() {
+    return this.meta.toObject();
   }
 
   toString() {
