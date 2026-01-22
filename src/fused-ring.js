@@ -19,22 +19,7 @@ class FusedRingClass {
       // Normalize attachments to arrays
       const normalizedAttachments = {};
       Object.entries(attachments).forEach(([pos, attachment]) => {
-        // Check if already an array
-        if (Array.isArray(attachment)) {
-          // Already an array, process each item
-          normalizedAttachments[pos] = attachment.map((item) => {
-            if (typeof item === 'string') {
-              return new Meta({ type: MetaType.LINEAR, atoms: item });
-            }
-            return item;
-          });
-        } else if (typeof attachment === 'string') {
-          // Single string - convert to Meta and wrap in array
-          normalizedAttachments[pos] = [new Meta({ type: MetaType.LINEAR, atoms: attachment })];
-        } else {
-          // Single item (FusedRingClass, Meta, etc.) - wrap in array
-          normalizedAttachments[pos] = [attachment];
-        }
+        normalizedAttachments[pos] = [attachment];
       });
 
       return new Meta({
@@ -158,12 +143,30 @@ class FusedRingClass {
 
   /**
    * Build a ring with attachments handling
-   * @param {Meta} meta - Meta instance with ring descriptor
+   * Can be called with either:
+   * - (meta: Meta) - Meta instance with ringNumber already set
+   * - (ringDesc: Object, ringNumber: number) - Ring descriptor and explicit ring number
    * @returns {Array<string>} Array of atom strings
    */
-  buildRing(meta) {
+  static buildRing(metaOrDesc, explicitRingNumber) {
+    // Handle two-argument form: buildRing(ringDesc, ringNumber)
+    let meta = metaOrDesc;
+    if (explicitRingNumber !== undefined) {
+      const { type, ...rest } = metaOrDesc;
+      meta = new Meta({
+        type: MetaType.RING,
+        atoms: type,
+        ...rest,
+        ringNumber: explicitRingNumber,
+      });
+    }
+
     const {
-      size, atoms, substitutions, attachments, ringNumber,
+      size,
+      atoms,
+      substitutions,
+      attachments,
+      ringNumber,
     } = meta;
 
     // Format ring number (use %NN notation for numbers > 9)
@@ -184,40 +187,7 @@ class FusedRingClass {
 
       let allAttachmentsSmiles = '';
       attachmentArray.forEach((attachment) => {
-        let attachSmiles;
-        if (attachment instanceof Meta) {
-          // Meta instance (linear attachment)
-          attachSmiles = attachment.atoms;
-        } else if (attachment instanceof FusedRingClass) {
-          // FusedRing instance
-          attachSmiles = attachment.smiles;
-        } else if (attachment?.smiles) {
-          // Fragment or other object with smiles property
-          attachSmiles = attachment.smiles;
-        } else if (Array.isArray(attachment)) {
-          // Parsed ring attachment (array of ring descriptors) - convert to Meta and build
-          const metaRings = attachment.map((ring) => {
-            if (ring instanceof Meta) {
-              return ring;
-            }
-            const { type, atoms: ringAtoms, ...rest } = ring;
-            return new Meta({
-              type: MetaType.RING,
-              atoms: ringAtoms || type,
-              ...rest,
-            });
-          });
-          const rebuiltFragment = this.build(metaRings);
-          attachSmiles = rebuiltFragment.smiles;
-        } else if (attachment?.meta) {
-          // Fused ring attachment (plain object with meta array) - rebuild with reassigned numbers
-          const rebuiltFragment = this.build(attachment.meta);
-          attachSmiles = rebuiltFragment.smiles;
-        } else {
-          // Unknown attachment type
-          attachSmiles = String(attachment);
-        }
-        allAttachmentsSmiles += `(${attachSmiles})`;
+        allAttachmentsSmiles += `(${attachment.smiles})`;
       });
 
       // For the last position (ring closure), attachment goes after ring number
@@ -332,26 +302,6 @@ class FusedRingClass {
     // Combine rings (constructor will purge and reassign ring numbers)
     const combinedRings = [...this.meta, ...other.meta];
     return new FusedRingClass(combinedRings);
-  }
-
-  /**
-   * Static helper to build a single ring (for testing/convenience)
-   * @param {Object} ringDesc - Ring descriptor
-   * @param {number} ringNumber - Ring closure number
-   * @returns {Array<string>} Array of atom strings
-   */
-  static buildRing(ringDesc, ringNumber) {
-    // Create Meta instance with ring number, mapping type to atoms
-    const { type, ...rest } = ringDesc;
-    const meta = new Meta({
-      type: MetaType.RING,
-      atoms: type,
-      ...rest,
-      ringNumber,
-    });
-    const tempInstance = new FusedRingClass([{ type, ...rest },
-    ]);
-    return tempInstance.buildRing(meta);
   }
 }
 
