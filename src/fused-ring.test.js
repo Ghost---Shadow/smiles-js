@@ -42,7 +42,8 @@ describe('FusedRing', () => {
 
   test('creates benzene with chlorine attachment', async () => {
     const parameters = {
-      type: 'c',
+      type: 'ring',
+      atoms: 'c',
       size: 6,
       attachments: {
         3: 'Cl',
@@ -51,9 +52,7 @@ describe('FusedRing', () => {
     const benzeneWithCl = FusedRing([parameters]);
     assert.strictEqual(benzeneWithCl.smiles, 'c1cc(Cl)ccc1');
     assert.deepStrictEqual(benzeneWithCl.meta.toObject(), [{
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
+      ...parameters,
       ringNumber: 1,
       attachments: {
         3: [
@@ -70,11 +69,13 @@ describe('FusedRing', () => {
   test('creates napthalene', async () => {
     const parameters = [
       {
-        type: 'c',
+        type: 'ring',
+        atoms: 'c',
         size: 6,
       },
       {
-        type: 'c',
+        type: 'ring',
+        atoms: 'c',
         size: 6,
         offset: 3,
       },
@@ -83,16 +84,11 @@ describe('FusedRing', () => {
     assert.strictEqual(napthalene.smiles, 'c1ccc2ccccc2c1');
     assert.deepStrictEqual(napthalene.meta.toObject(), [
       {
-        type: 'ring',
-        atoms: 'c',
-        size: 6,
+        ...parameters[0],
         ringNumber: 1,
       },
       {
-        type: 'ring',
-        atoms: 'c',
-        size: 6,
-        offset: 3,
+        ...parameters[1],
         ringNumber: 2,
       },
     ]);
@@ -133,22 +129,18 @@ describe('buildRing method', () => {
 
 describe('FusedRing with ring counter on connection', () => {
   test('independent FusedRing always starts at ring 1', async () => {
-    const parameters = { type: 'c', size: 6 };
+    const parameters = { type: 'ring', atoms: 'c', size: 6 };
     const benzene1 = FusedRing([parameters]);
     const benzene2 = FusedRing([parameters]);
     // Both independent, both use ring number 1
     assert.strictEqual(benzene1.smiles, 'c1ccccc1');
     assert.deepStrictEqual(benzene1.meta.toObject(), [{
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
+      ...parameters,
       ringNumber: 1,
     }]);
     assert.strictEqual(benzene2.smiles, 'c1ccccc1');
     assert.deepStrictEqual(benzene2.meta.toObject(), [{
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
+      ...parameters,
       ringNumber: 1,
     }]);
     assert.ok(await isValidSMILES(benzene1.smiles));
@@ -286,92 +278,83 @@ describe('FusedRing with ring counter on connection', () => {
 
   test('avoids ring numbers when attached via fusing', async () => {
     // This test will work once Fragment.attach() respects ring numbers
-    const napthalenePart1 = FusedRing([
-      {
-        type: 'c',
-        size: 6,
-      },
-    ]);
-    const napthalenePart2 = FusedRing([
-      {
-        type: 'c',
-        size: 6,
-        offset: 3,
-      },
-    ]);
+    const parameters1 = {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+    };
+    const parameters2 = {
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      offset: 3,
+    };
+    const napthalenePart1 = FusedRing([parameters1]);
+    const napthalenePart2 = FusedRing([parameters2]);
 
     // Picks up offset automatically
     const newCompound = napthalenePart1.fuse(napthalenePart2);
 
     // Expected: benzene (ring 1) attached to cyclohexane (ring 2)
     assert.strictEqual(newCompound.smiles, 'c1ccc2ccccc2c1');
-    assert.strictEqual(newCompound.meta.length, 2);
-    assert.deepStrictEqual(newCompound.meta[0].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      ringNumber: 1,
-    });
-    assert.deepStrictEqual(newCompound.meta[1].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      offset: 3,
-      ringNumber: 2,
-    });
+    assert.deepStrictEqual(newCompound.meta.toObject(), [
+      {
+        ...parameters1,
+        ringNumber: 1,
+      },
+      {
+        ...parameters2,
+        ringNumber: 2,
+      },
+    ]);
     assert.ok(await isValidSMILES(newCompound.smiles));
   });
 
   test('tracks used ring numbers in meta for connected fragments', async () => {
-    const naphthalene = FusedRing([
-      { type: 'c', size: 6 },
-      { type: 'c', size: 6, offset: 3 },
-    ]);
+    const parameters = [
+      { type: 'ring', atoms: 'c', size: 6 },
+      {
+        type: 'ring', atoms: 'c', size: 6, offset: 3,
+      },
+    ];
+    const naphthalene = FusedRing(parameters);
 
     // Naphthalene uses rings 1 and 2
-    assert.strictEqual(naphthalene.meta.length, 2);
-    assert.deepStrictEqual(naphthalene.meta[0].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      ringNumber: 1,
-    });
-    assert.deepStrictEqual(naphthalene.meta[1].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      offset: 3,
-      ringNumber: 2,
-    });
+    assert.deepStrictEqual(naphthalene.meta.toObject(), [
+      {
+        ...parameters[0],
+        ringNumber: 1,
+      },
+      {
+        ...parameters[1],
+        ringNumber: 2,
+      },
+    ]);
   });
 });
 
 describe('fuse method', () => {
   test('fuses two benzene rings to create naphthalene', async () => {
-    const benzene1 = FusedRing([
-      { type: 'c', size: 6 },
-    ]);
-    const benzene2 = FusedRing([
-      { type: 'c', size: 6, offset: 3 },
-    ]);
+    const parameters1 = { type: 'ring', atoms: 'c', size: 6 };
+    const parameters2 = {
+      type: 'ring', atoms: 'c', size: 6, offset: 3,
+    };
+    const benzene1 = FusedRing([parameters1]);
+    const benzene2 = FusedRing([parameters2]);
 
     const naphthalene = benzene1.fuse(benzene2);
 
     assert.strictEqual(naphthalene.smiles, 'c1ccc2ccccc2c1');
-    assert.strictEqual(naphthalene.meta.length, 2);
-    assert.deepStrictEqual(naphthalene.meta[0].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      ringNumber: 1,
-    });
-    assert.deepStrictEqual(naphthalene.meta[1].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      offset: 3,
-      ringNumber: 2,
-    });
+    assert.deepStrictEqual(naphthalene.meta.toObject(), [
+      {
+        ...parameters1,
+        ringNumber: 1,
+      },
+      {
+        ...parameters2,
+        ringNumber: 2,
+      },
+    ]);
     assert.ok(await isValidSMILES(naphthalene.smiles));
   });
 
@@ -388,56 +371,48 @@ describe('fuse method', () => {
   });
 
   test('accepts FusedRing as second parameter', async () => {
-    const benzene1 = FusedRing([
-      { type: 'c', size: 6 },
-    ]);
-    const benzene2 = FusedRing([
-      { type: 'c', size: 6, offset: 3 },
-    ]);
+    const parameters1 = { type: 'ring', atoms: 'c', size: 6 };
+    const parameters2 = {
+      type: 'ring', atoms: 'c', size: 6, offset: 3,
+    };
+    const benzene1 = FusedRing([parameters1]);
+    const benzene2 = FusedRing([parameters2]);
 
     const naphthalene = benzene1.fuse(benzene2);
 
     assert.strictEqual(naphthalene.smiles, 'c1ccc2ccccc2c1');
-    assert.strictEqual(naphthalene.meta.length, 2);
-    assert.deepStrictEqual(naphthalene.meta[0].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      ringNumber: 1,
-    });
-    assert.deepStrictEqual(naphthalene.meta[1].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      offset: 3,
-      ringNumber: 2,
-    });
+    assert.deepStrictEqual(naphthalene.meta.toObject(), [
+      {
+        ...parameters1,
+        ringNumber: 1,
+      },
+      {
+        ...parameters2,
+        ringNumber: 2,
+      },
+    ]);
     assert.ok(await isValidSMILES(naphthalene.smiles));
   });
 
   test('combines ring descriptors from both fragments', () => {
-    const ring1 = FusedRing([
-      { type: 'c', size: 6 },
-    ]);
-    const ring2 = FusedRing([
-      { type: 'c', size: 5, offset: 3 },
-    ]);
+    const parameters1 = { type: 'ring', atoms: 'c', size: 6 };
+    const parameters2 = {
+      type: 'ring', atoms: 'c', size: 5, offset: 3,
+    };
+    const ring1 = FusedRing([parameters1]);
+    const ring2 = FusedRing([parameters2]);
 
     const fused = ring1.fuse(ring2);
 
-    assert.strictEqual(fused.meta.length, 2);
-    assert.deepStrictEqual(fused.meta[0].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 6,
-      ringNumber: 1,
-    });
-    assert.deepStrictEqual(fused.meta[1].toObject(), {
-      type: 'ring',
-      atoms: 'c',
-      size: 5,
-      offset: 3,
-      ringNumber: 2,
-    });
+    assert.deepStrictEqual(fused.meta.toObject(), [
+      {
+        ...parameters1,
+        ringNumber: 1,
+      },
+      {
+        ...parameters2,
+        ringNumber: 2,
+      },
+    ]);
   });
 });
