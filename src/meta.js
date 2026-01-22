@@ -85,7 +85,12 @@ export class Meta {
     if (Meta.shouldInclude(this.attachments)) {
       const convertedAttachments = {};
       Object.entries(this.attachments).forEach(([position, attachment]) => {
-        if (attachment instanceof Meta) {
+        if (Array.isArray(attachment)) {
+          // Handle arrays of Meta instances
+          convertedAttachments[position] = attachment.map((item) => (
+            item instanceof Meta ? item.toObject() : item
+          ));
+        } else if (attachment instanceof Meta) {
           convertedAttachments[position] = attachment.toObject();
         } else if (attachment?.meta) {
           // Handle FusedRing attachments with meta array

@@ -21,10 +21,12 @@ describe('Linear', () => {
       type: 'linear',
       atoms: 'CCC',
       attachments: {
-        2: {
-          type: 'linear',
-          atoms: 'C',
-        },
+        2: [
+          {
+            type: 'linear',
+            atoms: 'C',
+          },
+        ],
       },
     });
     assert.ok(await isValidSMILES(branched.smiles));
@@ -79,10 +81,12 @@ describe('Linear.attach method', () => {
       type: 'linear',
       atoms: 'CC',
       attachments: {
-        2: {
-          type: 'linear',
-          atoms: 'O',
-        },
+        2: [
+          {
+            type: 'linear',
+            atoms: 'O',
+          },
+        ],
       },
     });
     assert.ok(await isValidSMILES(result.smiles));
@@ -97,10 +101,12 @@ describe('Linear.attach method', () => {
       type: 'linear',
       atoms: 'CCC',
       attachments: {
-        2: {
-          type: 'linear',
-          atoms: 'O',
-        },
+        2: [
+          {
+            type: 'linear',
+            atoms: 'O',
+          },
+        ],
       },
     });
     assert.ok(await isValidSMILES(result.smiles));
@@ -114,14 +120,18 @@ describe('Linear.attach method', () => {
       type: 'linear',
       atoms: 'CC',
       attachments: {
-        1: {
-          type: 'linear',
-          atoms: 'O',
-        },
-        2: {
-          type: 'linear',
-          atoms: 'N',
-        },
+        1: [
+          {
+            type: 'linear',
+            atoms: 'O',
+          },
+        ],
+        2: [
+          {
+            type: 'linear',
+            atoms: 'N',
+          },
+        ],
       },
     });
     assert.ok(await isValidSMILES(result.smiles));
@@ -229,10 +239,12 @@ describe('Linear.meta', () => {
       type: 'linear',
       atoms: 'CC',
       attachments: {
-        1: {
-          type: 'linear',
-          atoms: 'O',
-        },
+        1: [
+          {
+            type: 'linear',
+            atoms: 'O',
+          },
+        ],
       },
     });
   });
@@ -245,20 +257,26 @@ describe('Linear.meta', () => {
       type: 'linear',
       atoms: 'CCCC',
       attachments: {
-        1: {
-          type: 'linear',
-          atoms: 'CC',
-          attachments: {
-            1: {
-              type: 'linear',
-              atoms: 'CC',
+        1: [
+          {
+            type: 'linear',
+            atoms: 'CC',
+            attachments: {
+              1: [
+                {
+                  type: 'linear',
+                  atoms: 'CC',
+                },
+              ],
             },
           },
-        },
-        2: {
-          type: 'linear',
-          atoms: 'CC',
-        },
+        ],
+        2: [
+          {
+            type: 'linear',
+            atoms: 'CC',
+          },
+        ],
       },
     });
     assert.strictEqual(result.smiles, 'C(C(CC)C)C(CC)CC');

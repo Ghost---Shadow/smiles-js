@@ -43,15 +43,40 @@ class LinearClass {
 
     // Convert nested attachments to Meta instances
     const metaAttachments = {};
-    Object.entries(attachments).forEach(([pos, attachment]) => {
-      metaAttachments[pos] = LinearClass.convertToMeta(attachment);
-    });
+    if (attachments) {
+      Object.entries(attachments).forEach(([pos, attachmentArray]) => {
+        metaAttachments[pos] = attachmentArray.map(
+          (attachment) => LinearClass.convertToMeta(attachment),
+        );
+      });
+    }
 
     return new Meta({
       type: MetaType.LINEAR,
       atoms,
       attachments: metaAttachments,
     });
+  }
+
+  /**
+   * Append attachments to result string
+   * @param {Array|Object} attachmentData - Attachment or array of attachments
+   * @returns {string} SMILES string for attachments
+   */
+  static appendAttachments(attachmentData) {
+    const attachmentArray = Array.isArray(attachmentData)
+      ? attachmentData
+      : [attachmentData];
+
+    let result = '';
+    attachmentArray.forEach((attachment) => {
+      if (attachment instanceof Meta) {
+        result += `(${LinearClass.buildSmiles(attachment)})`;
+      } else if (attachment.smiles) {
+        result += `(${attachment.smiles})`;
+      }
+    });
+    return result;
   }
 
   /**
@@ -86,14 +111,9 @@ class LinearClass {
         atomIndex += 1;
         i = j;
 
-        // Add attachment
+        // Add attachment(s)
         if (attachments[atomIndex]) {
-          const attachment = attachments[atomIndex];
-          if (attachment instanceof Meta) {
-            result += `(${LinearClass.buildSmiles(attachment)})`;
-          } else if (attachment.smiles) {
-            result += `(${attachment.smiles})`;
-          }
+          result += LinearClass.appendAttachments(attachments[atomIndex]);
         }
       } else {
         // Regular atom
@@ -107,14 +127,9 @@ class LinearClass {
 
         atomIndex += 1;
 
-        // Add attachment
+        // Add attachment(s)
         if (attachments[atomIndex]) {
-          const attachment = attachments[atomIndex];
-          if (attachment instanceof Meta) {
-            result += `(${LinearClass.buildSmiles(attachment)})`;
-          } else if (attachment.smiles) {
-            result += `(${attachment.smiles})`;
-          }
+          result += LinearClass.appendAttachments(attachments[atomIndex]);
         }
       }
     }
@@ -146,11 +161,14 @@ class LinearClass {
     // Count atoms (excluding bond symbols)
     const atomsCount = this.meta.atoms.replace(/[=#]/g, '').length;
 
-    // Merge attachments with adjusted positions
-    const newAttachments = { ...this.meta.attachments };
-    Object.entries(otherLinear.meta.attachments).forEach(([pos, attachment]) => {
+    // Merge attachments with adjusted positions (deep clone arrays)
+    const newAttachments = {};
+    Object.entries(this.meta.attachments).forEach(([pos, attachmentArray]) => {
+      newAttachments[pos] = [...attachmentArray];
+    });
+    Object.entries(otherLinear.meta.attachments).forEach(([pos, attachmentArray]) => {
       const adjustedPos = parseInt(pos, 10) + atomsCount;
-      newAttachments[adjustedPos] = attachment;
+      newAttachments[adjustedPos] = [...attachmentArray];
     });
 
     // Merge atoms
@@ -188,19 +206,17 @@ class LinearClass {
   attachAt(position, branch) {
     const branchLinear = typeof branch === 'string' ? new LinearClass(branch) : branch;
 
-    // Clone existing attachments
-    const newAttachments = { ...this.meta.attachments };
+    // Clone existing attachments (deep clone for arrays)
+    const newAttachments = {};
+    Object.entries(this.meta.attachments).forEach(([pos, attachmentArray]) => {
+      newAttachments[pos] = [...attachmentArray];
+    });
 
-    // If position already has an attachment, concatenate with it
+    // Add new attachment to the array at this position
     if (newAttachments[position]) {
-      const existingLinear = LinearClass.fromMeta(
-        LinearClass.buildSmiles(newAttachments[position]),
-        newAttachments[position],
-      );
-      const concatenated = existingLinear.concat(branchLinear);
-      newAttachments[position] = concatenated.meta;
+      newAttachments[position].push(branchLinear.meta);
     } else {
-      newAttachments[position] = branchLinear.meta;
+      newAttachments[position] = [branchLinear.meta];
     }
 
     // Create new meta
