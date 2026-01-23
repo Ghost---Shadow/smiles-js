@@ -1,5 +1,5 @@
-import { test } from 'bun:test';
-import assert from 'bun:assert';
+import { test } from 'node:test';
+import assert from 'node:assert';
 import { Fragment } from '../src/index.js';
 
 test('Fragment - benzene', async () => {

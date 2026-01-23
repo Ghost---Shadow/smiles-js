@@ -1,4 +1,7 @@
 import initRDKitModule from '@rdkit/rdkit';
+import { attachFragmentAt } from './attach-fragment.js';
+import { fuseFragmentsAtEdge } from './fuse-fragments.js';
+import { getElementSymbol } from './utils.js';
 
 // Cache RDKit instance
 let rdkitPromise = null;
@@ -12,61 +15,6 @@ async function getRDKit() {
     rdkitPromise = initRDKitModule();
   }
   return rdkitPromise;
-}
-
-/**
- * Map atomic number to element symbol
- * @param {number} z - Atomic number
- * @returns {string} Element symbol
- */
-function getElementSymbol(z) {
-  const elements = {
-    1: 'H',
-    2: 'He',
-    3: 'Li',
-    4: 'Be',
-    5: 'B',
-    6: 'C',
-    7: 'N',
-    8: 'O',
-    9: 'F',
-    10: 'Ne',
-    11: 'Na',
-    12: 'Mg',
-    13: 'Al',
-    14: 'Si',
-    15: 'P',
-    16: 'S',
-    17: 'Cl',
-    18: 'Ar',
-    19: 'K',
-    20: 'Ca',
-    21: 'Sc',
-    22: 'Ti',
-    23: 'V',
-    24: 'Cr',
-    25: 'Mn',
-    26: 'Fe',
-    27: 'Co',
-    28: 'Ni',
-    29: 'Cu',
-    30: 'Zn',
-    31: 'Ga',
-    32: 'Ge',
-    33: 'As',
-    34: 'Se',
-    35: 'Br',
-    36: 'Kr',
-    37: 'Rb',
-    38: 'Sr',
-    47: 'Ag',
-    48: 'Cd',
-    53: 'I',
-    79: 'Au',
-    80: 'Hg',
-    82: 'Pb',
-  };
-  return elements[z] || 'X';
 }
 
 /**
@@ -170,6 +118,26 @@ export async function Fragment(smiles) {
 
     [Symbol.toPrimitive]() {
       return this.smiles;
+    },
+
+    /**
+     * Attach another fragment at a specific position
+     * @param {number|number[]} position - Atom position(s) to attach at
+     * @param {Fragment} fragment - Fragment to attach
+     * @param {Object} options - Options for attachment
+     * @param {number} options.attachmentPosition - Position on the fragment to attach from
+     * @returns {Promise<Fragment>}
+     */
+    async attachAt(position, fragmentToAttach, options = {}) {
+      if (Array.isArray(position)) {
+        return fuseFragmentsAtEdge(this, position, fragmentToAttach, Fragment);
+      }
+      return attachFragmentAt(
+        this,
+        position,
+        fragmentToAttach,
+        { ...options, FragmentConstructor: Fragment },
+      );
     },
   };
 
