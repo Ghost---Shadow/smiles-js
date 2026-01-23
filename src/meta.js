@@ -115,12 +115,16 @@ export class Meta {
    * Check if a value should be included in the output object
    * @param {*} value - Value to check
    * @param {*} defaultValue - Default value to compare against
+   * @param {string} fieldName - Name of the field being checked
    * @returns {boolean} True if value should be included
    */
-  static shouldInclude(value, defaultValue = null) {
+  static shouldInclude(value, defaultValue = null, fieldName = '') {
     if (value === null || value === undefined) return false;
     if (defaultValue === 0 && value === 0) return false;
     if (typeof value === 'object' && !Array.isArray(value)) {
+      // Always include attachments even if empty (for API consistency)
+      if (fieldName === 'attachments') return true;
+      // Exclude other empty objects
       return Object.keys(value).length > 0;
     }
     return true;
@@ -132,20 +136,33 @@ export class Meta {
    * @returns {Object} Plain object representation
    */
   toObject() {
-    const obj = {
-      type: this.type,
-    };
+    const obj = {};
+
+    // Normalize type field: if this has a size field, it's a ring
+    if (this.size !== null && this.size !== undefined) {
+      obj.type = 'ring';
+      // For rings, atoms field should be set from either atoms or type
+      if (Meta.shouldInclude(this.atoms)) {
+        obj.atoms = this.atoms;
+      } else if (this.type !== MetaType.RING && this.type !== MetaType.LINEAR) {
+        // Legacy: type contains the atom type
+        obj.atoms = this.type;
+      }
+    } else {
+      obj.type = this.type;
+      // For linear types, include atoms field
+      if (Meta.shouldInclude(this.atoms)) obj.atoms = this.atoms;
+    }
 
     // Add fields if they should be included
     if (Meta.shouldInclude(this.size)) obj.size = this.size;
-    if (Meta.shouldInclude(this.atoms)) obj.atoms = this.atoms;
     if (Meta.shouldInclude(this.offset, 0)) obj.offset = this.offset;
     if (Meta.shouldInclude(this.ringNumber)) obj.ringNumber = this.ringNumber;
-    if (Meta.shouldInclude(this.substitutions)) obj.substitutions = this.substitutions;
+    if (Meta.shouldInclude(this.substitutions, null, 'substitutions')) obj.substitutions = this.substitutions;
 
-    // Recursively convert attachments
-    if (Meta.shouldInclude(this.attachments)) {
-      const convertedAttachments = {};
+    // Recursively convert attachments (always include)
+    const convertedAttachments = {};
+    if (this.attachments) {
       Object.entries(this.attachments).forEach(([position, attachment]) => {
         if (Array.isArray(attachment)) {
           // Handle arrays of attachments
@@ -218,8 +235,8 @@ export class Meta {
           convertedAttachments[position] = [attachment];
         }
       });
-      obj.attachments = convertedAttachments;
     }
+    obj.attachments = convertedAttachments;
 
     return obj;
   }

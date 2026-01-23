@@ -58,6 +58,7 @@ describe('Meta.toObject', () => {
     assert.deepStrictEqual(meta.toObject(), {
       type: 'linear',
       atoms: 'CCC',
+      attachments: {},
     });
   });
 
@@ -73,6 +74,7 @@ describe('Meta.toObject', () => {
       atoms: 'c',
       size: 6,
       ringNumber: 1,
+      attachments: {},
     });
   });
 
@@ -93,6 +95,7 @@ describe('Meta.toObject', () => {
         1: [{
           type: 'linear',
           atoms: 'CC',
+          attachments: {},
         }],
       },
     });

@@ -12,7 +12,7 @@ test('README example: toluene', async () => {
   const toluene = benzeneRing(methylGroup);
   assert.ok(await isValidSMILES(toluene.smiles));
   assert.strictEqual(String(toluene), 'c1ccccc1(C)');
-  assert.deepStrictEqual(toluene.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(toluene.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',
@@ -37,7 +37,7 @@ test('README example: ethanol', async () => {
   const ethanol = ethyl(hydroxylGroup);
   assert.ok(await isValidSMILES(ethanol.smiles));
   assert.strictEqual(ethanol.smiles, 'CC(O)');
-  assert.deepStrictEqual(ethanol.meta, [
+  assert.deepStrictEqual(ethanol.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'CC',
@@ -59,7 +59,7 @@ test('README example: acetone', async () => {
   const acetone = methylGroup(Fragment('=O'))(methylGroup);
   assert.ok(await isValidSMILES(acetone.smiles));
   assert.strictEqual(acetone.smiles, 'C(=O)(C)');
-  assert.deepStrictEqual(acetone.meta, [
+  assert.deepStrictEqual(acetone.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'C',
@@ -88,7 +88,7 @@ test('README example: nested branching', async () => {
   const molecule = a(b(c));
   assert.ok(await isValidSMILES(molecule.smiles));
   assert.strictEqual(molecule.smiles, 'C(CC(CCC))');
-  assert.deepStrictEqual(molecule.meta, [
+  assert.deepStrictEqual(molecule.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'C',
@@ -118,7 +118,7 @@ test('README example: aspirin', async () => {
   const aspirin = benzeneRing.attachAt(2, carboxyl).attachAt(3, Fragment('OC(=O)C'));
   assert.ok(await isValidSMILES(aspirin.smiles));
   assert.strictEqual(aspirin.smiles, 'c1c(C(=O)O)c(OC(=O)C)ccc1');
-  assert.deepStrictEqual(aspirin.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(aspirin.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',
@@ -165,7 +165,7 @@ test('README example: ibuprofen', async () => {
   const ibuprofen = benzeneRing.attachAt(2, Fragment('CC(C)C')).attachAt(5, Fragment('CC(C)C(=O)O'));
   assert.ok(await isValidSMILES(ibuprofen.smiles));
   assert.strictEqual(ibuprofen.smiles, 'c1c(CC(C)C)ccc(CC(C)C(=O)O)c1');
-  assert.deepStrictEqual(ibuprofen.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(ibuprofen.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',
@@ -233,7 +233,7 @@ test('README example: molecule library', async () => {
   assert.strictEqual(String(molecules.phenol), 'c1ccccc1(O)');
   assert.strictEqual(String(molecules.benzoicAcid), 'c1ccccc1(C(=O)O)');
 
-  assert.deepStrictEqual(molecules.toluene.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(molecules.toluene.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',
@@ -250,7 +250,7 @@ test('README example: molecule library', async () => {
       },
     },
   ]);
-  assert.deepStrictEqual(molecules.phenol.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(molecules.phenol.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',
@@ -267,7 +267,7 @@ test('README example: molecule library', async () => {
       },
     },
   ]);
-  assert.deepStrictEqual(molecules.benzoicAcid.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(molecules.benzoicAcid.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',
@@ -295,7 +295,7 @@ test('README example: molecule library', async () => {
 
   assert.ok(await isValidSMILES(molecules.acetophenone.smiles));
   assert.strictEqual(String(molecules.acetophenone), 'c1ccccc1(C(=O)C)');
-  assert.deepStrictEqual(molecules.acetophenone.meta.map((m) => m.toObject()), [
+  assert.deepStrictEqual(molecules.acetophenone.meta.toObject(), [
     {
       type: 'ring',
       atoms: 'c',

@@ -360,6 +360,7 @@ describe('FusedRing.parse', () => {
           atoms: 'c',
           size: 6,
           ringNumber: 1,
+          attachments: {},
         },
       ]);
     });
@@ -380,6 +381,7 @@ describe('FusedRing.parse', () => {
           4: 'n',
           6: 'n',
         },
+        attachments: {},
       });
     });
   });
@@ -400,10 +402,12 @@ describe('FusedRing.parse', () => {
           2: [{
             type: 'linear',
             atoms: 'C',
+            attachments: {},
           }],
           5: [{
             type: 'linear',
             atoms: 'C',
+            attachments: {},
           }],
         },
       });
@@ -423,6 +427,7 @@ describe('FusedRing.parse', () => {
           atoms: 'c',
           size: 6,
           ringNumber: 1,
+          attachments: {},
         },
         {
           type: 'ring',
@@ -430,6 +435,7 @@ describe('FusedRing.parse', () => {
           size: 6,
           offset: 3,
           ringNumber: 2,
+          attachments: {},
         },
       ]);
     });
@@ -469,6 +475,7 @@ describe('FusedRing.parse', () => {
           atoms: 'c',
           size: 10,
           ringNumber: 42,
+          attachments: {},
         },
       ]);
     });
@@ -494,6 +501,7 @@ describe('FusedRing.parse', () => {
                 atoms: 'c',
                 size: 6,
                 ringNumber: 2,
+                attachments: {},
               },
             ],
             5: [
@@ -502,6 +510,7 @@ describe('FusedRing.parse', () => {
                 atoms: 'c',
                 size: 6,
                 ringNumber: 3,
+                attachments: {},
               },
             ],
           },

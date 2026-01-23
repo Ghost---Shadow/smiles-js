@@ -127,6 +127,7 @@ describe('Ring with ring counter on connection', () => {
         atoms: 'c',
         size: 6,
         ringNumber: 1,
+        attachments: {},
       },
       {
         type: 'ring',
@@ -134,6 +135,7 @@ describe('Ring with ring counter on connection', () => {
         size: 6,
         offset: 3,
         ringNumber: 2,
+        attachments: {},
       },
     ]);
   });
@@ -182,6 +184,7 @@ describe('fuse method', () => {
       atoms: 'c',
       size: 6,
       ringNumber: 1,
+      attachments: {},
     },
     {
       type: 'ring',
@@ -189,6 +192,7 @@ describe('fuse method', () => {
       size: 5,
       offset: 3,
       ringNumber: 2,
+      attachments: {},
     }]);
   });
 });

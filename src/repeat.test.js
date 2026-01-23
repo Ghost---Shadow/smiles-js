@@ -8,7 +8,7 @@ test('Repeat creates hexane', async () => {
   const hexane = Repeat('C', 6);
   assert.ok(await isValidSMILES(hexane.smiles));
   assert.strictEqual(hexane.smiles, 'CCCCCC');
-  assert.deepStrictEqual(hexane.meta, [
+  assert.deepStrictEqual(hexane.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'CCCCCC',
@@ -21,7 +21,7 @@ test('Repeat creates PEG-like chain', async () => {
   const peg = Repeat('CCO', 4);
   assert.ok(await isValidSMILES(peg.smiles));
   assert.strictEqual(peg.smiles, 'CCOCCOCCOCCO');
-  assert.deepStrictEqual(peg.meta, [
+  assert.deepStrictEqual(peg.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'CCOCCOCCOCCO',
@@ -34,7 +34,7 @@ test('Repeat creates polyethylene', async () => {
   const polyethylene = Repeat('CC', 100);
   assert.ok(await isValidSMILES(polyethylene.smiles));
   assert.strictEqual(polyethylene.smiles, 'CC'.repeat(100));
-  assert.deepStrictEqual(polyethylene.meta, [
+  assert.deepStrictEqual(polyethylene.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'CC'.repeat(100),
@@ -48,7 +48,7 @@ test('Repeat works with Fragment objects', async () => {
   const chain = Repeat(methyl, 5);
   assert.ok(await isValidSMILES(chain.smiles));
   assert.strictEqual(chain.smiles, 'CCCCC');
-  assert.deepStrictEqual(chain.meta, [
+  assert.deepStrictEqual(chain.meta.toObject(), [
     {
       type: 'linear',
       atoms: 'CCCCC',

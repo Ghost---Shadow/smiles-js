@@ -29,8 +29,8 @@ describe('MetaList', () => {
     const result = list.toObject();
 
     assert.deepStrictEqual(result, [
-      { type: 'linear', atoms: 'C' },
-      { type: 'linear', atoms: 'CC' },
+      { type: 'linear', atoms: 'C', attachments: {} },
+      { type: 'linear', atoms: 'CC', attachments: {} },
     ]);
   });
 
@@ -54,10 +54,10 @@ describe('MetaList', () => {
 
     assert.deepStrictEqual(result, [
       {
-        type: 'ring', atoms: 'c', size: 6, ringNumber: 1,
+        type: 'ring', atoms: 'c', size: 6, ringNumber: 1, attachments: {},
       },
       {
-        type: 'ring', atoms: 'c', size: 6, ringNumber: 2, offset: 3,
+        type: 'ring', atoms: 'c', size: 6, ringNumber: 2, offset: 3, attachments: {},
       },
     ]);
   });
@@ -84,7 +84,7 @@ describe('MetaList', () => {
         size: 6,
         ringNumber: 1,
         attachments: {
-          3: [{ type: 'linear', atoms: 'Cl' }],
+          3: [{ type: 'linear', atoms: 'Cl', attachments: {} }],
         },
       },
     ]);
@@ -100,8 +100,8 @@ describe('MetaList', () => {
 
     assert.strictEqual(list.length, 2);
     assert.deepStrictEqual(list.toObject(), [
-      { type: 'linear', atoms: 'C' },
-      { type: 'linear', atoms: 'O' },
+      { type: 'linear', atoms: 'C', attachments: {} },
+      { type: 'linear', atoms: 'O', attachments: {} },
     ]);
   });
 
@@ -133,7 +133,7 @@ describe('MetaList', () => {
 
     assert.strictEqual(list[0], meta1);
     assert.strictEqual(list[1], meta2);
-    assert.deepStrictEqual(list[0].toObject(), { type: 'linear', atoms: 'C' });
+    assert.deepStrictEqual(list[0].toObject(), { type: 'linear', atoms: 'C', attachments: {} });
   });
 
   test('handles empty list toObject', () => {
@@ -165,8 +165,8 @@ describe('MetaList', () => {
     assert.ok(list[0] instanceof Meta);
     assert.ok(list[1] instanceof Meta);
     assert.deepStrictEqual(list.toObject(), [
-      { type: 'linear', atoms: 'C' },
-      { type: 'linear', atoms: 'O' },
+      { type: 'linear', atoms: 'C', attachments: {} },
+      { type: 'linear', atoms: 'O', attachments: {} },
     ]);
   });
 
@@ -179,16 +179,16 @@ describe('MetaList', () => {
     assert.ok(list[0] instanceof Meta);
     assert.ok(list[1] instanceof Meta);
     assert.deepStrictEqual(list.toObject(), [
-      { type: 'linear', atoms: 'C' },
-      { type: 'linear', atoms: 'O' },
+      { type: 'linear', atoms: 'C', attachments: {} },
+      { type: 'linear', atoms: 'O', attachments: {} },
     ]);
   });
 
   test('round trip: from() and toObject() are inverses', () => {
     const plainObjects = [
-      { type: MetaType.LINEAR, atoms: 'C' },
+      { type: MetaType.LINEAR, atoms: 'C', attachments: {} },
       {
-        type: MetaType.RING, atoms: 'c', size: 6, ringNumber: 1,
+        type: MetaType.RING, atoms: 'c', size: 6, ringNumber: 1, attachments: {},
       },
       {
         type: MetaType.RING,
@@ -197,7 +197,7 @@ describe('MetaList', () => {
         ringNumber: 2,
         offset: 3,
         attachments: {
-          3: [{ type: MetaType.LINEAR, atoms: 'Cl' }],
+          3: [{ type: MetaType.LINEAR, atoms: 'Cl', attachments: {} }],
         },
       },
     ];

@@ -4,6 +4,7 @@ import {
 } from './properties.js';
 import { findUsedRingNumbers, getNextRingNumber } from './utils.js';
 import { parse } from './parse.js';
+import { MetaList } from './meta-list.js';
 
 class FragmentClass {
   constructor(smiles) {
@@ -13,7 +14,7 @@ class FragmentClass {
     }
 
     this.smiles = smiles;
-    this.meta = parse(smiles);
+    this.meta = MetaList.from(parse(smiles));
     this.atoms = countAtoms(smiles);
     this.rings = countRings(smiles);
     this.formula = calculateFormula(smiles);

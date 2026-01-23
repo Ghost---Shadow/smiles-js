@@ -10,6 +10,7 @@ describe('Linear', () => {
     assert.deepStrictEqual(chain.meta.toObject(), {
       type: 'linear',
       atoms: 'CCC',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(chain.smiles));
   });
@@ -25,6 +26,7 @@ describe('Linear', () => {
           {
             type: 'linear',
             atoms: 'C',
+            attachments: {},
           },
         ],
       },
@@ -55,6 +57,7 @@ describe('Linear.concat method', () => {
     assert.deepStrictEqual(result.meta.toObject(), {
       type: 'linear',
       atoms: 'CCCC',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(result.smiles));
   });
@@ -66,6 +69,7 @@ describe('Linear.concat method', () => {
     assert.deepStrictEqual(result.meta.toObject(), {
       type: 'linear',
       atoms: 'CCCO',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(result.smiles));
   });
@@ -85,6 +89,7 @@ describe('Linear.attach method', () => {
           {
             type: 'linear',
             atoms: 'O',
+            attachments: {},
           },
         ],
       },
@@ -105,6 +110,7 @@ describe('Linear.attach method', () => {
           {
             type: 'linear',
             atoms: 'O',
+            attachments: {},
           },
         ],
       },
@@ -124,12 +130,14 @@ describe('Linear.attach method', () => {
           {
             type: 'linear',
             atoms: 'O',
+            attachments: {},
           },
         ],
         2: [
           {
             type: 'linear',
             atoms: 'N',
+            attachments: {},
           },
         ],
       },
@@ -145,6 +153,7 @@ describe('Linear static methods', () => {
     assert.deepStrictEqual(result.meta.toObject(), {
       type: 'linear',
       atoms: 'CCO',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(result.smiles));
   });
@@ -157,6 +166,7 @@ describe('Linear static methods', () => {
     assert.deepStrictEqual(result.meta.toObject(), {
       type: 'linear',
       atoms: 'CCO',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(result.smiles));
   });
@@ -169,6 +179,7 @@ describe('Linear edge cases', () => {
     assert.deepStrictEqual(structure.meta.toObject(), {
       type: 'linear',
       atoms: '[13C]CC',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(structure.smiles));
   });
@@ -179,6 +190,7 @@ describe('Linear edge cases', () => {
     assert.deepStrictEqual(structure.meta.toObject(), {
       type: 'linear',
       atoms: 'C[NH3+]',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(structure.smiles));
   });
@@ -189,6 +201,7 @@ describe('Linear edge cases', () => {
     assert.deepStrictEqual(structure.meta.toObject(), {
       type: 'linear',
       atoms: 'C[C@H](O)N',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(structure.smiles));
   });
@@ -199,6 +212,7 @@ describe('Linear edge cases', () => {
     assert.deepStrictEqual(structure.meta.toObject(), {
       type: 'linear',
       atoms: 'C=C',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(structure.smiles));
   });
@@ -209,6 +223,7 @@ describe('Linear edge cases', () => {
     assert.deepStrictEqual(structure.meta.toObject(), {
       type: 'linear',
       atoms: 'C#C',
+      attachments: {},
     });
     assert.ok(await isValidSMILES(structure.smiles));
   });
@@ -220,6 +235,7 @@ describe('Linear.meta', () => {
     assert.deepStrictEqual(chain.meta.toObject(), {
       type: 'linear',
       atoms: 'CCC',
+      attachments: {},
     });
   });
 
@@ -229,6 +245,7 @@ describe('Linear.meta', () => {
     assert.deepStrictEqual(obj, {
       type: 'linear',
       atoms: 'CCC',
+      attachments: {},
     });
   });
 
@@ -243,6 +260,7 @@ describe('Linear.meta', () => {
           {
             type: 'linear',
             atoms: 'O',
+            attachments: {},
           },
         ],
       },
@@ -266,6 +284,7 @@ describe('Linear.meta', () => {
                 {
                   type: 'linear',
                   atoms: 'CC',
+                  attachments: {},
                 },
               ],
             },
@@ -275,6 +294,7 @@ describe('Linear.meta', () => {
           {
             type: 'linear',
             atoms: 'CC',
+            attachments: {},
           },
         ],
       },

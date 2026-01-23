@@ -16,6 +16,7 @@ describe('FusedRing', () => {
     assert.deepStrictEqual(benzene.meta.toObject(), [{
       ...parameters,
       ringNumber: 1,
+      attachments: {},
     }]);
     assert.ok(await isValidSMILES(benzene.smiles));
   });
@@ -36,6 +37,7 @@ describe('FusedRing', () => {
     assert.deepStrictEqual(triazine.meta.toObject(), [{
       ...parameters,
       ringNumber: 1,
+      attachments: {},
     }]);
     assert.ok(await isValidSMILES(triazine.smiles));
   });
@@ -64,6 +66,7 @@ describe('FusedRing', () => {
           {
             type: 'linear',
             atoms: 'Cl',
+            attachments: {},
           },
         ],
       },
@@ -91,10 +94,12 @@ describe('FusedRing', () => {
       {
         ...parameters[0],
         ringNumber: 1,
+        attachments: {},
       },
       {
         ...parameters[1],
         ringNumber: 2,
+        attachments: {},
       },
     ]);
     assert.ok(await isValidSMILES(napthalene.smiles));
@@ -142,11 +147,13 @@ describe('FusedRing with ring counter on connection', () => {
     assert.deepStrictEqual(benzene1.meta.toObject(), [{
       ...parameters,
       ringNumber: 1,
+      attachments: {},
     }]);
     assert.strictEqual(benzene2.smiles, 'c1ccccc1');
     assert.deepStrictEqual(benzene2.meta.toObject(), [{
       ...parameters,
       ringNumber: 1,
+      attachments: {},
     }]);
     assert.ok(await isValidSMILES(benzene1.smiles));
     assert.ok(await isValidSMILES(benzene2.smiles));
@@ -187,6 +194,7 @@ describe('FusedRing with ring counter on connection', () => {
               atoms: 'C',
               size: 6,
               ringNumber: 2,
+              attachments: {},
             },
           ],
         },
@@ -197,6 +205,7 @@ describe('FusedRing with ring counter on connection', () => {
         size: 6,
         offset: 3,
         ringNumber: 3,
+        attachments: {},
       },
     ]);
     assert.ok(await isValidSMILES(newCompound.smiles));
@@ -234,6 +243,7 @@ describe('FusedRing with ring counter on connection', () => {
               atoms: 'C',
               size: 6,
               ringNumber: 2,
+              attachments: {},
             },
           ],
         },
@@ -244,6 +254,7 @@ describe('FusedRing with ring counter on connection', () => {
         size: 6,
         offset: 3,
         ringNumber: 3,
+        attachments: {},
       },
     ]);
     assert.ok(await isValidSMILES(newCompound.smiles));
@@ -274,6 +285,7 @@ describe('FusedRing with ring counter on connection', () => {
             atoms: 'C',
             size: 6,
             ringNumber: 2,
+            attachments: {},
           },
         ],
       },
@@ -306,10 +318,12 @@ describe('FusedRing with ring counter on connection', () => {
       {
         ...parameters1,
         ringNumber: 1,
+        attachments: {},
       },
       {
         ...parameters2,
         ringNumber: 2,
+        attachments: {},
       },
     ]);
     assert.ok(await isValidSMILES(newCompound.smiles));
@@ -329,10 +343,12 @@ describe('FusedRing with ring counter on connection', () => {
       {
         ...parameters[0],
         ringNumber: 1,
+        attachments: {},
       },
       {
         ...parameters[1],
         ringNumber: 2,
+        attachments: {},
       },
     ]);
   });
@@ -354,10 +370,12 @@ describe('fuse method', () => {
       {
         ...parameters1,
         ringNumber: 1,
+        attachments: {},
       },
       {
         ...parameters2,
         ringNumber: 2,
+        attachments: {},
       },
     ]);
     assert.ok(await isValidSMILES(naphthalene.smiles));
@@ -390,10 +408,12 @@ describe('fuse method', () => {
       {
         ...parameters1,
         ringNumber: 1,
+        attachments: {},
       },
       {
         ...parameters2,
         ringNumber: 2,
+        attachments: {},
       },
     ]);
     assert.ok(await isValidSMILES(naphthalene.smiles));
@@ -413,10 +433,12 @@ describe('fuse method', () => {
       {
         ...parameters1,
         ringNumber: 1,
+        attachments: {},
       },
       {
         ...parameters2,
         ringNumber: 2,
+        attachments: {},
       },
     ]);
   });
