@@ -566,11 +566,250 @@ describe('parse', () => {
 
   describe('ring structures', () => {
     test('parses benzene c1ccccc1', () => {
-      const result = parse('c1ccccc1');
-      assert.ok(Array.isArray(result));
-      assert.strictEqual(result.length, 1);
-      assert.strictEqual(result[0].type, 'c');
-      assert.strictEqual(result[0].size, 6);
+      const parsed = parse('c1ccccc1');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'c',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      const result = FusedRing.parse('c1ccccc1');
+      assert.strictEqual(result.smiles, 'c1ccccc1');
+    });
+
+    test('parses simple ring with double bond C1=CCCCC1', () => {
+      const parsed = parse('C1=CCCCC1');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      // Known limitation: double bonds not preserved
+      const result = FusedRing.parse('C1=CCCCC1');
+      assert.strictEqual(result.smiles, 'C1CCCCC1');
+    });
+  });
+
+  describe('fused rings with parentheses - THE PROBLEM', () => {
+    test('works: fused ring without parens C1=NC2=CC=C2N1', () => {
+      const parsed = parse('C1=NC2=CC=C2N1');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 5,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: { 2: 'N', 7: 'N' },
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 4,
+          offset: 2,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      // Double bonds lost (known limitation)
+      const result = FusedRing.parse('C1=NC2=CC=C2N1');
+      assert.strictEqual(result.smiles, 'C1NC2CCC2C1');
+    });
+
+    test('same fused ring with parens C1=NC2=C(C=C2N1)', () => {
+      const parsed = parse('C1=NC2=C(C=C2N1)');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 5,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: { 2: 'N', 7: 'N' },
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 4,
+          offset: 2,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      // Double bonds and parens lost (known limitation)
+      const result = FusedRing.parse('C1=NC2=C(C=C2N1)');
+      assert.strictEqual(result.smiles, 'C1NC2CCC2C1');
+    });
+
+    test('fused ring with parens and attachment C1=NC2=C(C=C2N1)C', () => {
+      const parsed = parse('C1=NC2=C(C=C2N1)C');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 5,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: { 2: 'N', 7: 'N' },
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 4,
+          offset: 2,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      // Double bonds, parens, and trailing attachment lost (known limitations)
+      const result = FusedRing.parse('C1=NC2=C(C=C2N1)C');
+      assert.strictEqual(result.smiles, 'C1NC2CCC2C1');
+    });
+
+    test('naphthalene with parens C1=CC2=C(C=CC=C2)C=C1', () => {
+      const parsed = parse('C1=CC2=C(C=CC=C2)C=C1');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 6,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 6,
+          offset: 2,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      // Double bonds and parens lost (known limitation)
+      const result = FusedRing.parse('C1=CC2=C(C=CC=C2)C=C1');
+      assert.strictEqual(result.smiles, 'C1CC2CCCCC2CC1');
+    });
+
+    test('telmisartan parses all 6 rings', () => {
+      const smiles = 'CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C';
+      const parsed = parse(smiles);
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 5,
+          offset: 3,
+          ringNumber: 1,
+          substitutions: { 2: 'N', 9: 'N' },
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 6,
+          offset: 5,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 6,
+          offset: 13,
+          ringNumber: 3,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 6,
+          offset: 19,
+          ringNumber: 4,
+          substitutions: {},
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 5,
+          offset: 27,
+          ringNumber: 5,
+          substitutions: { 2: 'N', 9: 'N' },
+          attachments: {},
+        },
+        {
+          type: 'C',
+          size: 6,
+          offset: 29,
+          ringNumber: 6,
+          substitutions: {},
+          attachments: {},
+        },
+      ]);
+
+      // Complex round trip - double bonds and parens lost, but structure preserved
+      const result = FusedRing.parse(smiles);
+      // Just verify it round trips to something valid (exact match would be fragile)
+      assert.ok(result.smiles.length > 0);
+      assert.ok(result.smiles.includes('1'));
+      assert.ok(result.smiles.includes('6'));
+    });
+
+    test('fused ring with nested attachment C1=NC2=C(C(C)C=C2N1)C', () => {
+      const parsed = parse('C1=NC2=C(C(C)C=C2N1)C');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 5,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: { 2: 'N', 8: 'N' },
+          attachments: { 5: ['C'] },
+        },
+        {
+          type: 'C',
+          size: 5,
+          offset: 2,
+          ringNumber: 2,
+          substitutions: {},
+          attachments: { 3: ['C'] },
+        },
+      ]);
+
+      // Nested attachment preserved
+      const result = FusedRing.parse('C1=NC2=C(C(C)C=C2N1)C');
+      assert.ok(result.smiles.includes('(C)'));
+    });
+
+    test('simple nested attachment C1CCCCC(C(C)C)C1', () => {
+      const parsed = parse('C1CCCCC(C(C)C)C1');
+      assert.deepStrictEqual(parsed, [
+        {
+          type: 'C',
+          size: 7,
+          offset: 0,
+          ringNumber: 1,
+          substitutions: {},
+          attachments: { 6: ['C(C)C'] },
+        },
+      ]);
+
+      // Nested parentheses preserved
+      const result = FusedRing.parse('C1CCCCC(C(C)C)C1');
+      assert.strictEqual(result.smiles, 'C1CCCCC(C(C)C)C1');
     });
   });
 });

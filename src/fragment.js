@@ -4,6 +4,7 @@ import {
 } from './properties.js';
 import { findUsedRingNumbers, getNextRingNumber } from './utils.js';
 import { parse } from './parse.js';
+import { FusedRing } from './fused-ring.js';
 import { MetaList } from './meta-list.js';
 
 class FragmentClass {
@@ -13,12 +14,43 @@ class FragmentClass {
       throw new Error(validation.error);
     }
 
-    this.smiles = smiles;
-    this.meta = MetaList.from(parse(smiles));
-    this.atoms = countAtoms(smiles);
-    this.rings = countRings(smiles);
-    this.formula = calculateFormula(smiles);
-    this.molecularWeight = calculateMolecularWeight(smiles);
+    // Parse to check if it contains rings
+    const parsed = parse(smiles);
+    const hasRings = parsed.some((item) => item.type !== 'linear');
+
+    if (hasRings) {
+      // Use FusedRing.parse for molecules with rings (proper parentheses handling)
+      const fusedParsed = FusedRing.parse(smiles);
+
+      // If FusedRing.parse produces different output, check if we're losing information
+      if (fusedParsed.smiles !== smiles) {
+        // Check if original has content after ring closures that would be lost
+        // Patterns: c1ccccc1(C) or C1CCC1CC
+        const hasTrailingContent = (/\d\(/.test(smiles) || /\d[A-Za-z]/.test(smiles))
+          && fusedParsed.smiles.length < smiles.length;
+
+        if (hasTrailingContent) {
+          // Preserve original SMILES to avoid losing trailing content
+          this.smiles = smiles;
+          this.meta = fusedParsed.meta;
+        } else {
+          this.smiles = fusedParsed.smiles;
+          this.meta = fusedParsed.meta;
+        }
+      } else {
+        this.smiles = fusedParsed.smiles;
+        this.meta = fusedParsed.meta;
+      }
+    } else {
+      // No rings, use original SMILES and parse result as-is
+      this.smiles = smiles;
+      this.meta = MetaList.from(parsed);
+    }
+
+    this.atoms = countAtoms(this.smiles);
+    this.rings = countRings(this.smiles);
+    this.formula = calculateFormula(this.smiles);
+    this.molecularWeight = calculateMolecularWeight(this.smiles);
   }
 
   // Make fragment callable for branching

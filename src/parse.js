@@ -29,19 +29,6 @@ export const extractParenthesesContent = (smiles, startIndex) => {
   return { content, endIndex: j };
 };
 
-export const handleAttachment = (context) => {
-  // Handle attachment - extract content within parentheses
-  const { content, endIndex } = extractParenthesesContent(context.smiles, context.i);
-
-  // Add attachment to the most recent atom
-  if (context.atoms.length > 0) {
-    context.atoms[context.atoms.length - 1].attachments.push(content);
-  }
-
-  // Skip past the closing parenthesis
-  context.i = endIndex - 1;
-};
-
 export const handleRings = (context) => {
   // Handle ring closure digit
   const ringNum = parseInt(context.char, 10);
@@ -146,6 +133,70 @@ export const handleLargeRings = (context) => {
     // Skip the digits (minus 1 because loop will increment)
     context.i += ringNumStr.length;
   }
+};
+
+export const handleAttachment = (context) => {
+  // Handle attachment - extract content within parentheses
+  const { content, endIndex } = extractParenthesesContent(context.smiles, context.i);
+
+  // Check if we're in ring parsing mode (context has ringStacks)
+  // and if content has ring closures for ALREADY OPEN rings (fused rings)
+  let hasFusedRingClosure = false;
+  if (context.ringStacks) {
+    // Extract all ring numbers from content
+    const ringNumbers = content.match(/\d+/g);
+    if (ringNumbers) {
+      // Check if any of these ring numbers are already open
+      ringNumbers.some((numStr) => {
+        const ringNum = parseInt(numStr, 10);
+        if (context.ringStacks[ringNum] && context.ringStacks[ringNum].length > 0) {
+          hasFusedRingClosure = true;
+          return true; // Break out of some()
+        }
+        return false;
+      });
+    }
+  }
+
+  if (hasFusedRingClosure) {
+    // This is a fused ring - parse the content inline as part of the main structure
+    const savedI = context.i;
+    for (let j = 0; j < content.length; j += 1) {
+      const char = content[j];
+      context.i = savedI + 1 + j; // Track position for error messages
+      context.char = char;
+
+      if (/[a-zA-Z]/.test(char)) {
+        handleAtoms(context);
+      } else if (char === '(') {
+        // Nested parentheses - need to handle recursively
+        const nestedStart = savedI + 1 + j;
+        const { endIndex: nestedEnd } = extractParenthesesContent(
+          context.smiles,
+          nestedStart,
+        );
+        // Recursively handle the nested parentheses
+        context.i = nestedStart;
+        handleAttachment(context);
+        j += (nestedEnd - nestedStart - 1); // Skip past nested parens
+      } else if (char === '%') {
+        handleLargeRings(context);
+        // Skip the extra digits we consumed
+        const match = content.substring(j + 1).match(/^\d+/);
+        if (match) {
+          j += match[0].length;
+        }
+      } else if (/\d/.test(char)) {
+        handleRings(context);
+      }
+    }
+    // Add attachment to the most recent atom
+  } else if (context.atoms.length > 0) {
+    context.atoms[context.atoms.length - 1].attachments.push(content);
+  }
+
+  // Skip past the closing parenthesis
+  context.i = endIndex - 1;
 };
 
 /**
