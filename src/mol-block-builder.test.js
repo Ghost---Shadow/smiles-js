@@ -8,6 +8,36 @@ test('buildMolBlockFromMeta - converts benzene meta to valid MOL block', async (
   const benzene = await Fragment('c1ccccc1');
   const molBlock = buildMolBlockFromMeta(benzene.meta);
 
+  assert.deepStrictEqual(benzene.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6, impHs: 0, chg: 0, nRad: 0, isotope: 0, stereo: 'unspecified',
+      },
+      bond: { bo: 1, stereo: 'unspecified' },
+    },
+    molecules: [{
+      atoms: [{ impHs: 1 }, { impHs: 1 }, { impHs: 1 }, { impHs: 1 }, { impHs: 1 }, { impHs: 1 }],
+      bonds: [
+        { bo: 2, atoms: [0, 1] },
+        { atoms: [1, 2] },
+        { bo: 2, atoms: [2, 3] },
+        { atoms: [3, 4] },
+        { bo: 2, atoms: [4, 5] },
+        { atoms: [5, 0] },
+      ],
+      extensions: [{
+        name: 'rdkitRepresentation',
+        formatVersion: 2,
+        toolkitVersion: '2025.03.4',
+        aromaticAtoms: [0, 1, 2, 3, 4, 5],
+        aromaticBonds: [0, 1, 2, 3, 4, 5],
+        cipRanks: [0, 0, 0, 0, 0, 0],
+        atomRings: [[0, 5, 4, 3, 2, 1]],
+      }],
+    }],
+  });
+
   // MOL block should have header, counts line, atom block, bond block, and M  END
   assert.ok(molBlock.includes('V2000'), 'Should be V2000 format');
   assert.ok(molBlock.includes('M  END'), 'Should have M  END marker');
@@ -27,6 +57,45 @@ test('buildMolBlockFromMeta - converts toluene meta to valid MOL block', async (
   const toluene = await Fragment('Cc1ccccc1');
   const molBlock = buildMolBlockFromMeta(toluene.meta);
 
+  assert.deepStrictEqual(toluene.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6, impHs: 0, chg: 0, nRad: 0, isotope: 0, stereo: 'unspecified',
+      },
+      bond: { bo: 1, stereo: 'unspecified' },
+    },
+    molecules: [{
+      atoms: [
+        { impHs: 3 },
+        {},
+        { impHs: 1 },
+        { impHs: 1 },
+        { impHs: 1 },
+        { impHs: 1 },
+        { impHs: 1 },
+      ],
+      bonds: [
+        { atoms: [0, 1] },
+        { bo: 2, atoms: [1, 2] },
+        { atoms: [2, 3] },
+        { bo: 2, atoms: [3, 4] },
+        { atoms: [4, 5] },
+        { bo: 2, atoms: [5, 6] },
+        { atoms: [6, 1] },
+      ],
+      extensions: [{
+        name: 'rdkitRepresentation',
+        formatVersion: 2,
+        toolkitVersion: '2025.03.4',
+        aromaticAtoms: [1, 2, 3, 4, 5, 6],
+        aromaticBonds: [1, 2, 3, 4, 5, 6],
+        cipRanks: [0, 4, 3, 2, 1, 2, 3],
+        atomRings: [[1, 6, 5, 4, 3, 2]],
+      }],
+    }],
+  });
+
   const rdkit = await initRDKitModule();
   const mol = rdkit.get_mol(molBlock);
   assert.ok(mol.is_valid(), 'Generated MOL block should be valid');
@@ -41,6 +110,31 @@ test('buildMolBlockFromMeta - converts methanol meta to valid MOL block', async 
   const methanol = await Fragment('CO');
   const molBlock = buildMolBlockFromMeta(methanol.meta);
 
+  assert.deepStrictEqual(methanol.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6, impHs: 0, chg: 0, nRad: 0, isotope: 0, stereo: 'unspecified',
+      },
+      bond: { bo: 1, stereo: 'unspecified' },
+    },
+    molecules: [{
+      atoms: [
+        { impHs: 3 },
+        { z: 8, impHs: 1 },
+      ],
+      bonds: [
+        { atoms: [0, 1] },
+      ],
+      extensions: [{
+        name: 'rdkitRepresentation',
+        formatVersion: 2,
+        toolkitVersion: '2025.03.4',
+        cipRanks: [0, 1],
+      }],
+    }],
+  });
+
   const rdkit = await initRDKitModule();
   const mol = rdkit.get_mol(molBlock);
   assert.ok(mol.is_valid(), 'Generated MOL block should be valid');
@@ -54,6 +148,36 @@ test('buildMolBlockFromMeta - converts methanol meta to valid MOL block', async 
 test('buildMolBlockFromMeta - handles correct atom and bond counts', async () => {
   const benzene = await Fragment('c1ccccc1');
   const molBlock = buildMolBlockFromMeta(benzene.meta);
+
+  assert.deepStrictEqual(benzene.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6, impHs: 0, chg: 0, nRad: 0, isotope: 0, stereo: 'unspecified',
+      },
+      bond: { bo: 1, stereo: 'unspecified' },
+    },
+    molecules: [{
+      atoms: [{ impHs: 1 }, { impHs: 1 }, { impHs: 1 }, { impHs: 1 }, { impHs: 1 }, { impHs: 1 }],
+      bonds: [
+        { bo: 2, atoms: [0, 1] },
+        { atoms: [1, 2] },
+        { bo: 2, atoms: [2, 3] },
+        { atoms: [3, 4] },
+        { bo: 2, atoms: [4, 5] },
+        { atoms: [5, 0] },
+      ],
+      extensions: [{
+        name: 'rdkitRepresentation',
+        formatVersion: 2,
+        toolkitVersion: '2025.03.4',
+        aromaticAtoms: [0, 1, 2, 3, 4, 5],
+        aromaticBonds: [0, 1, 2, 3, 4, 5],
+        cipRanks: [0, 0, 0, 0, 0, 0],
+        atomRings: [[0, 5, 4, 3, 2, 1]],
+      }],
+    }],
+  });
 
   // Extract counts line (4th line)
   const lines = molBlock.split('\n');
