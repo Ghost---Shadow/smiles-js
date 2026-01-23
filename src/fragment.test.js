@@ -1,5 +1,5 @@
-import { test } from 'node:test';
-import assert from 'node:assert';
+import { test } from 'bun:test';
+import assert from 'bun:assert';
 import { Fragment } from '../src/index.js';
 
 test('Fragment - benzene', async () => {
@@ -12,16 +12,55 @@ test('Fragment - benzene', async () => {
   assert.strictEqual(benzene.formula, 'C6H6');
   assert.strictEqual(benzene.molecularWeight, 78.11);
 
-  // Check meta structure
-  assert.ok(benzene.meta);
-  assert.ok(benzene.meta.molecules);
-  assert.strictEqual(benzene.meta.molecules[0].atoms.length, 6);
-  assert.strictEqual(benzene.meta.molecules[0].bonds.length, 6);
-
-  // Check aromatic ring in extensions
-  const ext = benzene.meta.molecules[0].extensions[0];
-  assert.deepStrictEqual(ext.aromaticAtoms, [0, 1, 2, 3, 4, 5]);
-  assert.deepStrictEqual(ext.atomRings, [[0, 5, 4, 3, 2, 1]]);
+  // Assert the complete meta object
+  assert.deepStrictEqual(benzene.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6,
+        impHs: 0,
+        chg: 0,
+        nRad: 0,
+        isotope: 0,
+        stereo: 'unspecified',
+      },
+      bond: {
+        bo: 1,
+        stereo: 'unspecified',
+      },
+    },
+    molecules: [
+      {
+        atoms: [
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+        ],
+        bonds: [
+          { bo: 2, atoms: [0, 1] },
+          { atoms: [1, 2] },
+          { bo: 2, atoms: [2, 3] },
+          { atoms: [3, 4] },
+          { bo: 2, atoms: [4, 5] },
+          { atoms: [5, 0] },
+        ],
+        extensions: [
+          {
+            name: 'rdkitRepresentation',
+            formatVersion: 2,
+            toolkitVersion: '2025.03.4',
+            aromaticAtoms: [0, 1, 2, 3, 4, 5],
+            aromaticBonds: [0, 1, 2, 3, 4, 5],
+            cipRanks: [0, 0, 0, 0, 0, 0],
+            atomRings: [[0, 5, 4, 3, 2, 1]],
+          },
+        ],
+      },
+    ],
+  });
 });
 
 test('Fragment - toluene', async () => {
@@ -31,9 +70,57 @@ test('Fragment - toluene', async () => {
   assert.strictEqual(toluene.rings, 1);
   assert.strictEqual(toluene.formula, 'C7H8');
 
-  // Check that methyl group is properly represented
-  const firstAtom = toluene.meta.molecules[0].atoms[0];
-  assert.strictEqual(firstAtom.impHs, 3); // CH3
+  // Assert the complete meta object
+  assert.deepStrictEqual(toluene.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6,
+        impHs: 0,
+        chg: 0,
+        nRad: 0,
+        isotope: 0,
+        stereo: 'unspecified',
+      },
+      bond: {
+        bo: 1,
+        stereo: 'unspecified',
+      },
+    },
+    molecules: [
+      {
+        atoms: [
+          { impHs: 3 },
+          {},
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+        ],
+        bonds: [
+          { atoms: [0, 1] },
+          { bo: 2, atoms: [1, 2] },
+          { atoms: [2, 3] },
+          { bo: 2, atoms: [3, 4] },
+          { atoms: [4, 5] },
+          { bo: 2, atoms: [5, 6] },
+          { atoms: [6, 1] },
+        ],
+        extensions: [
+          {
+            name: 'rdkitRepresentation',
+            formatVersion: 2,
+            toolkitVersion: '2025.03.4',
+            aromaticAtoms: [1, 2, 3, 4, 5, 6],
+            aromaticBonds: [1, 2, 3, 4, 5, 6],
+            cipRanks: [0, 4, 3, 2, 1, 2, 3],
+            atomRings: [[1, 6, 5, 4, 3, 2]],
+          },
+        ],
+      },
+    ],
+  });
 });
 
 test('Fragment - ethanol', async () => {
@@ -42,6 +129,46 @@ test('Fragment - ethanol', async () => {
   assert.strictEqual(ethanol.atoms, 3);
   assert.strictEqual(ethanol.rings, 0);
   assert.strictEqual(ethanol.formula, 'C2H6O');
+
+  // Assert the complete meta object
+  assert.deepStrictEqual(ethanol.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6,
+        impHs: 0,
+        chg: 0,
+        nRad: 0,
+        isotope: 0,
+        stereo: 'unspecified',
+      },
+      bond: {
+        bo: 1,
+        stereo: 'unspecified',
+      },
+    },
+    molecules: [
+      {
+        atoms: [
+          { impHs: 3 },
+          { impHs: 2 },
+          { z: 8, impHs: 1 },
+        ],
+        bonds: [
+          { atoms: [0, 1] },
+          { atoms: [1, 2] },
+        ],
+        extensions: [
+          {
+            name: 'rdkitRepresentation',
+            formatVersion: 2,
+            toolkitVersion: '2025.03.4',
+            cipRanks: [0, 1, 2],
+          },
+        ],
+      },
+    ],
+  });
 });
 
 test('Fragment - invalid SMILES', async () => {
@@ -71,17 +198,53 @@ test('Fragment.toString', async () => {
 test('Fragment - meta contains complete RDKit JSON', async () => {
   const mol = await Fragment('c1ccccc1');
 
-  // Check top-level structure (rdkitjson in newer versions, commonchem in older)
-  assert.ok(mol.meta.rdkitjson || mol.meta.commonchem);
-  assert.ok(mol.meta.defaults);
-  assert.ok(mol.meta.molecules);
-
-  // Check defaults
-  assert.strictEqual(mol.meta.defaults.atom.z, 6); // Carbon
-  assert.strictEqual(mol.meta.defaults.bond.bo, 1); // Single bond
-
-  // Check molecule data
-  assert.ok(Array.isArray(mol.meta.molecules[0].atoms));
-  assert.ok(Array.isArray(mol.meta.molecules[0].bonds));
-  assert.ok(Array.isArray(mol.meta.molecules[0].extensions));
+  // Assert the complete meta object
+  assert.deepStrictEqual(mol.meta, {
+    rdkitjson: { version: 12 },
+    defaults: {
+      atom: {
+        z: 6,
+        impHs: 0,
+        chg: 0,
+        nRad: 0,
+        isotope: 0,
+        stereo: 'unspecified',
+      },
+      bond: {
+        bo: 1,
+        stereo: 'unspecified',
+      },
+    },
+    molecules: [
+      {
+        atoms: [
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+          { impHs: 1 },
+        ],
+        bonds: [
+          { bo: 2, atoms: [0, 1] },
+          { atoms: [1, 2] },
+          { bo: 2, atoms: [2, 3] },
+          { atoms: [3, 4] },
+          { bo: 2, atoms: [4, 5] },
+          { atoms: [5, 0] },
+        ],
+        extensions: [
+          {
+            name: 'rdkitRepresentation',
+            formatVersion: 2,
+            toolkitVersion: '2025.03.4',
+            aromaticAtoms: [0, 1, 2, 3, 4, 5],
+            aromaticBonds: [0, 1, 2, 3, 4, 5],
+            cipRanks: [0, 0, 0, 0, 0, 0],
+            atomRings: [[0, 5, 4, 3, 2, 1]],
+          },
+        ],
+      },
+    ],
+  });
 });
