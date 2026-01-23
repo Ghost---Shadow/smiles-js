@@ -1,0 +1,2 @@
+bun test src/fused-ring.test.js --only-failures --bail
+bun test src/parse.test.js --only-failures --bail

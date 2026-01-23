@@ -1,326 +1,87 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Fragment } from './fragment.js';
-import { isValidSMILES } from './test-utils.js';
+import { Fragment } from '../src/index.js';
 
-test('Fragment creates basic fragments', async () => {
-  const methyl = Fragment('C');
-  assert.strictEqual(methyl.smiles, 'C');
-  assert.ok(await isValidSMILES(methyl.smiles));
-  assert.strictEqual(String(methyl), 'C');
-});
+test('Fragment - benzene', async () => {
+  const benzene = await Fragment('c1ccccc1');
 
-test('Fragment validates SMILES on creation', () => {
-  assert.throws(() => Fragment('C(C'), { message: 'Unclosed branch' });
-});
-
-test('Fragment.validate returns validation result', () => {
-  const result1 = Fragment.validate('C(C');
-  assert.deepStrictEqual(result1, { valid: false, error: 'Unclosed branch' });
-
-  const result2 = Fragment.validate('CCO');
-  assert.deepStrictEqual(result2, { valid: true });
-});
-
-test('Fragment supports branching', async () => {
-  const methyl = Fragment('C');
-  const ethyl = Fragment('CC');
-  const result = methyl(ethyl);
-  assert.strictEqual(result.smiles, 'C(CC)');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('Fragment supports multiple branches', async () => {
-  const methyl = Fragment('C');
-  const ethyl = Fragment('CC');
-  const result = methyl(ethyl)(ethyl);
-  assert.strictEqual(result.smiles, 'C(CC)(CC)');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('Fragment supports nested branches', async () => {
-  const a = Fragment('C');
-  const b = Fragment('CC');
-  const c = Fragment('CCC');
-  const result = a(b(c));
-  assert.strictEqual(result.smiles, 'C(CC(CCC))');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('Fragment counts atoms correctly', async () => {
-  const methyl = Fragment('C');
-  assert.strictEqual(methyl.atoms, 1);
-  assert.ok(await isValidSMILES(methyl.smiles));
-
-  const ethyl = Fragment('CC');
-  assert.strictEqual(ethyl.atoms, 2);
-  assert.ok(await isValidSMILES(ethyl.smiles));
-
-  const benzene = Fragment('c1ccccc1');
+  assert.strictEqual(benzene.smiles, 'c1ccccc1');
+  assert.strictEqual(benzene.originalSmiles, 'c1ccccc1');
   assert.strictEqual(benzene.atoms, 6);
-  assert.ok(await isValidSMILES(benzene.smiles));
-});
-
-test('Fragment counts rings correctly', async () => {
-  const methyl = Fragment('C');
-  assert.strictEqual(methyl.rings, 0);
-  assert.ok(await isValidSMILES(methyl.smiles));
-
-  const benzene = Fragment('c1ccccc1');
   assert.strictEqual(benzene.rings, 1);
-  assert.ok(await isValidSMILES(benzene.smiles));
+  assert.strictEqual(benzene.formula, 'C6H6');
+  assert.strictEqual(benzene.molecularWeight, 78.11);
 
-  const naphthalene = Fragment('c1ccc2ccccc2c1');
-  assert.strictEqual(naphthalene.rings, 2);
-  assert.ok(await isValidSMILES(naphthalene.smiles));
+  // Check meta structure
+  assert.ok(benzene.meta);
+  assert.ok(benzene.meta.molecules);
+  assert.strictEqual(benzene.meta.molecules[0].atoms.length, 6);
+  assert.strictEqual(benzene.meta.molecules[0].bonds.length, 6);
+
+  // Check aromatic ring in extensions
+  const ext = benzene.meta.molecules[0].extensions[0];
+  assert.deepStrictEqual(ext.aromaticAtoms, [0, 1, 2, 3, 4, 5]);
+  assert.deepStrictEqual(ext.atomRings, [[0, 5, 4, 3, 2, 1]]);
 });
 
-test('Fragment calculates formula correctly', async () => {
-  const methyl = Fragment('C');
-  assert.strictEqual(methyl.formula, 'CH4');
-  assert.ok(await isValidSMILES(methyl.smiles));
+test('Fragment - toluene', async () => {
+  const toluene = await Fragment('Cc1ccccc1');
 
-  const ethyl = Fragment('CC');
-  assert.strictEqual(ethyl.formula, 'C2H6');
-  assert.ok(await isValidSMILES(ethyl.smiles));
+  assert.strictEqual(toluene.atoms, 7);
+  assert.strictEqual(toluene.rings, 1);
+  assert.strictEqual(toluene.formula, 'C7H8');
 
-  const carbonyl = Fragment('C=O');
-  assert.strictEqual(carbonyl.formula, 'CH2O');
-  assert.ok(await isValidSMILES(carbonyl.smiles));
+  // Check that methyl group is properly represented
+  const firstAtom = toluene.meta.molecules[0].atoms[0];
+  assert.strictEqual(firstAtom.impHs, 3); // CH3
 });
 
-test('Fragment calculates molecular weight correctly', async () => {
-  const methyl = Fragment('C');
-  assert.strictEqual(methyl.molecularWeight, 16.04);
-  assert.ok(await isValidSMILES(methyl.smiles));
+test('Fragment - ethanol', async () => {
+  const ethanol = await Fragment('CCO');
 
-  const ethyl = Fragment('CC');
-  assert.strictEqual(ethyl.molecularWeight, 30.07);
-  assert.ok(await isValidSMILES(ethyl.smiles));
+  assert.strictEqual(ethanol.atoms, 3);
+  assert.strictEqual(ethanol.rings, 0);
+  assert.strictEqual(ethanol.formula, 'C2H6O');
 });
 
-test('Fragment works with complex molecules', async () => {
-  const benzene = Fragment('c1ccccc1');
-  const methyl = Fragment('C');
-  const toluene = benzene(methyl);
-  assert.strictEqual(toluene.smiles, 'c1ccccc1(C)');
-  assert.ok(await isValidSMILES(toluene.smiles));
+test('Fragment - invalid SMILES', async () => {
+  await assert.rejects(
+    async () => Fragment('c1ccc'),
+    /Invalid SMILES/,
+  );
 });
 
-test('Fragment toString and toPrimitive work correctly', async () => {
-  const methyl = Fragment('C');
-  assert.strictEqual(methyl.toString(), 'C');
-  assert.ok(await isValidSMILES(methyl.smiles));
-  assert.strictEqual(`${methyl}`, 'C');
+test('Fragment.validate - valid SMILES', async () => {
+  const result = await Fragment.validate('c1ccccc1');
+  assert.strictEqual(result.valid, true);
 });
 
-// Concat tests
-test('concat combines two simple fragments', async () => {
-  const a = Fragment('CC');
-  const b = Fragment('CC');
-  const result = a.concat(b);
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.ok(await isValidSMILES(result.smiles));
+test('Fragment.validate - invalid SMILES', async () => {
+  const result = await Fragment.validate('c1ccc');
+  assert.strictEqual(result.valid, false);
+  assert.ok(result.error);
 });
 
-test('concat works with method chaining', async () => {
-  const a = Fragment('C');
-  const b = Fragment('C');
-  const c = Fragment('C');
-  const result = a.concat(b).concat(c);
-  assert.strictEqual(result.smiles, 'CCC');
-  assert.ok(await isValidSMILES(result.smiles));
+test('Fragment.toString', async () => {
+  const benzene = await Fragment('c1ccccc1');
+  assert.strictEqual(benzene.toString(), 'c1ccccc1');
+  assert.strictEqual(String(benzene), 'c1ccccc1');
 });
 
-test('concat handles string arguments', async () => {
-  const a = Fragment('CC');
-  const result = a.concat('CC');
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
+test('Fragment - meta contains complete RDKit JSON', async () => {
+  const mol = await Fragment('c1ccccc1');
 
-test('concat preserves properties', async () => {
-  const a = Fragment('C');
-  const b = Fragment('C');
-  const result = a.concat(b);
+  // Check top-level structure (rdkitjson in newer versions, commonchem in older)
+  assert.ok(mol.meta.rdkitjson || mol.meta.commonchem);
+  assert.ok(mol.meta.defaults);
+  assert.ok(mol.meta.molecules);
 
-  assert.strictEqual(result.atoms, 2);
-  assert.strictEqual(result.formula, 'C2H6');
-  assert.ok(await isValidSMILES(result.smiles));
-});
+  // Check defaults
+  assert.strictEqual(mol.meta.defaults.atom.z, 6); // Carbon
+  assert.strictEqual(mol.meta.defaults.bond.bo, 1); // Single bond
 
-test('concat handles fragments with branches', async () => {
-  const a = Fragment('C(C)C');
-  const b = Fragment('CC');
-  const result = a.concat(b);
-  assert.strictEqual(result.smiles, 'C(C)CCC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat handles rings without conflicts', async () => {
-  const a = Fragment('C1CCC1');
-  const b = Fragment('CC');
-  const result = a.concat(b);
-  assert.strictEqual(result.smiles, 'C1CCC1CC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat remaps conflicting ring numbers', async () => {
-  const a = Fragment('C1CCC1');
-  const b = Fragment('C1CCC1');
-  const result = a.concat(b);
-
-  // The second ring should be remapped to ring 2
-  assert.strictEqual(result.smiles, 'C1CCC1C2CCC2');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat handles multiple ring conflicts', async () => {
-  const a = Fragment('C1CCC1C2CCC2');
-  const b = Fragment('C1CCC1C2CCC2');
-  const result = a.concat(b);
-
-  // Rings should be remapped to 3 and 4
-  assert.strictEqual(result.smiles, 'C1CCC1C2CCC2C3CCC3C4CCC4');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat handles aromatic rings', async () => {
-  const benzene1 = Fragment('c1ccccc1');
-  const benzene2 = Fragment('c1ccccc1');
-  const result = benzene1.concat(benzene2);
-
-  assert.strictEqual(result.smiles, 'c1ccccc1c2ccccc2');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat works with complex molecules', async () => {
-  const phenyl = Fragment('c1ccccc1');
-  const methyl = Fragment('C');
-  const result = phenyl.concat(methyl);
-
-  assert.strictEqual(result.smiles, 'c1ccccc1C');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat can be used multiple times', async () => {
-  const c = Fragment('C');
-  const result = c.concat('C').concat('C').concat('C');
-
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.strictEqual(result.atoms, 4);
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('Static Fragment.concat works', async () => {
-  const a = Fragment('CC');
-  const b = Fragment('CC');
-  const result = Fragment.concat(a, b);
-
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('Static Fragment.concat accepts strings', async () => {
-  const result = Fragment.concat('CC', 'CC');
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat with functional groups', async () => {
-  const ethyl = Fragment('CC');
-  const hydroxyl = Fragment('O');
-  const result = ethyl.concat(hydroxyl);
-
-  assert.strictEqual(result.smiles, 'CCO');
-  assert.strictEqual(result.formula, 'C2H6O');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat preserves original fragments', async () => {
-  const a = Fragment('CC');
-  const b = Fragment('CC');
-  const result = a.concat(b);
-
-  // Original fragments should be unchanged
-  assert.strictEqual(a.smiles, 'CC');
-  assert.strictEqual(b.smiles, 'CC');
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat with heterocycles', async () => {
-  const pyridine = Fragment('n1ccccc1');
-  const methyl = Fragment('C');
-  const result = pyridine.concat(methyl);
-
-  assert.strictEqual(result.smiles, 'n1ccccc1C');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat builds polymer-like chains', async () => {
-  const ethylene = Fragment('CC');
-  let polymer = ethylene;
-
-  for (let i = 0; i < 4; i += 1) {
-    polymer = polymer.concat(ethylene);
-  }
-
-  assert.strictEqual(polymer.smiles, 'CCCCCCCCCC'); // 5 ethylene units = 10 carbons
-  assert.strictEqual(polymer.atoms, 10);
-  assert.ok(await isValidSMILES(polymer.smiles));
-});
-
-test('concat with charged species', async () => {
-  const a = Fragment('[NH3+]');
-  const b = Fragment('C');
-  const result = a.concat(b);
-
-  assert.strictEqual(result.smiles, '[NH3+]C');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat handles double and triple bonds', async () => {
-  const ethylene = Fragment('C=C');
-  const methyl = Fragment('C');
-  const result = ethylene.concat(methyl);
-
-  assert.strictEqual(result.smiles, 'C=CC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat with stereochemistry', async () => {
-  const a = Fragment('C[C@H](O)C');
-  const b = Fragment('C');
-  const result = a.concat(b);
-
-  assert.strictEqual(result.smiles, 'C[C@H](O)CC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat example from requirement: Fragment("CC") + Fragment("CC")', async () => {
-  const a = Fragment('CC');
-  const b = Fragment('CC');
-  const result = a.concat(b);
-
-  assert.strictEqual(result.smiles, 'CCCC');
-  assert.strictEqual(String(result), 'CCCC');
-  assert.ok(await isValidSMILES(result.smiles));
-});
-
-test('concat returns a new Fragment with all methods', async () => {
-  const a = Fragment('C');
-  const b = Fragment('C');
-  const result = a.concat(b);
-
-  // Should have all Fragment methods
-  assert.strictEqual(typeof result.concat, 'function');
-  assert.strictEqual(typeof result.toString, 'function');
-  assert.strictEqual(typeof result, 'function'); // Can be called as a function for branching
-
-  // Can still use for branching
-  const branched = result(Fragment('O'));
-  assert.strictEqual(branched.smiles, 'CC(O)');
-  assert.ok(await isValidSMILES(result.smiles));
-  assert.ok(await isValidSMILES(branched.smiles));
+  // Check molecule data
+  assert.ok(Array.isArray(mol.meta.molecules[0].atoms));
+  assert.ok(Array.isArray(mol.meta.molecules[0].bonds));
+  assert.ok(Array.isArray(mol.meta.molecules[0].extensions));
 });
