@@ -7,3 +7,4 @@ Move fast and ship. Iterate based on real usage, not hypothetical requirements.
 2. Test assertions should compare entire objects using `.toEqual()` rather than checking individual properties
 3. Keep code simple and focused - rely on tests to catch issues rather than adding excessive validation or error handling
 4. Keep it simple, silly - write lean, straightforward code without unnecessary abstractions or complexity
+5. You are currently running on windows operating system. Invoke shell commands with that in mind.
