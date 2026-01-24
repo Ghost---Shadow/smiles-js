@@ -144,6 +144,24 @@ describe('Parser - Bracketed Atoms', () => {
   });
 });
 
+describe('Parser - Branches (Not Yet Supported)', () => {
+  test.skip('parses simple branch - NOT IMPLEMENTED', () => {
+    // Branch tracking exists but attachment integration not implemented
+    // Current behavior: Branches are tracked in Pass 1 but flattened in Pass 2
+    // TODO: Implement branch attachment handling in buildAST
+    const ast = parse('C(C)C');
+    expect(ast.type).toBe('linear');
+    expect(ast.atoms).toEqual(['C', 'C', 'C']); // Currently all atoms in flat list
+  });
+
+  test.skip('parses branch with double bond - NOT IMPLEMENTED', () => {
+    // TODO: Implement branch attachment handling
+    const ast = parse('CC(=O)C');
+    expect(ast.type).toBe('linear');
+    expect(ast.atoms).toEqual(['C', 'C', 'O', 'C']); // Currently flattened
+  });
+});
+
 describe('Parser - Error Handling', () => {
   test('throws on unclosed ring', () => {
     expect(() => parse('C1CCCC')).toThrow('Unclosed rings');

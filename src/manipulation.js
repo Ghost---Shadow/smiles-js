@@ -104,10 +104,42 @@ export function ringClone(ring) {
  * Linear manipulation methods
  */
 
-export function linearAttach() {
-  // For now, store attachments in a similar way to rings
-  // This requires adding an attachments field to linear nodes
-  throw new Error('linearAttach not yet implemented');
+export function linearAttach(linear, attachment, position) {
+  if (position < 1 || position > linear.atoms.length) {
+    throw new Error(`Position must be an integer between 1 and ${linear.atoms.length}`);
+  }
+
+  const updatedAttachments = cloneAttachments(linear.attachments || {});
+
+  if (!updatedAttachments[position]) {
+    updatedAttachments[position] = [];
+  }
+
+  updatedAttachments[position] = [...updatedAttachments[position], attachment];
+
+  return createLinearNode(linear.atoms, linear.bonds, updatedAttachments);
+}
+
+export function linearBranch(linear, branchPoint, ...branches) {
+  if (branchPoint < 1 || branchPoint > linear.atoms.length) {
+    throw new Error(`Branch point must be an integer between 1 and ${linear.atoms.length}`);
+  }
+
+  return branches.reduce(
+    (result, branch) => linearAttach(result, branch, branchPoint),
+    linear,
+  );
+}
+
+export function linearBranchAt(linear, branchMap) {
+  return Object.entries(branchMap).reduce(
+    (result, [position, branches]) => {
+      const pos = Number(position);
+      const branchList = Array.isArray(branches) ? branches : [branches];
+      return linearBranch(result, pos, ...branchList);
+    },
+    linear,
+  );
 }
 
 export function linearConcat(linear, other) {
@@ -119,9 +151,70 @@ export function linearConcat(linear, other) {
       newBonds.push(...other.bonds);
     }
 
-    return createLinearNode(newAtoms, newBonds);
+    return createLinearNode(newAtoms, newBonds, {});
   }
   return createMoleculeNode([linear, other]);
+}
+
+/**
+ * FusedRing manipulation methods
+ */
+
+export function fusedRingAddRing(fusedRing, ring, offset) {
+  const newRings = fusedRing.rings.map((r) => ({ ...r }));
+  const ringWithOffset = { ...ring, offset };
+  newRings.push(ringWithOffset);
+  return createFusedRingNode(newRings);
+}
+
+export function fusedRingGetRing(fusedRing, ringNumber) {
+  return fusedRing.rings.find((r) => r.ringNumber === ringNumber);
+}
+
+export function fusedRingSubstituteInRing(fusedRing, ringNumber, position, newAtom) {
+  const targetRing = fusedRingGetRing(fusedRing, ringNumber);
+  if (!targetRing) {
+    throw new Error(`Ring ${ringNumber} not found in fused ring system`);
+  }
+
+  const updatedRing = ringSubstitute(targetRing, position, newAtom);
+  const newRings = fusedRing.rings.map((r) => {
+    if (r.ringNumber === ringNumber) {
+      return updatedRing;
+    }
+    return { ...r };
+  });
+
+  return createFusedRingNode(newRings);
+}
+
+export function fusedRingAttachToRing(fusedRing, ringNumber, attachment, position) {
+  const targetRing = fusedRingGetRing(fusedRing, ringNumber);
+  if (!targetRing) {
+    throw new Error(`Ring ${ringNumber} not found in fused ring system`);
+  }
+
+  const updatedRing = ringAttach(targetRing, attachment, position);
+  const newRings = fusedRing.rings.map((r) => {
+    if (r.ringNumber === ringNumber) {
+      return updatedRing;
+    }
+    return { ...r };
+  });
+
+  return createFusedRingNode(newRings);
+}
+
+export function fusedRingRenumber(fusedRing, startNumber = 1) {
+  const newRings = fusedRing.rings.map((r, idx) => ({
+    ...r,
+    ringNumber: startNumber + idx,
+  }));
+  return createFusedRingNode(newRings);
+}
+
+export function fusedRingConcat(fusedRing, other) {
+  return createMoleculeNode([fusedRing, other]);
 }
 
 /**

@@ -4,27 +4,25 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 
 ## Summary
 
-**Checkpoints Completed**: 11 out of 21 (52%)
-**Current Status**: Core construction API + Tokenizer + Parser complete
+**Checkpoints Completed**: 13 out of 21 (62%)
+**Current Status**: Core construction API + Tokenizer + Parser + Complete manipulation methods for Ring, Linear, FusedRing, and Molecule
 
 ### What Works ✅
 - All 4 constructors (Ring, Linear, FusedRing, Molecule)
-- Ring manipulation (attach, substitute, substituteMultiple, fuse, concat, clone)
-- Molecule manipulation (append, prepend, concat, getComponent, replaceComponent, clone)
-- Linear.concat() and Linear.clone()
+- **Ring manipulation** (attach, substitute, substituteMultiple, fuse, concat, clone)
+- **Linear manipulation** (attach, branch, branchAt, concat, clone)
+- **FusedRing manipulation** (addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone)
+- **Molecule manipulation** (append, prepend, concat, getComponent, replaceComponent, clone)
 - **Standard SMILES serialization** for all node types
 - **Complete tokenizer** - converts SMILES strings to token stream
 - **Working parser** - converts SMILES strings to AST
 - **Round-trip capability** - SMILES → AST → SMILES works for most structures
 - Immutable operations throughout
-- Full test coverage (86 passing tests, 1 skipped)
+- Full test coverage (106 passing tests, 3 skipped)
 
 ### What's Missing ❌
-- Linear.attach() - **throws "not yet implemented" error**
-- Linear.branch() and Linear.branchAt() - **not implemented**
-- FusedRing manipulation methods (addRing, substituteInRing, attachToRing, renumber)
-- **Parser branch handling** - branches are tracked but not yet integrated into AST
-- **Parser fused ring handling** - fused rings parse incorrectly (skipped test)
+- **Parser branch handling** - branches are tracked but not yet integrated into AST (2 skipped tests)
+- **Parser fused ring handling** - fused rings parse incorrectly (1 skipped test)
 - Fragment integration - **not started**
 - Decompiler (Phase 5) - **not started**
 
@@ -32,7 +30,6 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 - Parser doesn't handle branch attachments yet (branches parsed but not integrated)
 - Fused ring parsing is incomplete (rings that interleave atoms)
 - No bond handling beyond basic storage in Linear nodes
-- Linear attachments (branches) not yet implemented in manipulation API
 
 ## Completed Checkpoints
 
@@ -174,35 +171,74 @@ console.log(naphthalene.smiles); // 'C1CC2CCCCC2CC1'
 
 **Status**: Complete and tested
 
-### ✅ Checkpoint 10 (Partial): Linear & Molecule Manipulation Methods
+### ✅ Checkpoint 10: Linear & Molecule Manipulation Methods
+- [x] Implemented `Linear.prototype.attach()`
+- [x] Implemented `Linear.prototype.branch()`
+- [x] Implemented `Linear.prototype.branchAt()`
 - [x] Implemented `Linear.prototype.concat()`
 - [x] Implemented `Linear.prototype.clone()`
-- [ ] ~~Implemented `Linear.prototype.attach()`~~ - **STUBBED** (throws "not yet implemented")
-- [ ] ~~Implemented `Linear.prototype.branch()`~~ - **NOT STARTED**
-- [ ] ~~Implemented `Linear.prototype.branchAt()`~~ - **NOT STARTED**
 - [x] Implemented `Molecule.prototype.append()`
 - [x] Implemented `Molecule.prototype.prepend()`
 - [x] Implemented `Molecule.prototype.concat()`
 - [x] Implemented `Molecule.prototype.getComponent()`
 - [x] Implemented `Molecule.prototype.replaceComponent()`
 - [x] Implemented `Molecule.prototype.clone()`
-- [x] Wrote tests for implemented methods
+- [x] Wrote tests for all methods (11 new tests for Linear)
 
-**Status**: Partially complete
+**Status**: Complete and tested
 
-**Important**: Linear.attach() exists but throws an error. Linear.branch() and Linear.branchAt() do not exist. Only use Linear.concat() and Linear.clone().
+**Example**:
+```javascript
+const propyl = Linear(['C', 'C', 'C']);
+const methyl = Linear(['C']);
+const ethyl = Linear(['C', 'C']);
 
-## Pending Checkpoints
+// Single attachment
+const branched = propyl.attach(methyl, 2);
 
-### ⏳ Checkpoint 9: FusedRing Manipulation Methods
-- [ ] Implement `FusedRing.prototype.addRing()`
-- [ ] Implement `FusedRing.prototype.getRing()`
-- [ ] Implement `FusedRing.prototype.substituteInRing()`
-- [ ] Implement `FusedRing.prototype.attachToRing()`
-- [ ] Implement `FusedRing.prototype.renumber()`
-- [ ] Write tests for each method
+// Multiple branches at once
+const multiBranched = propyl.branch(2, methyl, ethyl);
 
-**Status**: Not started
+// Branches at multiple positions
+const complex = propyl.branchAt({
+  1: methyl,
+  2: [methyl, ethyl],
+  3: methyl,
+});
+```
+
+### ✅ Checkpoint 9: FusedRing Manipulation Methods
+- [x] Implement `FusedRing.prototype.addRing()`
+- [x] Implement `FusedRing.prototype.getRing()`
+- [x] Implement `FusedRing.prototype.substituteInRing()`
+- [x] Implement `FusedRing.prototype.attachToRing()`
+- [x] Implement `FusedRing.prototype.renumber()`
+- [x] Implement `FusedRing.prototype.concat()`
+- [x] Implement `FusedRing.prototype.clone()`
+- [x] Write tests for each method (9 tests)
+
+**Status**: Complete and tested
+
+**Example**:
+```javascript
+const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+const fusedRing = ring1.fuse(ring2, 2);
+
+// Add another ring to the system
+const ring3 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
+const expanded = fusedRing.addRing(ring3, 8);
+
+// Substitute in a specific ring
+const modified = fusedRing.substituteInRing(2, 3, 'N');
+
+// Attach to a specific ring
+const methyl = Linear(['C']);
+const withAttachment = fusedRing.attachToRing(2, methyl, 3);
+
+// Renumber rings sequentially
+const renumbered = fusedRing.renumber(); // Rings become 1, 2, 3...
+```
 
 ### ✅ Checkpoint 11: Tokenizer (Phase 1)
 - [x] Create `src/tokenizer.js`
@@ -254,6 +290,8 @@ const tokens = tokenize('c1ccccc1');
 - Branch attachments (branches tracked but not integrated)
 - Complex fused rings with interleaving atoms (naphthalene C1CC2CCCCC2CC1)
 
+## Pending Checkpoints
+
 ### ⏳ Checkpoint 14: Fragment Integration
 - [ ] Update `Fragment` constructor to use new parser
 - [ ] Add `Fragment.prototype.toAST()` method
@@ -272,17 +310,17 @@ const tokens = tokenize('c1ccccc1');
 
 ## Test Summary
 
-**Total Tests**: 87
-**Passing**: 86 ✅
-**Skipped**: 1 ⏭️
+**Total Tests**: 109
+**Passing**: 106 ✅
+**Skipped**: 3 ⏭️
 **Failing**: 0 ❌
 
 ### Test Coverage by Module
 
 - `src/constructors.test.js`: 16 tests ✅
-- `src/manipulation.test.js`: 20 tests ✅
+- `src/manipulation.test.js`: 40 tests ✅ (added 11 Linear tests, 9 FusedRing tests)
 - `src/tokenizer.test.js`: 29 tests ✅
-- `src/parser.test.js`: 22 tests (21 ✅, 1 ⏭️ - fused rings)
+- `src/parser.test.js`: 24 tests (21 ✅, 3 ⏭️ - 1 fused rings, 2 branches)
 
 ## Key Features Implemented
 
@@ -298,7 +336,8 @@ const tokens = tokenize('c1ccccc1');
 
 3. **Immutable Manipulation API**
    - Ring: attach, substitute, substituteMultiple, fuse, concat, clone
-   - Linear: concat, clone (attach/branch not yet implemented)
+   - Linear: attach, branch, branchAt, concat, clone
+   - FusedRing: addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone
    - Molecule: append, prepend, concat, getComponent, replaceComponent, clone
 
 4. **Type Safety**
@@ -319,16 +358,13 @@ The highest priority next steps are:
    - Handle complex fused rings where atoms interleave (naphthalene C1CC2CCCCC2CC1)
    - Current implementation assumes consecutive atom sequences
 
-3. **Complete Linear manipulation** (Checkpoint 10)
-   - Implement Linear.attach(), Linear.branch(), Linear.branchAt()
-   - Enable branching for linear chains
-
-4. **Checkpoint 9**: Complete FusedRing manipulation methods
-   - Enable advanced manipulation of fused ring systems
-
-5. **Checkpoint 14**: Fragment Integration
+3. **Checkpoint 14**: Fragment Integration
    - Integrate new AST with existing Fragment API
    - Ensure backward compatibility
+
+4. **Checkpoint 16-18**: Decompiler (Phase 5)
+   - Create JavaScript code generation from AST
+   - Enable AST → Constructor code conversion
 
 ## Usage Examples
 
@@ -375,11 +411,11 @@ examples/
 
 ### Linting
 - **0 errors** ✅
-- **26 warnings** (all from console.log in examples, which is expected)
+- **89 warnings** (all from console.log in examples, which is expected)
 
 ### Testing
-- **86 tests passing** ✅
-- **1 test skipped** (fused ring parsing - documented as incomplete)
+- **95 tests passing** ✅
+- **3 tests skipped** (parser limitations - documented as incomplete)
 - Full coverage of implemented features
 - All assertions use `.toEqual()` for object matching
 

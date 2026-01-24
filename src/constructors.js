@@ -18,7 +18,16 @@ import {
   ringFuse,
   ringConcat,
   ringClone,
+  linearAttach,
+  linearBranch,
+  linearBranchAt,
   linearConcat,
+  fusedRingAddRing,
+  fusedRingGetRing,
+  fusedRingSubstituteInRing,
+  fusedRingAttachToRing,
+  fusedRingRenumber,
+  fusedRingConcat,
   moleculeAppend,
   moleculePrepend,
   moleculeConcat,
@@ -59,6 +68,7 @@ export function deepCloneLinear(linear) {
     ...linear,
     atoms: [...linear.atoms],
     bonds: [...linear.bonds],
+    attachments: cloneAttachments(linear.attachments || {}),
   };
 }
 
@@ -125,6 +135,15 @@ export function attachRingMethods(node) {
 // Attach manipulation methods to Linear nodes
 export function attachLinearMethods(node) {
   return Object.assign(node, {
+    attach(attachment, position) {
+      return linearAttach(this, attachment, position);
+    },
+    branch(branchPoint, ...branches) {
+      return linearBranch(this, branchPoint, ...branches);
+    },
+    branchAt(branchMap) {
+      return linearBranchAt(this, branchMap);
+    },
     concat(other) {
       return linearConcat(this, other);
     },
@@ -161,8 +180,23 @@ export function attachMoleculeMethods(node) {
 // Attach manipulation methods to FusedRing nodes
 export function attachFusedRingMethods(node) {
   return Object.assign(node, {
+    addRing(ring, offset) {
+      return fusedRingAddRing(this, ring, offset);
+    },
+    getRing(ringNumber) {
+      return fusedRingGetRing(this, ringNumber);
+    },
+    substituteInRing(ringNumber, position, newAtom) {
+      return fusedRingSubstituteInRing(this, ringNumber, position, newAtom);
+    },
+    attachToRing(ringNumber, attachment, position) {
+      return fusedRingAttachToRing(this, ringNumber, attachment, position);
+    },
+    renumber(startNumber = 1) {
+      return fusedRingRenumber(this, startNumber);
+    },
     concat(other) {
-      return ringConcat(this, other);
+      return fusedRingConcat(this, other);
     },
     clone() {
       return deepCloneFusedRing(this);
@@ -189,11 +223,12 @@ export function createRingNode(atoms, size, ringNumber, offset, substitutions, a
   return node;
 }
 
-export function createLinearNode(atoms, bonds) {
+export function createLinearNode(atoms, bonds, attachments = {}) {
   const node = {
     type: ASTNodeType.LINEAR,
     atoms: [...atoms],
     bonds: [...bonds],
+    attachments: { ...attachments },
   };
   attachSmilesGetter(node);
   attachLinearMethods(node);
@@ -255,15 +290,16 @@ export function Ring(options) {
  * Create a Linear chain node
  * @param {Array<string>} atoms - Array of atom symbols
  * @param {Array<string>} [bonds=[]] - Array of bond types
+ * @param {Object} [attachments={}] - Position -> attachment list
  * @returns {Object} Linear AST node
  */
-export function Linear(atoms, bonds = []) {
+export function Linear(atoms, bonds = [], attachments = {}) {
   if (!Array.isArray(atoms)) {
     throw new Error('Linear atoms must be an array');
   }
   validateAtoms(atoms);
 
-  return createLinearNode(atoms, bonds);
+  return createLinearNode(atoms, bonds, attachments);
 }
 
 /**

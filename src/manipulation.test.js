@@ -131,6 +131,109 @@ describe('Ring.clone()', () => {
   });
 });
 
+describe('Linear.attach()', () => {
+  test('attaches a linear chain to a linear chain', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+    const branched = propyl.attach(methyl, 2);
+
+    expect(branched.attachments[2]).toHaveLength(1);
+    expect(branched.attachments[2][0].type).toBe('linear');
+  });
+
+  test('returns a new linear without modifying original', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+    const branched = propyl.attach(methyl, 2);
+
+    expect(propyl.attachments).toEqual({});
+    expect(branched.attachments[2]).toHaveLength(1);
+  });
+
+  test('can attach multiple groups to same position', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl1 = Linear(['C']);
+    const methyl2 = Linear(['C']);
+    const result = propyl.attach(methyl1, 2).attach(methyl2, 2);
+
+    expect(result.attachments[2]).toHaveLength(2);
+  });
+
+  test('throws error for invalid position', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+
+    expect(() => propyl.attach(methyl, 0)).toThrow('Position must be an integer between 1 and 3');
+    expect(() => propyl.attach(methyl, 4)).toThrow('Position must be an integer between 1 and 3');
+  });
+});
+
+describe('Linear.branch()', () => {
+  test('adds single branch at position', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+    const branched = propyl.branch(2, methyl);
+
+    expect(branched.attachments[2]).toHaveLength(1);
+  });
+
+  test('adds multiple branches at same position', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl1 = Linear(['C']);
+    const methyl2 = Linear(['C']);
+    const branched = propyl.branch(2, methyl1, methyl2);
+
+    expect(branched.attachments[2]).toHaveLength(2);
+  });
+
+  test('throws error for invalid branch point', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+
+    expect(() => propyl.branch(0, methyl)).toThrow('Branch point must be an integer between 1 and 3');
+    expect(() => propyl.branch(4, methyl)).toThrow('Branch point must be an integer between 1 and 3');
+  });
+});
+
+describe('Linear.branchAt()', () => {
+  test('adds branches at multiple positions', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+    const branched = propyl.branchAt({
+      1: methyl,
+      3: methyl,
+    });
+
+    expect(branched.attachments[1]).toHaveLength(1);
+    expect(branched.attachments[3]).toHaveLength(1);
+  });
+
+  test('adds multiple branches at same position via array', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl1 = Linear(['C']);
+    const methyl2 = Linear(['C']);
+    const branched = propyl.branchAt({
+      2: [methyl1, methyl2],
+    });
+
+    expect(branched.attachments[2]).toHaveLength(2);
+  });
+
+  test('handles mixed single and array branches', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl1 = Linear(['C']);
+    const methyl2 = Linear(['C']);
+    const ethyl = Linear(['C', 'C']);
+    const branched = propyl.branchAt({
+      1: methyl1,
+      2: [methyl2, ethyl],
+    });
+
+    expect(branched.attachments[1]).toHaveLength(1);
+    expect(branched.attachments[2]).toHaveLength(2);
+  });
+});
+
 describe('Linear.concat()', () => {
   test('concatenates two linear chains', () => {
     const propyl = Linear(['C', 'C', 'C']);
@@ -148,6 +251,124 @@ describe('Linear.concat()', () => {
 
     expect(molecule.type).toBe('molecule');
     expect(molecule.components).toHaveLength(2);
+  });
+});
+
+describe('Linear.clone()', () => {
+  test('creates a deep clone', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const methyl = Linear(['C']);
+    const branched = propyl.attach(methyl, 2);
+    const cloned = branched.clone();
+
+    expect(cloned).toEqual(branched);
+    expect(cloned).not.toBe(branched);
+    expect(cloned.attachments).not.toBe(branched.attachments);
+  });
+});
+
+describe('FusedRing methods', () => {
+  test('addRing() adds a ring to fused system', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const ring3 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
+    const expanded = fusedRing.addRing(ring3, 8);
+
+    expect(expanded.rings).toHaveLength(3);
+    expect(expanded.rings[2].size).toBe(5);
+    expect(expanded.rings[2].offset).toBe(8);
+  });
+
+  test('getRing() retrieves ring by number', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const retrieved = fusedRing.getRing(2);
+
+    expect(retrieved.ringNumber).toBe(2);
+    expect(retrieved.size).toBe(6);
+  });
+
+  test('getRing() returns undefined for non-existent ring', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const retrieved = fusedRing.getRing(99);
+
+    expect(retrieved).toBeUndefined();
+  });
+
+  test('substituteInRing() substitutes in specific ring', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const modified = fusedRing.substituteInRing(2, 3, 'N');
+
+    expect(modified.rings[1].substitutions[3]).toBe('N');
+    expect(fusedRing.rings[1].substitutions).toEqual({});
+  });
+
+  test('attachToRing() attaches to specific ring', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const methyl = Linear(['C']);
+    const modified = fusedRing.attachToRing(2, methyl, 3);
+
+    expect(modified.rings[1].attachments[3]).toHaveLength(1);
+    expect(fusedRing.rings[1].attachments).toEqual({});
+  });
+
+  test('renumber() renumbers rings sequentially', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 5 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 7 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const renumbered = fusedRing.renumber();
+
+    expect(renumbered.rings[0].ringNumber).toBe(1);
+    expect(renumbered.rings[1].ringNumber).toBe(2);
+  });
+
+  test('renumber() with custom start number', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const renumbered = fusedRing.renumber(10);
+
+    expect(renumbered.rings[0].ringNumber).toBe(10);
+    expect(renumbered.rings[1].ringNumber).toBe(11);
+  });
+
+  test('concat() creates molecule', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const methyl = Linear(['C']);
+    const molecule = fusedRing.concat(methyl);
+
+    expect(molecule.type).toBe('molecule');
+    expect(molecule.components).toHaveLength(2);
+  });
+
+  test('clone() creates deep copy', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    const cloned = fusedRing.clone();
+
+    expect(cloned).toEqual(fusedRing);
+    expect(cloned).not.toBe(fusedRing);
+    expect(cloned.rings).not.toBe(fusedRing.rings);
   });
 });
 
