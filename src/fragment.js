@@ -74,7 +74,6 @@ class FragmentClass {
       result += `(${remappedBranch})`;
     });
 
-    // eslint-disable-next-line no-use-before-define
     return Fragment(result);
   }
 
@@ -93,7 +92,7 @@ class FragmentClass {
     });
 
     const newSmiles = this.smiles + remappedOther;
-    // eslint-disable-next-line no-use-before-define
+
     return Fragment(newSmiles);
   }
 

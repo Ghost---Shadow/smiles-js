@@ -10,7 +10,11 @@
       "Bash(grep:*)",
       "Bash(npx:*)",
       "Bash(bunx:*)",
-      "Bash(ren:*)"
+      "Bash(ren:*)",
+      "Bash(dir:*)",
+      "Bash(timeout:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

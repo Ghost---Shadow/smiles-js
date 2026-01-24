@@ -105,7 +105,7 @@ class FusedRingClass {
             // Renumber rings in the attached FusedRing
             const renumberedMeta = item.meta.map((attachedMeta) => processRing(attachedMeta));
             // Create new FusedRing with renumbered meta
-            // eslint-disable-next-line no-use-before-define
+
             const tempRing = FusedRing(
               renumberedMeta.map((m) => m.toObject()),
               { purgeRingNumbers: false },

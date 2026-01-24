@@ -96,7 +96,7 @@ export const collectRingAttachments = (context, startPos, endPos) => {
         if (/\d/.test(attachmentSmiles)) {
           try {
             // Recursively parse the ring attachment
-            // eslint-disable-next-line no-use-before-define
+
             const parsedRings = parse(attachmentSmiles);
             // Store parsed rings directly without meta wrapper
             attachments[relativePos].push(parsedRings);
