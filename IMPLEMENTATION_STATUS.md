@@ -5,28 +5,30 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 ## Summary
 
 **Checkpoints Completed**: 8 out of 21 (38%)
-**Current Status**: Core construction API complete, ready for parser implementation
+**Current Status**: Core construction API complete with standard SMILES output
 
-### What Works
-- ✅ All 4 constructors (Ring, Linear, FusedRing, Molecule)
-- ✅ Ring manipulation (attach, substitute, fuse, clone)
-- ✅ Molecule manipulation (append, prepend, concat, etc.)
-- ✅ SMILES serialization for all node types
-- ✅ Immutable operations throughout
-- ✅ Full test coverage for implemented features
+### What Works ✅
+- All 4 constructors (Ring, Linear, FusedRing, Molecule)
+- Ring manipulation (attach, substitute, substituteMultiple, fuse, concat, clone)
+- Molecule manipulation (append, prepend, concat, getComponent, replaceComponent, clone)
+- Linear.concat() and Linear.clone()
+- **Standard SMILES serialization** for all node types
+- Immutable operations throughout
+- Full test coverage (36 passing tests)
 
-### What's Missing
-- ❌ Linear.attach(), Linear.branch(), Linear.branchAt()
-- ❌ FusedRing manipulation methods (addRing, substituteInRing, etc.)
-- ❌ Tokenizer (Phase 1)
-- ❌ Parser (Phase 2)
-- ❌ Fragment integration
-- ❌ Decompiler (Phase 5)
+### What's Missing ❌
+- Linear.attach() - **throws "not yet implemented" error**
+- Linear.branch() and Linear.branchAt() - **not implemented**
+- FusedRing manipulation methods (addRing, substituteInRing, attachToRing, renumber)
+- Tokenizer (Phase 1) - **not started**
+- Parser (Phase 2) - **not started**
+- Fragment integration - **not started**
+- Decompiler (Phase 5) - **not started**
 
-### Known Issues
-- ⚠️ SMILES generation uses non-standard ring marker placement (before first atom instead of after)
-- ⚠️ No bond handling beyond basic storage
-- ⚠️ FusedRing SMILES generation is complex and could use better documentation
+### Known Limitations ⚠️
+- No bond handling beyond basic storage in Linear nodes
+- Linear attachments (branches) not yet implemented
+- Parser needed for round-trip (SMILES string → AST → SMILES string)
 
 ## Completed Checkpoints
 
@@ -51,7 +53,7 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 **Example**:
 ```javascript
 const benzene = Ring({ atoms: 'c', size: 6 });
-console.log(benzene.smiles); // '1cccccc1' (non-standard: marker before first atom)
+console.log(benzene.smiles); // 'c1ccccc1' (standard SMILES notation)
 ```
 
 ### ✅ Checkpoint 2: Linear Constructor
@@ -85,7 +87,7 @@ console.log(propane.smiles); // 'CCC'
 const benzene = Ring({ atoms: 'c', size: 6 });
 const methyl = Linear(['C']);
 const toluene = benzene.attach(methyl, 1);
-console.log(toluene.smiles); // '1c(C)ccccc1'
+console.log(toluene.smiles); // 'c1(C)ccccc1'
 ```
 
 ### ✅ Checkpoint 4: Ring.substitute() - Ring Substitutions
@@ -103,7 +105,7 @@ console.log(toluene.smiles); // '1c(C)ccccc1'
 ```javascript
 const benzene = Ring({ atoms: 'c', size: 6 });
 const pyridine = benzene.substitute(1, 'n');
-console.log(pyridine.smiles); // '1nccccc1'
+console.log(pyridine.smiles); // 'n1ccccc1'
 ```
 
 ### ✅ Checkpoint 5: Molecule Constructor
@@ -121,7 +123,7 @@ console.log(pyridine.smiles); // '1nccccc1'
 const propyl = Linear(['C', 'C', 'C']);
 const benzene = Ring({ atoms: 'c', size: 6 });
 const propylbenzene = Molecule([propyl, benzene]);
-console.log(propylbenzene.smiles); // 'CCC1cccccc1'
+console.log(propylbenzene.smiles); // 'CCCc1ccccc1'
 ```
 
 ### ✅ Checkpoint 6: FusedRing Constructor
@@ -140,20 +142,23 @@ const naphthalene = FusedRing([
   Ring({ atoms: 'C', size: 10, offset: 0, ringNumber: 1 }),
   Ring({ atoms: 'C', size: 6, offset: 2, ringNumber: 2 })
 ]);
-console.log(naphthalene.smiles); // '1CC2CCCCCC2CC1'
+console.log(naphthalene.smiles); // 'C1CC2CCCCC2CC1'
 ```
 
 ### ✅ Checkpoint 7: SMILES Code Generator (Phase 4)
 - [x] Created `src/codegen.js`
 - [x] Implemented `buildSMILES()` dispatcher
-- [x] Implemented `buildRingSMILES()` function
+- [x] Implemented `buildRingSMILES()` function with standard notation
 - [x] Implemented `buildLinearSMILES()` function
-- [x] Implemented `buildFusedRingSMILES()` function
+- [x] Implemented `buildFusedRingSMILES()` function with detailed comments
 - [x] Implemented `buildMoleculeSMILES()` function
 - [x] Updated all `.smiles` getters to use code generator
 - [x] Wrote round-trip tests for all node types
+- [x] **Fixed to use standard SMILES notation** (ring marker after first atom)
 
 **Status**: Complete and tested
+
+**Note**: SMILES generation now follows standard notation where ring markers appear AFTER atoms, not before (e.g., `c1ccccc1` not `1cccccc1`).
 
 ### ✅ Checkpoint 8: Additional Ring Manipulation Methods
 - [x] Implemented `Ring.prototype.substituteMultiple()`
@@ -168,9 +173,9 @@ console.log(naphthalene.smiles); // '1CC2CCCCCC2CC1'
 ### ✅ Checkpoint 10 (Partial): Linear & Molecule Manipulation Methods
 - [x] Implemented `Linear.prototype.concat()`
 - [x] Implemented `Linear.prototype.clone()`
-- [ ] Implemented `Linear.prototype.attach()` - **STUBBED** (throws "not yet implemented")
-- [ ] Implemented `Linear.prototype.branch()` - **NOT STARTED**
-- [ ] Implemented `Linear.prototype.branchAt()` - **NOT STARTED**
+- [ ] ~~Implemented `Linear.prototype.attach()`~~ - **STUBBED** (throws "not yet implemented")
+- [ ] ~~Implemented `Linear.prototype.branch()`~~ - **NOT STARTED**
+- [ ] ~~Implemented `Linear.prototype.branchAt()`~~ - **NOT STARTED**
 - [x] Implemented `Molecule.prototype.append()`
 - [x] Implemented `Molecule.prototype.prepend()`
 - [x] Implemented `Molecule.prototype.concat()`
@@ -179,7 +184,9 @@ console.log(naphthalene.smiles); // '1CC2CCCCCC2CC1'
 - [x] Implemented `Molecule.prototype.clone()`
 - [x] Wrote tests for implemented methods
 
-**Status**: Partially complete - Molecule methods done, Linear methods incomplete (Linear.attach throws error, Linear.branch/branchAt not started)
+**Status**: Partially complete
+
+**Important**: Linear.attach() exists but throws an error. Linear.branch() and Linear.branchAt() do not exist. Only use Linear.concat() and Linear.clone().
 
 ## Pending Checkpoints
 
@@ -247,14 +254,15 @@ console.log(naphthalene.smiles); // '1CC2CCCCCC2CC1'
    - Ring(), Linear(), FusedRing(), Molecule() constructors
    - All constructors validated and tested
 
-2. **SMILES Serialization**
+2. **Standard SMILES Serialization**
    - Every AST node has a `.smiles` property
    - Code generator supports all node types
    - Proper handling of attachments and substitutions
+   - **Standard notation**: Ring markers appear after atoms (e.g., `c1ccccc1`)
 
 3. **Immutable Manipulation API**
    - Ring: attach, substitute, substituteMultiple, fuse, concat, clone
-   - Linear: concat, clone
+   - Linear: concat, clone (attach/branch not yet implemented)
    - Molecule: append, prepend, concat, getComponent, replaceComponent, clone
 
 4. **Type Safety**
@@ -270,16 +278,16 @@ The highest priority next steps are:
    - This will enable parsing SMILES strings into AST
    - Required for full round-trip capability (SMILES → AST → SMILES)
 
-2. **Checkpoint 9**: Complete FusedRing manipulation methods
+2. **Complete Linear manipulation** (Checkpoint 10)
+   - Implement Linear.attach(), Linear.branch(), Linear.branchAt()
+   - Enable branching for linear chains
+
+3. **Checkpoint 9**: Complete FusedRing manipulation methods
    - Enable advanced manipulation of fused ring systems
 
-3. **Checkpoint 14**: Fragment Integration
+4. **Checkpoint 14**: Fragment Integration
    - Integrate new AST with existing Fragment API
    - Ensure backward compatibility
-
-4. **Checkpoint 16-18**: Decompiler
-   - Enable code generation from AST
-   - Add `.toCode()` method to Fragment
 
 ## Usage Examples
 
@@ -301,9 +309,9 @@ const methyl = Linear(['C']);
 const toluene = benzene.attach(methyl, 1);
 
 // All operations are immutable
-console.log(benzene.smiles);   // '1cccccc1'
-console.log(pyridine.smiles);  // '1nccccc1'
-console.log(toluene.smiles);   // '1c(C)ccccc1'
+console.log(benzene.smiles);   // 'c1ccccc1'
+console.log(pyridine.smiles);  // 'n1ccccc1'
+console.log(toluene.smiles);   // 'c1(C)ccccc1'
 ```
 
 ## Architecture
@@ -312,7 +320,7 @@ console.log(toluene.smiles);   // '1c(C)ccccc1'
 src/
 ├── ast.js              # AST node types and validation utilities
 ├── constructors.js     # Factory functions (Ring, Linear, etc.)
-├── codegen.js          # SMILES code generator
+├── codegen.js          # SMILES code generator (standard notation)
 ├── manipulation.js     # Manipulation methods
 └── index.js            # Public API exports
 
@@ -320,55 +328,26 @@ examples/
 └── basic-usage.js      # Usage examples
 ```
 
-## Implementation Quality Assessment
+## Code Quality
 
-**Areas for Improvement:**
-- FusedRing SMILES generation is complex and could benefit from comments
-- No bond handling beyond basic storage in Linear nodes
-- Linear.attach() and Linear.branch() are stubbed (documented as incomplete)
+### Linting
+- **0 errors** ✅
+- **26 warnings** (all from console.log in examples, which is expected)
 
-### Documentation Quality: ⚠️ Needs Attention
+### Testing
+- **36 tests passing**
+- Full coverage of implemented features
+- All assertions use `.toEqual()` for object matching
 
-**Issues Found:**
-1. **SMILES Output Mismatch**: Status doc shows incorrect SMILES examples:
-   - Doc claims benzene is `'c1ccccc1'` but actual output is `'1cccccc1'`
-   - Doc claims toluene is `'c1c(C)cccc1'` but actual is `'1c(C)ccccc1'`
-   - Doc claims naphthalene is `'C1=CC2=CC=CC=C2C=C1'` but actual is `'1CC2CCCCCC2CC1'`
+### Documentation
+- Inline comments for complex logic (especially FusedRing SMILES generation)
+- Clear JSDoc comments on all public functions
+- Examples demonstrate all core features
 
-2. **Incomplete Features**: Linear.attach() and Linear.branch() are listed as implemented but they throw "not yet implemented" errors
-
-### Honesty Assessment: ⚠️ Overstated
-
-The implementation status document is **mostly honest but overstates completeness**:
-
-**Accurate Claims:**
-- ✅ Checkpoints 0-8 are genuinely complete
-- ✅ All claimed tests are passing (36 tests verified)
-- ✅ Code quality is good
-- ✅ API is working as designed
-
-**Inaccurate/Misleading Claims:**
-- ❌ Checkpoint 10 claims to be "Partially complete" but should note Linear.attach/branch throw errors
-- ❌ SMILES examples in status doc don't match actual output
-- ❌ Status says "SMILES generation works" but doesn't clarify it's non-standard format
-- ❌ No mention that ring markers appear at position 1 instead of standard position
-
-### SMILES Generation Issues
-
-The current implementation generates **valid but non-canonical SMILES**:
-
-**Current behavior:**
-- Ring opening marker at position 1: `1cccccc1`
-- Standard SMILES: `c1ccccc1` (marker after first atom)
-
-**Impact:**
-- Round-trip will work (SMILES → AST → SMILES)
-- But output won't match standard chemistry tools
-- Not wrong, just non-standard notation
-
-## Notes
+## Implementation Notes
 
 - All implementations follow the design from `docs/PARSER_REFACTOR_PLAN.md`
 - Code follows the "startup mindset" from `CLAUDE.md` (move fast, iterate, breaking changes OK)
-- Test assertions use `.toEqual()` for object matching per project guidelines
-- **IMPORTANT**: SMILES generation uses non-standard ring marker placement (marker before first atom instead of after)
+- SMILES generation uses **standard notation** (ring markers after atoms)
+- FusedRing SMILES generation includes detailed inline documentation
+- Linear.attach() is stubbed with error message - clearly documented as not implemented

@@ -9,7 +9,7 @@ describe('Ring.attach()', () => {
 
     expect(toluene.attachments[1]).toHaveLength(1);
     expect(toluene.attachments[1][0].type).toBe('linear');
-    expect(toluene.smiles).toBe('1c(C)ccccc1');
+    expect(toluene.smiles).toBe('c1(C)ccccc1');
   });
 
   test('returns a new ring without modifying original', () => {
@@ -45,7 +45,7 @@ describe('Ring.substitute()', () => {
     const pyridine = benzene.substitute(1, 'n');
 
     expect(pyridine.substitutions[1]).toBe('n');
-    expect(pyridine.smiles).toBe('1nccccc1');
+    expect(pyridine.smiles).toBe('n1ccccc1');
   });
 
   test('returns a new ring without modifying original', () => {

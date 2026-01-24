@@ -51,18 +51,19 @@ export function buildRingSMILES(ring) {
   } = ring;
   const parts = [];
 
-  // Build ring with opening marker
+  // Build ring with standard SMILES notation
+  // Ring marker appears AFTER the first atom (standard notation)
   Array.from({ length: size }, (_, idx) => idx + 1).forEach((i) => {
-    // Add ring opening marker at position 1
-    if (i === 1) {
-      parts.push(ringNumber.toString());
-    }
-
     // Get the atom at this position (base atom or substitution)
     const atom = substitutions[i] || atoms;
 
     // Add the atom first
     parts.push(atom);
+
+    // Add ring opening marker after position 1 (standard SMILES)
+    if (i === 1) {
+      parts.push(ringNumber.toString());
+    }
 
     // Then add attachments if any
     if (attachments[i]) {
@@ -86,6 +87,20 @@ export function buildRingSMILES(ring) {
 
 /**
  * Build SMILES for a FusedRing node
+ *
+ * Strategy:
+ * 1. Build a linear atom sequence covering all fused rings
+ * 2. Track which ring markers (open/close) appear at each position
+ * 3. Serialize by walking the atom sequence and emitting:
+ *    - Atom
+ *    - Ring markers after the atom (standard SMILES notation)
+ *    - Attachments in parentheses
+ *
+ * Example: Naphthalene C1=CC2=CC=CC=C2C=C1
+ * - Ring 1 spans positions 0-9 (10 atoms)
+ * - Ring 2 spans positions 2-7 (6 atoms, fused at offset 2)
+ * - Ring markers: 1 after pos 0, 2 after pos 2, 2 after pos 7, 1 after pos 9
+ *
  * @param {Object} fusedRing - FusedRing AST node
  * @returns {string} SMILES string
  */
@@ -141,36 +156,38 @@ export function buildFusedRingSMILES(fusedRing) {
     atomSequence[marker.position].markers.push(marker);
   });
 
-  // Build SMILES string
+  // Build SMILES string using standard notation
+  // Standard SMILES: atom comes first, then ring markers
   const parts = [];
   atomSequence.forEach((entry) => {
     if (!entry) return;
 
     const { atom, markers = [], attachments = [] } = entry;
 
-    // Add opening ring markers
+    // Add atom first (standard SMILES)
+    if (atom) {
+      parts.push(atom);
+    }
+
+    // Add ring markers after the atom (standard SMILES)
+    // Opening markers first
     const openMarkers = markers.filter((m) => m.type === 'open');
     openMarkers.forEach((marker) => {
       parts.push(marker.ringNumber.toString());
     });
 
-    // Add attachments
+    // Then closing markers
+    const closeMarkers = markers.filter((m) => m.type === 'close');
+    closeMarkers.forEach((marker) => {
+      parts.push(marker.ringNumber.toString());
+    });
+
+    // Add attachments last
     attachments.forEach((attachment) => {
       parts.push('(');
       // eslint-disable-next-line no-use-before-define
       parts.push(buildSMILES(attachment));
       parts.push(')');
-    });
-
-    // Add atom
-    if (atom) {
-      parts.push(atom);
-    }
-
-    // Add closing ring markers
-    const closeMarkers = markers.filter((m) => m.type === 'close');
-    closeMarkers.forEach((marker) => {
-      parts.push(marker.ringNumber.toString());
     });
   });
 

@@ -15,7 +15,7 @@ console.log('=== Basic Ring Construction ===\n');
 // Create benzene
 const benzene = Ring({ atoms: 'c', size: 6 });
 console.log('Benzene:', benzene.smiles);
-// Output: 1cccccc1
+// Output: c1ccccc1
 
 // ============================================
 // RING SUBSTITUTIONS
@@ -26,12 +26,12 @@ console.log('\n=== Ring Substitutions ===\n');
 // Create pyridine (benzene with one nitrogen)
 const pyridine = benzene.substitute(1, 'n');
 console.log('Pyridine:', pyridine.smiles);
-// Output: 1nccccc1
+// Output: n1ccccc1
 
 // Create multiple substitutions
 const triazine = benzene.substituteMultiple({ 1: 'n', 3: 'n', 5: 'n' });
 console.log('Triazine:', triazine.smiles);
-// Output: 1ncncnc1
+// Output: n1cncnc1
 
 // ============================================
 // RING ATTACHMENTS
@@ -43,13 +43,13 @@ console.log('\n=== Ring Attachments ===\n');
 const methyl = Linear(['C']);
 const toluene = benzene.attach(methyl, 1);
 console.log('Toluene:', toluene.smiles);
-// Output: 1c(C)ccccc1
+// Output: c1(C)ccccc1
 
 // Multiple attachments
 const ethyl = Linear(['C', 'C']);
 const ethylbenzene = benzene.attach(ethyl, 1);
 console.log('Ethylbenzene:', ethylbenzene.smiles);
-// Output: 1c(CC)ccccc1
+// Output: c1(CC)ccccc1
 
 // ============================================
 // LINEAR CHAINS
@@ -87,12 +87,12 @@ const ring2 = Ring({
 });
 const naphthalene = FusedRing([ring1, ring2]);
 console.log('Naphthalene:', naphthalene.smiles);
-// Output: 1C2CCCCCC2CCCC1
+// Output: C1CC2CCCCC2CC1
 
 // Alternative: Use fuse method
 const naphthalene2 = ring1.fuse(ring2, 2);
 console.log('Naphthalene (via fuse):', naphthalene2.smiles);
-// Output: 1C2CCCCCC2CCCC1
+// Output: C1CC2CCCCC2CC1
 
 // ============================================
 // MOLECULES (MULTIPLE COMPONENTS)
@@ -103,12 +103,12 @@ console.log('\n=== Molecules ===\n');
 // Propylbenzene
 const propylbenzene = Molecule([propane, benzene]);
 console.log('Propylbenzene:', propylbenzene.smiles);
-// Output: CCC1cccccc1
+// Output: CCCc1ccccc1
 
 // Can also use concat
 const propylbenzene2 = propane.concat(benzene);
 console.log('Propylbenzene (via concat):', propylbenzene2.smiles);
-// Output: CCC1cccccc1
+// Output: CCCc1ccccc1
 
 // ============================================
 // CHAINING OPERATIONS
@@ -123,7 +123,7 @@ const molecule = Ring({ atoms: 'c', size: 6 })
   .attach(Linear(['C']), 2);
 
 console.log('Complex molecule:', molecule.smiles);
-// Output: 1nc(C)nccc1
+// Output: n1c(C)nccc1
 
 // ============================================
 // IMMUTABILITY
@@ -132,11 +132,11 @@ console.log('Complex molecule:', molecule.smiles);
 console.log('\n=== Immutability ===\n');
 
 const original = Ring({ atoms: 'c', size: 6 });
-console.log('Original:', original.smiles);
+console.log('Original:', original.smiles); // c1ccccc1
 
 const modified = original.substitute(1, 'n');
-console.log('Modified:', modified.smiles);
-console.log('Original unchanged:', original.smiles);
+console.log('Modified:', modified.smiles); // n1ccccc1
+console.log('Original unchanged:', original.smiles); // c1ccccc1
 // Original remains benzene, modified is pyridine
 
 // ============================================

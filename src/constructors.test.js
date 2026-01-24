@@ -18,7 +18,7 @@ describe('Ring Constructor', () => {
 
   test('has .smiles property', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
-    expect(benzene.smiles).toBe('1cccccc1');
+    expect(benzene.smiles).toBe('c1ccccc1');
   });
 
   test('throws error for invalid size', () => {
@@ -98,7 +98,7 @@ describe('Molecule Constructor', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
     const propylbenzene = Molecule([propyl, benzene]);
 
-    expect(propylbenzene.smiles).toBe('CCC1cccccc1');
+    expect(propylbenzene.smiles).toBe('CCCc1ccccc1');
   });
 
   test('handles empty components', () => {
