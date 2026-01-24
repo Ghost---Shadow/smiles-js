@@ -26,8 +26,9 @@ export function buildMolBlockFromMeta(meta) {
     const z = atom.z !== undefined ? atom.z : defaults.z;
     const symbol = getElementSymbol(z).padEnd(3);
 
-    // Use dummy coordinates (RDKit will generate proper ones)
-    const x = (i * 1.5).toFixed(4).padStart(10);
+    // Use dummy linear coordinates (valid but not geometrically accurate)
+    // Users can generate proper 2D coords by: mol.get_smiles() then rdkit.get_mol(smiles).get_molblock()
+    const x = '0.0000'.padStart(10);
     const y = '0.0000'.padStart(10);
     const zCoord = '0.0000'.padStart(10);
 
