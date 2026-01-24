@@ -1,7 +1,14 @@
 import { test, describe } from 'bun:test';
 import assert from 'bun:assert';
 import {
-  handleAtoms, handleAttachment, handleRings, handleLargeRings,
+  handleAtoms,
+  handleAttachment,
+  handleRings,
+  handleLargeRings,
+  hasFusedRingClosures,
+  detectRingSubstitutions,
+  collectRingAttachments,
+  parseFusedRingContent,
 } from './parse.js';
 import { Fragment } from './fragment.js';
 import { isValidSMILES } from './test-utils.js';
@@ -271,6 +278,257 @@ describe('handleRings', () => {
 
     assert.strictEqual(context.rings.length, 2);
     assert.strictEqual(context.rings[1].offset, 3); // Offset is startPos for fused rings
+  });
+});
+
+describe('hasFusedRingClosures', () => {
+  test('returns false when ringStacks is undefined', () => {
+    const result = hasFusedRingClosures('c1ccccc1', undefined);
+    assert.strictEqual(result, false);
+  });
+
+  test('returns false when content has no ring numbers', () => {
+    const ringStacks = { 1: [0] };
+    const result = hasFusedRingClosures('CCC', ringStacks);
+    assert.strictEqual(result, false);
+  });
+
+  test('returns false when ring numbers are not open', () => {
+    const ringStacks = { 1: [0] };
+    const result = hasFusedRingClosures('c2ccccc2', ringStacks);
+    assert.strictEqual(result, false);
+  });
+
+  test('returns true when content has open ring closures', () => {
+    const ringStacks = { 1: [0], 2: [3] };
+    const result = hasFusedRingClosures('C=C2N1', ringStacks);
+    assert.strictEqual(result, true);
+  });
+
+  test('returns true for multiple open rings', () => {
+    const ringStacks = { 1: [0], 2: [3], 3: [5] };
+    const result = hasFusedRingClosures('c2ccc3cc3c2', ringStacks);
+    assert.strictEqual(result, true);
+  });
+
+  test('handles empty ringStacks object', () => {
+    const ringStacks = {};
+    const result = hasFusedRingClosures('c1ccccc1', ringStacks);
+    assert.strictEqual(result, false);
+  });
+});
+
+describe('detectRingSubstitutions', () => {
+  test('returns empty object when all atoms match base type', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: [] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = detectRingSubstitutions(context, 0, 2, 'c');
+    assert.deepStrictEqual(result, {});
+  });
+
+  test('detects single substitution', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'n', position: 1, attachments: [] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = detectRingSubstitutions(context, 0, 2, 'c');
+    assert.deepStrictEqual(result, { 2: 'n' });
+  });
+
+  test('detects multiple substitutions', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'n', position: 1, attachments: [] },
+        { type: 'c', position: 2, attachments: [] },
+        { type: 'n', position: 3, attachments: [] },
+        { type: 'c', position: 4, attachments: [] },
+      ],
+    };
+    const result = detectRingSubstitutions(context, 0, 4, 'c');
+    assert.deepStrictEqual(result, { 2: 'n', 4: 'n' });
+  });
+
+  test('uses 1-based relative positions', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: [] },
+        { type: 'c', position: 2, attachments: [] },
+        { type: 'n', position: 3, attachments: [] },
+        { type: 'c', position: 4, attachments: [] },
+      ],
+    };
+    const result = detectRingSubstitutions(context, 3, 4, 'c');
+    assert.deepStrictEqual(result, { 1: 'n' });
+  });
+});
+
+describe('collectRingAttachments', () => {
+  test('returns empty object when no attachments', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: [] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = collectRingAttachments(context, 0, 2);
+    assert.deepStrictEqual(result, {});
+  });
+
+  test('collects simple attachments', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: ['C'] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = collectRingAttachments(context, 0, 2);
+    assert.deepStrictEqual(result, {
+      2: ['C'],
+    });
+  });
+
+  test('collects multiple attachments at same position', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: ['C', 'N'] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = collectRingAttachments(context, 0, 2);
+    assert.deepStrictEqual(result, {
+      2: ['C', 'N'],
+    });
+  });
+
+  test('collects attachments at multiple positions', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: ['O'] },
+        { type: 'c', position: 1, attachments: ['C'] },
+        { type: 'c', position: 2, attachments: ['N'] },
+      ],
+    };
+    const result = collectRingAttachments(context, 0, 2);
+    assert.deepStrictEqual(result, {
+      1: ['O'],
+      2: ['C'],
+      3: ['N'],
+    });
+  });
+
+  test('recursively parses ring attachments', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: ['c1ccccc1'] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = collectRingAttachments(context, 0, 2);
+    assert.strictEqual(result[2].length, 1);
+    assert.ok(Array.isArray(result[2][0]));
+    assert.strictEqual(result[2][0][0].type, 'c');
+    assert.strictEqual(result[2][0][0].size, 6);
+  });
+
+  test('handles failed ring parsing gracefully', () => {
+    const context = {
+      atoms: [
+        { type: 'c', position: 0, attachments: [] },
+        { type: 'c', position: 1, attachments: ['c1'] },
+        { type: 'c', position: 2, attachments: [] },
+      ],
+    };
+    const result = collectRingAttachments(context, 0, 2);
+    // Failed ring parsing returns empty array from parse()
+    assert.deepStrictEqual(result, {
+      2: [[]],
+    });
+  });
+});
+
+describe('parseFusedRingContent', () => {
+  test('parses atoms in fused ring content', () => {
+    const context = {
+      smiles: 'c(CCC)cc',
+      atoms: [],
+      atomIndex: 0,
+      i: 1,
+      char: '',
+    };
+    parseFusedRingContent(context, 'CCC');
+    assert.strictEqual(context.atoms.length, 3);
+    assert.strictEqual(context.atoms[0].type, 'C');
+    assert.strictEqual(context.atoms[1].type, 'C');
+    assert.strictEqual(context.atoms[2].type, 'C');
+  });
+
+  test('handles ring closures in fused content', () => {
+    const context = {
+      smiles: 'C1(C2CC2)CC1',
+      atoms: [
+        { type: 'C', position: 0, attachments: [] },
+      ],
+      atomIndex: 1,
+      ringStacks: { 1: [0] },
+      rings: [],
+      i: 2,
+      char: '',
+    };
+    parseFusedRingContent(context, 'C2CC2');
+    assert.strictEqual(context.atoms.length, 4);
+    assert.strictEqual(context.rings.length, 1);
+    assert.strictEqual(context.rings[0].size, 3);
+  });
+
+  test('handles nested parentheses in fused content', () => {
+    const context = {
+      smiles: 'C1(C(C)C)CC1',
+      atoms: [
+        { type: 'C', position: 0, attachments: [] },
+      ],
+      atomIndex: 1,
+      ringStacks: {},
+      rings: [],
+      i: 2,
+      char: '',
+    };
+    parseFusedRingContent(context, 'C(C)C');
+    assert.strictEqual(context.atoms.length, 3);
+    // The attachment is added to the second atom (index 1)
+    assert.strictEqual(context.atoms[1].attachments.length, 1);
+    assert.strictEqual(context.atoms[1].attachments[0], 'C');
+  });
+
+  test('handles large ring numbers in fused content', () => {
+    const context = {
+      smiles: 'C1(C%10CC%10)CC1',
+      atoms: [
+        { type: 'C', position: 0, attachments: [] },
+      ],
+      atomIndex: 1,
+      ringStacks: { 1: [0] },
+      rings: [],
+      i: 2,
+      char: '',
+    };
+    parseFusedRingContent(context, 'C%10CC%10');
+    assert.strictEqual(context.atoms.length, 4);
+    assert.strictEqual(context.rings.length, 1);
+    assert.strictEqual(context.rings[0].ringNumber, 10);
   });
 });
 

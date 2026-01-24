@@ -1,5 +1,9 @@
 export const handleAtoms = (context) => {
-  context.atoms.push({ type: context.char, position: context.atomIndex, attachments: [] });
+  context.atoms.push({
+    type: context.char,
+    position: context.atomIndex,
+    attachments: [],
+  });
   context.atomIndex += 1;
 };
 
@@ -27,6 +31,87 @@ export const extractParenthesesContent = (smiles, startIndex) => {
   }
 
   return { content, endIndex: j };
+};
+
+/**
+ * Check if content contains fused ring closures (ring numbers that are already open)
+ * @param {string} content - Content to check for ring numbers
+ * @param {Object} ringStacks - Ring stacks from parser context (can be undefined)
+ * @returns {boolean} True if content has fused ring closures
+ */
+export const hasFusedRingClosures = (content, ringStacks) => {
+  if (!ringStacks) {
+    return false;
+  }
+
+  const ringNumbers = content.match(/\d+/g);
+  if (!ringNumbers) {
+    return false;
+  }
+
+  return ringNumbers.some((numStr) => {
+    const ringNum = parseInt(numStr, 10);
+    return ringStacks[ringNum] && ringStacks[ringNum].length > 0;
+  });
+};
+
+/**
+ * Detect substitutions (atoms different from base type) in a ring
+ * @param {Object} context - Parser context
+ * @param {number} startPos - Start position of the ring
+ * @param {number} endPos - End position of the ring
+ * @param {string} baseType - Base atom type of the ring
+ * @returns {Object} Substitutions object with position keys and atom types
+ */
+export const detectRingSubstitutions = (context, startPos, endPos, baseType) => {
+  const substitutions = {};
+  for (let pos = startPos; pos <= endPos; pos += 1) {
+    const relativePos = pos - startPos + 1; // 1-based position in ring
+    if (context.atoms[pos].type !== baseType) {
+      substitutions[relativePos] = context.atoms[pos].type;
+    }
+  }
+  return substitutions;
+};
+
+/**
+ * Collect attachments from atoms in a ring and recursively parse ring attachments
+ * @param {Object} context - Parser context
+ * @param {number} startPos - Start position of the ring
+ * @param {number} endPos - End position of the ring
+ * @returns {Object} Attachments object with position keys and arrays of parsed attachments
+ */
+export const collectRingAttachments = (context, startPos, endPos) => {
+  const attachments = {};
+  for (let pos = startPos; pos <= endPos; pos += 1) {
+    const relativePos = pos - startPos + 1; // 1-based position in ring
+    if (context.atoms[pos].attachments.length > 0) {
+      // Initialize array for this position if not exists
+      if (!attachments[relativePos]) {
+        attachments[relativePos] = [];
+      }
+      // Process all attachments at this position
+      context.atoms[pos].attachments.forEach((attachmentSmiles) => {
+        // Check if attachment contains a ring (has digits)
+        if (/\d/.test(attachmentSmiles)) {
+          try {
+            // Recursively parse the ring attachment
+            // eslint-disable-next-line no-use-before-define
+            const parsedRings = parse(attachmentSmiles);
+            // Store parsed rings directly without meta wrapper
+            attachments[relativePos].push(parsedRings);
+          } catch {
+            // If parsing fails, store as string (might be non-ring attachment)
+            attachments[relativePos].push(attachmentSmiles);
+          }
+        } else {
+          // Simple attachment (no rings)
+          attachments[relativePos].push(attachmentSmiles);
+        }
+      });
+    }
+  }
+  return attachments;
 };
 
 export const handleRings = (context) => {
@@ -70,44 +155,10 @@ export const handleRings = (context) => {
     }
 
     // Detect substitutions (atoms different from base type)
-    const substitutions = {};
-    for (let pos = startPos; pos <= endPos; pos += 1) {
-      const relativePos = pos - startPos + 1; // 1-based position in ring
-      if (context.atoms[pos].type !== baseType) {
-        substitutions[relativePos] = context.atoms[pos].type;
-      }
-    }
+    const substitutions = detectRingSubstitutions(context, startPos, endPos, baseType);
 
     // Collect attachments and recursively parse ring attachments
-    const attachments = {};
-    for (let pos = startPos; pos <= endPos; pos += 1) {
-      const relativePos = pos - startPos + 1; // 1-based position in ring
-      if (context.atoms[pos].attachments.length > 0) {
-        // Initialize array for this position if not exists
-        if (!attachments[relativePos]) {
-          attachments[relativePos] = [];
-        }
-        // Process all attachments at this position
-        context.atoms[pos].attachments.forEach((attachmentSmiles) => {
-          // Check if attachment contains a ring (has digits)
-          if (/\d/.test(attachmentSmiles)) {
-            try {
-              // Recursively parse the ring attachment
-              // eslint-disable-next-line no-use-before-define
-              const parsedRings = parse(attachmentSmiles);
-              // Store parsed rings directly without meta wrapper
-              attachments[relativePos].push(parsedRings);
-            } catch {
-              // If parsing fails, store as string (might be non-ring attachment)
-              attachments[relativePos].push(attachmentSmiles);
-            }
-          } else {
-            // Simple attachment (no rings)
-            attachments[relativePos].push(attachmentSmiles);
-          }
-        });
-      }
-    }
+    const attachments = collectRingAttachments(context, startPos, endPos);
 
     context.rings.push({
       type: baseType,
@@ -135,62 +186,56 @@ export const handleLargeRings = (context) => {
   }
 };
 
+/**
+ * Parse fused ring content inline as part of the main structure
+ * @param {Object} context - Parser context
+ * @param {string} content - Content to parse
+ */
+export const parseFusedRingContent = (context, content) => {
+  const savedI = context.i;
+  for (let j = 0; j < content.length; j += 1) {
+    const char = content[j];
+    context.i = savedI + 1 + j; // Track position for error messages
+    context.char = char;
+
+    if (/[a-zA-Z]/.test(char)) {
+      handleAtoms(context);
+    } else if (char === '(') {
+      // Nested parentheses - need to handle recursively
+      const nestedStart = savedI + 1 + j;
+      const { endIndex: nestedEnd } = extractParenthesesContent(
+        context.smiles,
+        nestedStart,
+      );
+      // Recursively handle the nested parentheses
+      context.i = nestedStart;
+      // eslint-disable-next-line no-use-before-define
+      handleAttachment(context);
+      j += (nestedEnd - nestedStart - 1); // Skip past nested parens
+    } else if (char === '%') {
+      handleLargeRings(context);
+      // Skip the extra digits we consumed
+      const match = content.substring(j + 1).match(/^\d+/);
+      if (match) {
+        j += match[0].length;
+      }
+    } else if (/\d/.test(char)) {
+      handleRings(context);
+    }
+  }
+};
+
 export const handleAttachment = (context) => {
   // Handle attachment - extract content within parentheses
   const { content, endIndex } = extractParenthesesContent(context.smiles, context.i);
 
   // Check if we're in ring parsing mode (context has ringStacks)
   // and if content has ring closures for ALREADY OPEN rings (fused rings)
-  let hasFusedRingClosure = false;
-  if (context.ringStacks) {
-    // Extract all ring numbers from content
-    const ringNumbers = content.match(/\d+/g);
-    if (ringNumbers) {
-      // Check if any of these ring numbers are already open
-      ringNumbers.some((numStr) => {
-        const ringNum = parseInt(numStr, 10);
-        if (context.ringStacks[ringNum] && context.ringStacks[ringNum].length > 0) {
-          hasFusedRingClosure = true;
-          return true; // Break out of some()
-        }
-        return false;
-      });
-    }
-  }
+  const hasFusedRingClosure = hasFusedRingClosures(content, context.ringStacks);
 
   if (hasFusedRingClosure) {
     // This is a fused ring - parse the content inline as part of the main structure
-    const savedI = context.i;
-    for (let j = 0; j < content.length; j += 1) {
-      const char = content[j];
-      context.i = savedI + 1 + j; // Track position for error messages
-      context.char = char;
-
-      if (/[a-zA-Z]/.test(char)) {
-        handleAtoms(context);
-      } else if (char === '(') {
-        // Nested parentheses - need to handle recursively
-        const nestedStart = savedI + 1 + j;
-        const { endIndex: nestedEnd } = extractParenthesesContent(
-          context.smiles,
-          nestedStart,
-        );
-        // Recursively handle the nested parentheses
-        context.i = nestedStart;
-        handleAttachment(context);
-        j += (nestedEnd - nestedStart - 1); // Skip past nested parens
-      } else if (char === '%') {
-        handleLargeRings(context);
-        // Skip the extra digits we consumed
-        const match = content.substring(j + 1).match(/^\d+/);
-        if (match) {
-          j += match[0].length;
-        }
-      } else if (/\d/.test(char)) {
-        handleRings(context);
-      }
-    }
-    // Add attachment to the most recent atom
+    parseFusedRingContent(context, content);
   } else if (context.atoms.length > 0) {
     context.atoms[context.atoms.length - 1].attachments.push(content);
   }
