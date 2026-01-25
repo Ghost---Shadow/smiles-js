@@ -2,7 +2,7 @@
 
 ## Summary
 
-**Checkpoints Completed**: 16 out of 21 (76%)
+**Checkpoints Completed**: 17 out of 21 (81%)
 
 ### What Works ✅
 - All 4 constructors (Ring, Linear, FusedRing, Molecule)
@@ -11,30 +11,13 @@
 - Complete tokenizer
 - Parser with branch support including rings inside branches
 - Parser with interleaved fused ring support
+- Fused ring SMILES with attachments (telmisartan now works!)
+- Reused ring number support (e.g., `Cc1ccccc1Cc1ccccc1`)
 - Decompiler (AST → JavaScript code)
 - 159 passing tests
 
 ### What's Missing ❌
-- **Fused ring SMILES with attachments** - attachments on fused rings are lost in output
 - Fragment integration (optional convenience API)
-
-### 🔴 CRITICAL Limitation
-**Fused rings with attachments lose attachments in SMILES output.**
-
-```javascript
-// Parsing captures the attachment correctly:
-const ast = parse('c1nc2c(C)cc(C)cc2n1');  // Benzimidazole with methyls
-ast.rings[1].attachments  // { 2: [Linear(['C'])], 4: [Linear(['C'])] } ✅
-
-// But SMILES generation drops them:
-ast.smiles  // 'c1nc2ccccc2n1' - methyls LOST! ❌
-```
-
-**Impact**: Telmisartan and other drug molecules with attachments on fused ring systems cannot round-trip correctly.
-
-**Root cause** (`codegen.js`):
-- `buildInterleavedFusedRingSMILES()` doesn't include attachments in output
-- Only atoms and ring markers are generated, attachments are ignored
 
 ---
 
@@ -59,7 +42,7 @@ const propylbenzene = Molecule([propane, benzene]);    // 'CCCc1ccccc1'
 ### ✅ Checkpoint 11: Tokenizer
 Complete tokenizer handles all SMILES features (atoms, bonds, rings, branches, brackets).
 
-### ⚠️ Checkpoints 12-13: Parser
+### ✅ Checkpoints 12-13: Parser
 **Working**:
 - Simple branches: `C(C)C`, `CC(=O)C`
 - Nested branches: `CC(C(C))C`
@@ -69,9 +52,8 @@ Complete tokenizer handles all SMILES features (atoms, bonds, rings, branches, b
 - Biphenyl in branches: `Cc1ccc(c2ccccc2)cc1` ✅
 - Nested ring attachments: `c1ccc(c2ccc(c3ccccc3)cc2)cc1` ✅
 - Interleaved fused rings: `C1CC2CCCCC2CC1` ✅
-
-**NOT Working** (SMILES generation bug):
-- Fused rings with attachments: `c1nc2c(C)cc(C)cc2n1` → outputs `c1nc2ccccc2n1`
+- Fused rings with attachments: `c1nc2c(C)cc(C)cc2n1` ✅
+- Reused ring numbers: `Cc1ccccc1Cc1ccccc1` ✅
 
 ### ✅ Checkpoints 16-18: Decompiler
 ```javascript
@@ -100,12 +82,7 @@ console.log(ast.toCode('compound'));
 
 ## Next Steps
 
-1. **🔴 CRITICAL: Fix Fused Ring SMILES with Attachments**
-   - `buildInterleavedFusedRingSMILES()` needs to include attachments from each ring
-   - Each ring's attachments should be placed at the correct position in the output
-   - This is blocking telmisartan and similar molecules
-
-2. **Fragment Integration** (Optional)
+1. **Fragment Integration** (Optional)
    - Create Fragment convenience API if needed
 
 ---
@@ -140,23 +117,34 @@ $ bun test
 - ✅ Rings inside branches: `C(c1ccccc1)C` now round-trips correctly
 - ✅ Biphenyl in branches: `Cc1ccc(c2ccccc2)cc1` now round-trips correctly
 - ✅ Interleaved fused rings: `C1CC2CCCCC2CC1` now round-trips correctly
+- ✅ Fused rings with attachments: `c1nc2c(C)cc(C)cc2n1` now round-trips correctly
+- ✅ Reused ring numbers: `Cc1ccccc1Cc1ccccc1` now round-trips correctly
+- ✅ Telmisartan: Full round-trip works
 
-### Remaining Issue Found
-- ❌ **Fused rings with attachments**: Attachments are parsed correctly into the AST but lost during SMILES generation
-
-### Test Case: Telmisartan
+### Test Case: Telmisartan ✅
 ```bash
 Input:  CCCc1nc2c(C)cc(C)cc2n1Cc1ccc(c2ccccc2C(=O)O)cc1  (47 chars)
-Output: CCCc1nc2ccccc2n1Ccccc(c2ccccc2C(=O)O)cc          (39 chars)
-Match:  false
+Output: CCCc1nc2c(C)cc(C)cc2n1Cc1ccc(c2ccccc2C(=O)O)cc1  (47 chars)
+Match:  true
 ```
 
-The methyls on the fused benzimidazole ring system are lost.
+---
 
-### Simpler Test Case
-```bash
-Input:  c1nc2c(C)cc(C)cc2n1  # Benzimidazole with 2 methyl groups
-Output: c1nc2ccccc2n1        # Methyls lost!
-```
+## Bug Fixes (2026-01-25)
 
-The AST correctly captures the attachments on ring 2, but `buildInterleavedFusedRingSMILES()` in `codegen.js` doesn't output them.
+### Fix 1: Fused Ring Attachments in SMILES Output
+**Issue**: `buildInterleavedFusedRingSMILES()` in `codegen.js` was not including attachments.
+
+**Root Cause**: The function walked through atom positions and added atoms + ring markers, but ignored the `attachments` property on each ring.
+
+**Fix**: Modified `buildInterleavedFusedRingSMILES()` to:
+1. Extract `attachments` from each ring along with `substitutions`
+2. Map attachments to their global atom positions using the ring's relative position index
+3. Emit attachments after ring markers at each position
+
+### Fix 2: Reused Ring Number Tracking
+**Issue**: SMILES like `Cc1ccccc1Cc1ccccc1` (two benzene rings with reused ring number 1) were parsed incorrectly. The second ring was treated as a linear chain.
+
+**Root Cause**: `groupFusedRings()` in `parser.js` tracked processed rings by ring number. When ring number 1 was reused for a second independent ring, it was skipped because ring number 1 was already marked as processed.
+
+**Fix**: Changed `groupFusedRings()` to track rings by their index in the `ringBoundaries` array instead of by ring number. This allows the same ring number to be reused for multiple independent rings.

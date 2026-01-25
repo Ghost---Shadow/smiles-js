@@ -544,18 +544,19 @@ function ringsShareAtoms(ring1, ring2) {
 
 /**
  * Group rings that share atoms (fused rings)
+ * Uses ring boundary index to track assignment since ring numbers can be reused
  */
 function groupFusedRings(ringBoundaries) {
   const groups = [];
-  const assigned = new Set();
+  const assigned = new Set(); // Track by index, not ring number
 
-  ringBoundaries.forEach((ring) => {
-    if (assigned.has(ring.ringNumber)) {
+  ringBoundaries.forEach((ring, ringIdx) => {
+    if (assigned.has(ringIdx)) {
       return;
     }
 
     const group = [ring];
-    assigned.add(ring.ringNumber);
+    assigned.add(ringIdx);
 
     // Find all rings that share atoms with this group
     let didExpand = true;
@@ -566,7 +567,7 @@ function groupFusedRings(ringBoundaries) {
       for (let j = 0; j < ringBoundaries.length; j += 1) {
         const otherRing = ringBoundaries[j];
 
-        if (assigned.has(otherRing.ringNumber)) {
+        if (assigned.has(j)) {
           // eslint-disable-next-line no-continue
           continue;
         }
@@ -576,7 +577,7 @@ function groupFusedRings(ringBoundaries) {
 
         if (hasOverlap) {
           group.push(otherRing);
-          assigned.add(otherRing.ringNumber);
+          assigned.add(j);
           didExpand = true;
         }
       }
