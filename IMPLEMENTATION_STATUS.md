@@ -16,11 +16,13 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 - **Standard SMILES serialization** for all node types including branches
 - **Complete tokenizer** - converts SMILES strings to token stream
 - **Parser with full branch support** - converts SMILES strings to AST with branch attachments
+- **Nested branches** - `CC(C(C))C` parses correctly
 - **Multiple branches at same position** - `CC(C)(C)C` parses correctly
+- **Ring attachments** - `C1CCC(C)CC1` parses correctly
 - **Decompiler** - converts AST back to JavaScript constructor code
 - **Round-trip capability** - SMILES → AST → SMILES → Code works for most structures
 - Immutable operations throughout
-- Full test coverage (124 passing tests, 1 skipped)
+- Full test coverage (147 passing tests, 1 skipped)
 
 ### What's Missing ❌
 - **Parser fused ring handling** - fused rings with interleaved atoms (1 skipped test)
@@ -282,12 +284,16 @@ const tokens = tokenize('c1ccccc1');
 - Simple branches: `C(C)C` → parses correctly with attachment
 - Branches with bonds: `CC(=O)C` → bond preserved in attachment
 - Branch round-trip: Parse and regenerate identical SMILES
-- Nested branches: `C(CC)C` → works correctly
+- Nested branches: `CC(C(C))C` → correctly nests branches ✅
 - Multiple branches: `CC(C)(C)C` → creates separate attachments at same position ✅
+- Triple branches: `C(C)(C)(C)C` → correctly handles 3+ branches ✅
+- Ring attachments: `C1CCC(C)CC1` → branches on rings work ✅
 
 **Implementation Details**:
 - Uses branchId tracking to distinguish separate branches at same position
-- Tracks lastMainChainAtomIndex to ensure consecutive branches attach to correct parent
+- Tracks lastAtomAtDepth Map to maintain parent context at each nesting level
+- Filters branch atoms (depth > 0) when building ring positions
+- Unit tests verify branch tracking logic independently
 
 **Example**:
 ```javascript
@@ -368,8 +374,8 @@ console.log(ast.toCode('compound'));
 
 ## Test Summary
 
-**Total Tests**: 125
-**Passing**: 124 ✅
+**Total Tests**: 148
+**Passing**: 147 ✅
 **Skipped**: 1 ⏭️
 **Failing**: 0 ❌
 
@@ -378,7 +384,8 @@ console.log(ast.toCode('compound'));
 - `src/constructors.test.js`: 16 tests ✅
 - `src/manipulation.test.js`: 40 tests ✅ (11 Linear tests, 9 FusedRing tests)
 - `src/tokenizer.test.js`: 29 tests ✅
-- `src/parser.test.js`: 27 tests (26 ✅, 1 ⏭️ - fused rings only)
+- `src/parser.test.js`: 47 tests (46 ✅, 1 ⏭️ - fused rings only)
+- `src/parser.branch-tracking.test.js`: 3 tests ✅ (unit tests for branch logic)
 - `src/decompiler.test.js`: 13 tests ✅
 
 ## Key Features Implemented
