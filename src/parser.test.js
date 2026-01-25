@@ -142,20 +142,15 @@ describe('Parser - Molecules with Multiple Components', () => {
 });
 
 describe('Parser - Fused Rings', () => {
-  test.skip('parses naphthalene - SMILES generation needs fix', () => {
-    // Parsing works but SMILES generation for interleaved fused rings is incorrect
-    // Input: C1CC2CCCCC2CC1
-    // Output: C21CCCCC2CCCC1 (wrong)
-    // TODO: Fix buildFusedRingSMILES to handle interleaved ring structures
+  test('parses naphthalene-like interleaved fused rings', () => {
     const ast = parse('C1CC2CCCCC2CC1');
     expect(ast.type).toBe('fused_ring');
     expect(ast.rings).toHaveLength(2);
 
-    // Ring 1 should be the 10-membered ring
+    // Both rings are 6-membered (they share 2 atoms at the fusion point)
     const ring1 = ast.rings.find((r) => r.ringNumber === 1);
-    expect(ring1.size).toBe(10);
+    expect(ring1.size).toBe(6);
 
-    // Ring 2 should be the 6-membered ring
     const ring2 = ast.rings.find((r) => r.ringNumber === 2);
     expect(ring2.size).toBe(6);
 
@@ -428,6 +423,108 @@ describe('Parser - Complex Molecules', () => {
 
   test('round-trips linear with multiple branches', () => {
     const smiles = 'CC(C)CC(C)C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+});
+
+describe('Parser - Rings Inside Branches', () => {
+  test('parses ring inside branch', () => {
+    const ast = parse('C(c1ccccc1)C');
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C'],
+      bonds: [],
+      attachments: {
+        1: [
+          {
+            type: 'ring',
+            atoms: 'c',
+            size: 6,
+            ringNumber: 1,
+            offset: 0,
+            substitutions: {},
+            attachments: {},
+          },
+        ],
+      },
+    });
+  });
+
+  test('round-trips ring inside branch', () => {
+    const smiles = 'C(c1ccccc1)C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses biphenyl in branch', () => {
+    const ast = parse('Cc1ccc(c2ccccc2)cc1');
+    expect(ast.type).toBe('molecule');
+    expect(ast.components).toHaveLength(2);
+    expect(ast.components[0].type).toBe('linear');
+    expect(ast.components[1].type).toBe('ring');
+    expect(ast.components[1].attachments[4]).toBeDefined();
+    expect(ast.components[1].attachments[4][0].type).toBe('ring');
+    expect(ast.components[1].attachments[4][0].ringNumber).toBe(2);
+  });
+
+  test('round-trips biphenyl in branch', () => {
+    const smiles = 'Cc1ccc(c2ccccc2)cc1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses ring with ring attachment having substitution', () => {
+    const ast = parse('c1ccc(n2ccccc2)cc1');
+    expect(ast.type).toBe('ring');
+    expect(ast.attachments[4]).toBeDefined();
+    expect(ast.attachments[4][0].type).toBe('ring');
+    expect(ast.attachments[4][0].substitutions[1]).toBe('n');
+  });
+
+  test('round-trips ring with ring attachment having substitution', () => {
+    const smiles = 'c1ccc(n2ccccc2)cc1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses nested ring attachments', () => {
+    const ast = parse('c1ccc(c2ccc(c3ccccc3)cc2)cc1');
+    expect(ast.type).toBe('ring');
+    expect(ast.attachments[4][0].type).toBe('ring');
+    expect(ast.attachments[4][0].attachments[4][0].type).toBe('ring');
+  });
+
+  test('round-trips nested ring attachments', () => {
+    const smiles = 'c1ccc(c2ccc(c3ccccc3)cc2)cc1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+});
+
+describe('Parser - Interleaved Fused Rings', () => {
+  test('parses interleaved fused rings (naphthalene-like)', () => {
+    const ast = parse('C1CC2CCCCC2CC1');
+    expect(ast.type).toBe('fused_ring');
+    expect(ast.rings).toHaveLength(2);
+
+    // Ring 2 closes first, should be 6-membered
+    const ring2 = ast.rings.find((r) => r.ringNumber === 2);
+    expect(ring2.size).toBe(6);
+
+    // Ring 1 closes second, should also be 6-membered (uses shortcut through ring 2)
+    const ring1 = ast.rings.find((r) => r.ringNumber === 1);
+    expect(ring1.size).toBe(6);
+  });
+
+  test('ring 2 has correct offset in interleaved fused rings', () => {
+    const ast = parse('C1CC2CCCCC2CC1');
+    const ring1 = ast.rings.find((r) => r.ringNumber === 1);
+    const ring2 = ast.rings.find((r) => r.ringNumber === 2);
+
+    // Ring 1 is the base ring (offset 0)
+    // Ring 2 starts at position 2 of ring 1's path
+    expect(ring1.offset).toBe(0);
+    expect(ring2.offset).toBe(2);
+  });
+
+  test('round-trips interleaved fused rings', () => {
+    const smiles = 'C1CC2CCCCC2CC1';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 });

@@ -110,23 +110,98 @@ export function buildRingSMILES(ring) {
 /**
  * Build SMILES for a FusedRing node
  *
- * Strategy:
- * 1. Build a linear atom sequence covering all fused rings
- * 2. Track which ring markers (open/close) appear at each position
- * 3. Serialize by walking the atom sequence and emitting:
- *    - Atom
- *    - Ring markers after the atom (standard SMILES notation)
- *    - Attachments in parentheses
- *
- * Example: Naphthalene C1=CC2=CC=CC=C2C=C1
- * - Ring 1 spans positions 0-9 (10 atoms)
- * - Ring 2 spans positions 2-7 (6 atoms, fused at offset 2)
- * - Ring markers: 1 after pos 0, 2 after pos 2, 2 after pos 7, 1 after pos 9
+ * For interleaved fused rings (like naphthalene C1CC2CCCCC2CC1), we use
+ * the stored positions to properly reconstruct the SMILES with correct
+ * ring marker placement.
  *
  * @param {Object} fusedRing - FusedRing AST node
  * @returns {string} SMILES string
  */
 export function buildFusedRingSMILES(fusedRing) {
+  const { rings } = fusedRing;
+
+  // Check if we have position data for interleaved fused ring handling
+  const hasPositionData = rings.some((r) => r._positions);
+
+  if (hasPositionData && fusedRing._allPositions) {
+    return buildInterleavedFusedRingSMILES(fusedRing);
+  }
+
+  // Fall back to offset-based approach for simple fused rings
+  return buildSimpleFusedRingSMILES(fusedRing);
+}
+
+/**
+ * Build SMILES for interleaved fused rings using stored position data
+ */
+function buildInterleavedFusedRingSMILES(fusedRing) {
+  const { rings } = fusedRing;
+  const allPositions = fusedRing._allPositions;
+
+  // Build the atom sequence
+  const atomSequence = [];
+  const ringMarkers = new Map(); // position -> [{ringNumber, type}]
+
+  // Collect all ring markers
+  rings.forEach((ring) => {
+    const positions = ring._positions || [];
+    const start = ring._start;
+    const end = ring._end;
+    const { ringNumber, atoms, substitutions = {} } = ring;
+
+    // Ring opens at its first position (which is the start atom index)
+    if (!ringMarkers.has(start)) {
+      ringMarkers.set(start, []);
+    }
+    ringMarkers.get(start).push({ ringNumber, type: 'open' });
+
+    // Ring closes at its last position (which is the end atom index)
+    if (!ringMarkers.has(end)) {
+      ringMarkers.set(end, []);
+    }
+    ringMarkers.get(end).push({ ringNumber, type: 'close' });
+
+    // Fill in atom values for this ring's positions
+    positions.forEach((pos, idx) => {
+      const relativePos = idx + 1;
+      const atomValue = substitutions[relativePos] || atoms;
+      if (!atomSequence[pos]) {
+        atomSequence[pos] = { atom: atomValue, attachments: [] };
+      }
+    });
+  });
+
+  // Build SMILES by walking through all positions in order
+  const parts = [];
+  allPositions.forEach((pos) => {
+    const entry = atomSequence[pos];
+    if (!entry) return;
+
+    // Add atom
+    parts.push(entry.atom);
+
+    // Add ring markers for this position
+    const markers = ringMarkers.get(pos) || [];
+    // Sort: opens first, then by ring number
+    markers.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === 'open' ? -1 : 1;
+      }
+      return a.ringNumber - b.ringNumber;
+    });
+
+    markers.forEach((marker) => {
+      parts.push(marker.ringNumber.toString());
+    });
+  });
+
+  return parts.join('');
+}
+
+/**
+ * Build SMILES for simple (non-interleaved) fused rings using offset approach
+ */
+function buildSimpleFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
 
   // Sort rings by offset to process in order
@@ -179,32 +254,26 @@ export function buildFusedRingSMILES(fusedRing) {
   });
 
   // Build SMILES string using standard notation
-  // Standard SMILES: atom comes first, then ring markers
   const parts = [];
   atomSequence.forEach((entry) => {
     if (!entry) return;
 
     const { atom, markers = [], attachments = [] } = entry;
 
-    // Add atom first (standard SMILES)
     if (atom) {
       parts.push(atom);
     }
 
-    // Add ring markers after the atom (standard SMILES)
-    // Opening markers first
     const openMarkers = markers.filter((m) => m.type === 'open');
     openMarkers.forEach((marker) => {
       parts.push(marker.ringNumber.toString());
     });
 
-    // Then closing markers
     const closeMarkers = markers.filter((m) => m.type === 'close');
     closeMarkers.forEach((marker) => {
       parts.push(marker.ringNumber.toString());
     });
 
-    // Add attachments last
     attachments.forEach((attachment) => {
       parts.push('(');
       // eslint-disable-next-line no-use-before-define
