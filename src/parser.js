@@ -16,9 +16,38 @@ import {
 } from './constructors.js';
 
 /**
+ * Collect consecutive atoms in a branch chain
+ */
+function collectBranchChain(branchAtom, allAtoms, processed) {
+  const branchChain = [branchAtom];
+  processed.add(branchAtom.index);
+
+  // Look for continuation of this branch
+  // Build a map of index -> atom for faster lookup
+  const atomsByIndex = new Map();
+  allAtoms.forEach((a) => atomsByIndex.set(a.index, a));
+
+  let currentIdx = branchAtom.index + 1;
+  while (currentIdx < allAtoms.length) {
+    const nextAtom = atomsByIndex.get(currentIdx);
+    if (!nextAtom) break;
+
+    // Stop if we hit a different branch level or parent
+    if (nextAtom.branchDepth !== branchAtom.branchDepth) break;
+    if (nextAtom.parentIndex !== branchAtom.parentIndex) break;
+
+    branchChain.push(nextAtom);
+    processed.add(nextAtom.index);
+    currentIdx += 1;
+  }
+
+  return branchChain;
+}
+
+/**
  * Build a linear chain node from atoms
  */
-function buildLinearNode(atomList) {
+function buildLinearNode(atomList, allAtoms = [], isBranch = false) {
   const atomValues = atomList.map((atom) => {
     if (typeof atom.value === 'string') {
       return atom.value;
@@ -26,10 +55,41 @@ function buildLinearNode(atomList) {
     return atom.value.raw || 'C';
   });
 
-  // Only include bonds if they're explicitly specified (not null/undefined)
-  const bonds = atomList.slice(1).map((atom) => atom.bond).filter((b) => b !== null);
+  // For branches, include the bond on the first atom (connection to parent)
+  // For main chain, start from second atom (skip first atom's bond)
+  const bondStart = isBranch ? 0 : 1;
+  const bonds = atomList.slice(bondStart).map((atom) => atom.bond).filter((b) => b !== null);
 
-  return Linear(atomValues, bonds);
+  // Build attachments from branches
+  const attachments = {};
+
+  // Group branch atoms by their parent index within this linear chain
+  atomList.forEach((atom, localIdx) => {
+    const globalIdx = atom.index;
+
+    // Find all atoms that branch from this atom
+    const branchAtoms = allAtoms.filter((a) => a.parentIndex === globalIdx && a.branchDepth > 0);
+
+    if (branchAtoms.length > 0) {
+      // Group branches by depth to handle multiple branches
+      const branchGroups = [];
+      const processed = new Set();
+
+      branchAtoms.forEach((branchAtom) => {
+        if (processed.has(branchAtom.index)) return;
+
+        // Collect consecutive atoms at this branch depth
+        const branchChain = collectBranchChain(branchAtom, allAtoms, processed);
+        branchGroups.push(branchChain);
+      });
+
+      // Build Linear nodes for each branch group
+      const position = localIdx + 1; // Convert to 1-indexed position
+      attachments[position] = branchGroups.map((group) => buildLinearNode(group, allAtoms, true));
+    }
+  });
+
+  return Linear(atomValues, bonds, attachments);
 }
 
 /**
@@ -192,18 +252,22 @@ function buildAST(atoms, ringBoundaries) {
   const processedGroups = new Set();
   let currentLinear = [];
 
-  for (let i = 0; i < atoms.length; i += 1) {
-    const atom = atoms[i];
+  // Filter out atoms that are branches (will be attached to parents)
+  const mainChainAtoms = atoms.filter((atom) => atom.branchDepth === 0);
+
+  for (let i = 0; i < mainChainAtoms.length; i += 1) {
+    const atom = mainChainAtoms[i];
+    const globalIdx = atom.index;
 
     // Check if this atom is part of a ring group
-    if (atomToGroup.has(i)) {
+    if (atomToGroup.has(globalIdx)) {
       // Flush any pending linear chain
       if (currentLinear.length > 0) {
-        components.push(buildLinearNode(currentLinear));
+        components.push(buildLinearNode(currentLinear, atoms));
         currentLinear = [];
       }
 
-      const groupIdx = atomToGroup.get(i);
+      const groupIdx = atomToGroup.get(globalIdx);
 
       if (!processedGroups.has(groupIdx)) {
         // Build ring/fused ring node for this group
@@ -213,10 +277,12 @@ function buildAST(atoms, ringBoundaries) {
         processedGroups.add(groupIdx);
       }
 
-      // Skip to end of this group
+      // Skip to end of this group in main chain
       const group = fusedGroups[groupIdx];
       const maxPos = Math.max(...group.flatMap((r) => r.positions));
-      i = maxPos;
+      while (i + 1 < mainChainAtoms.length && mainChainAtoms[i + 1].index <= maxPos) {
+        i += 1;
+      }
     } else {
       // Atom not in a ring - add to linear chain
       currentLinear.push(atom);
@@ -225,7 +291,7 @@ function buildAST(atoms, ringBoundaries) {
 
   // Flush remaining linear chain
   if (currentLinear.length > 0) {
-    components.push(buildLinearNode(currentLinear));
+    components.push(buildLinearNode(currentLinear, atoms));
   }
 
   // Return appropriate node type

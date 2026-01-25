@@ -27,14 +27,36 @@ export function buildMoleculeSMILES(molecule) {
  * @returns {string} SMILES string
  */
 export function buildLinearSMILES(linear) {
-  const { atoms, bonds = [] } = linear;
+  const { atoms, bonds = [], attachments = {} } = linear;
   const parts = [];
 
   atoms.forEach((atom, i) => {
-    if (i > 0 && bonds[i - 1]) {
+    // Add bond before atom
+    // For a branch attachment (single atom with bond), bonds.length === 1 and atoms.length === 1
+    // In this case, bonds[0] is the bond from parent to this atom
+    // For regular linear chains, bonds[i-1] is the bond between atoms[i-1] and atoms[i]
+    const isBranchWithBond = atoms.length === 1 && bonds.length === 1;
+
+    if (isBranchWithBond && i === 0) {
+      // Single-atom branch with explicit bond
+      parts.push(bonds[0]);
+    } else if (i > 0 && bonds[i - 1]) {
+      // Regular case: bond between previous and current atom
       parts.push(bonds[i - 1]);
     }
+
+    // Add atom
     parts.push(atom);
+
+    // Add any attachments at this position (1-indexed)
+    const position = i + 1;
+    if (attachments[position]) {
+      attachments[position].forEach((attachment) => {
+        // eslint-disable-next-line no-use-before-define
+        const attachmentSMILES = buildSMILES(attachment);
+        parts.push(`(${attachmentSMILES})`);
+      });
+    }
   });
 
   return parts.join('');

@@ -144,21 +144,51 @@ describe('Parser - Bracketed Atoms', () => {
   });
 });
 
-describe('Parser - Branches (Not Yet Supported)', () => {
-  test.skip('parses simple branch - NOT IMPLEMENTED', () => {
-    // Branch tracking exists but attachment integration not implemented
-    // Current behavior: Branches are tracked in Pass 1 but flattened in Pass 2
-    // TODO: Implement branch attachment handling in buildAST
+describe('Parser - Branches', () => {
+  test('parses simple branch', () => {
     const ast = parse('C(C)C');
-    expect(ast.type).toBe('linear');
-    expect(ast.atoms).toEqual(['C', 'C', 'C']); // Currently all atoms in flat list
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C'],
+      bonds: [],
+      attachments: {
+        1: [
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+        ],
+      },
+    });
   });
 
-  test.skip('parses branch with double bond - NOT IMPLEMENTED', () => {
-    // TODO: Implement branch attachment handling
+  test('parses branch with double bond', () => {
     const ast = parse('CC(=O)C');
-    expect(ast.type).toBe('linear');
-    expect(ast.atoms).toEqual(['C', 'C', 'O', 'C']); // Currently flattened
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C', 'C'],
+      bonds: [],
+      attachments: {
+        2: [
+          {
+            type: 'linear',
+            atoms: ['O'],
+            bonds: ['='],
+            attachments: {},
+          },
+        ],
+      },
+    });
+  });
+
+  test('round-trip for branches', () => {
+    const smiles1 = 'C(C)C';
+    expect(parse(smiles1).smiles).toBe(smiles1);
+
+    const smiles2 = 'CC(=O)C';
+    expect(parse(smiles2).smiles).toBe(smiles2);
   });
 });
 

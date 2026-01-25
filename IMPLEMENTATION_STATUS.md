@@ -4,8 +4,8 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 
 ## Summary
 
-**Checkpoints Completed**: 13 out of 21 (62%)
-**Current Status**: Core construction API + Tokenizer + Parser + Complete manipulation methods for Ring, Linear, FusedRing, and Molecule
+**Checkpoints Completed**: 14 out of 21 (67%)
+**Current Status**: Core construction API + Tokenizer + Parser with branch support + Complete manipulation methods
 
 ### What Works ✅
 - All 4 constructors (Ring, Linear, FusedRing, Molecule)
@@ -13,21 +13,21 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 - **Linear manipulation** (attach, branch, branchAt, concat, clone)
 - **FusedRing manipulation** (addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone)
 - **Molecule manipulation** (append, prepend, concat, getComponent, replaceComponent, clone)
-- **Standard SMILES serialization** for all node types
+- **Standard SMILES serialization** for all node types including branches
 - **Complete tokenizer** - converts SMILES strings to token stream
-- **Working parser** - converts SMILES strings to AST
+- **Parser with branch support** - converts SMILES strings to AST with branch attachments
 - **Round-trip capability** - SMILES → AST → SMILES works for most structures
 - Immutable operations throughout
-- Full test coverage (106 passing tests, 3 skipped)
+- Full test coverage (109 passing tests, 1 skipped)
 
 ### What's Missing ❌
-- **Parser branch handling** - branches are tracked but not yet integrated into AST (2 skipped tests)
 - **Parser fused ring handling** - fused rings parse incorrectly (1 skipped test)
+- **Multiple branches at same position** - currently groups them incorrectly
 - Fragment integration - **not started**
 - Decompiler (Phase 5) - **not started**
 
 ### Known Limitations ⚠️
-- Parser doesn't handle branch attachments yet (branches parsed but not integrated)
+- Multiple consecutive branches `C(C)(C)C` are parsed as nested instead of separate
 - Fused ring parsing is incomplete (rings that interleave atoms)
 - No bond handling beyond basic storage in Linear nodes
 
@@ -268,7 +268,38 @@ const tokens = tokenize('c1ccccc1');
 // ]
 ```
 
-### ✅ Checkpoint 12-13: Parser (Phase 2)
+### ✅ Checkpoint 12-13: Parser with Branch Support
+- [x] Create `src/parser.js`
+- [x] Implement Pass 1: Linear scan with ring and branch tracking
+- [x] Implement Pass 2: AST building
+- [x] Integrate branch attachments into Linear nodes
+- [x] Update codegen to serialize branches
+- [x] Write parser tests (25 tests, 1 skipped for fused rings)
+- [ ] Handle multiple branches at same position (currently nests incorrectly)
+
+**Status**: Mostly complete - simple branches work, multiple branches need fix
+
+**Working**:
+- Simple branches: `C(C)C` → parses correctly with attachment
+- Branches with bonds: `CC(=O)C` → bond preserved in attachment
+- Branch round-trip: Parse and regenerate identical SMILES
+- Nested branches: `C(CC)C` → works correctly
+
+**Not Yet Working**:
+- Multiple branches: `CC(C)(C)C` → currently creates nested structure instead of multiple attachments
+
+**Example**:
+```javascript
+const ast = parse('CC(=O)C');
+// Returns Linear node with:
+//   atoms: ['C', 'C', 'C']
+//   attachments: {
+//     2: [Linear(['O'], ['='])]
+//   }
+// ast.smiles === 'CC(=O)C' ✅
+```
+
+### ✅ Checkpoint 12-13 (Old): Parser (Phase 2)
 - [x] Create `src/parser.js`
 - [x] Implement Pass 1: Linear scan with ring tracking
 - [x] Implement Pass 2: AST building
@@ -286,8 +317,13 @@ const tokens = tokenize('c1ccccc1');
 - Bracketed atoms ([NH3+], [13C])
 - Round-trip for simple structures
 
+**Working**:
+- Simple branches (`C(C)C`, `CC(=O)C`)
+- Branch round-trip (parse and regenerate SMILES)
+- Bonds in branches
+
 **Not Yet Working**:
-- Branch attachments (branches tracked but not integrated)
+- Multiple branches at same position (`CC(C)(C)C` - groups as nested)
 - Complex fused rings with interleaving atoms (naphthalene C1CC2CCCCC2CC1)
 
 ## Pending Checkpoints
@@ -310,17 +346,17 @@ const tokens = tokenize('c1ccccc1');
 
 ## Test Summary
 
-**Total Tests**: 109
-**Passing**: 106 ✅
-**Skipped**: 3 ⏭️
+**Total Tests**: 110
+**Passing**: 109 ✅
+**Skipped**: 1 ⏭️
 **Failing**: 0 ❌
 
 ### Test Coverage by Module
 
 - `src/constructors.test.js`: 16 tests ✅
-- `src/manipulation.test.js`: 40 tests ✅ (added 11 Linear tests, 9 FusedRing tests)
+- `src/manipulation.test.js`: 40 tests ✅ (11 Linear tests, 9 FusedRing tests)
 - `src/tokenizer.test.js`: 29 tests ✅
-- `src/parser.test.js`: 24 tests (21 ✅, 3 ⏭️ - 1 fused rings, 2 branches)
+- `src/parser.test.js`: 25 tests (24 ✅, 1 ⏭️ - fused rings only)
 
 ## Key Features Implemented
 

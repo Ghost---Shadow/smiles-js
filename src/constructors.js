@@ -129,6 +129,21 @@ export function attachRingMethods(node) {
     clone() {
       return ringClone(this);
     },
+    toObject() {
+      const result = {
+        type: this.type,
+        atoms: this.atoms,
+        size: this.size,
+        ringNumber: this.ringNumber,
+        offset: this.offset,
+        substitutions: { ...this.substitutions },
+        attachments: {},
+      };
+      Object.entries(this.attachments).forEach(([pos, attachmentList]) => {
+        result.attachments[pos] = attachmentList.map((a) => (a.toObject ? a.toObject() : a));
+      });
+      return result;
+    },
   });
 }
 
@@ -149,6 +164,18 @@ export function attachLinearMethods(node) {
     },
     clone() {
       return deepCloneLinear(this);
+    },
+    toObject() {
+      const result = {
+        type: this.type,
+        atoms: [...this.atoms],
+        bonds: [...this.bonds],
+        attachments: {},
+      };
+      Object.entries(this.attachments).forEach(([pos, attachmentList]) => {
+        result.attachments[pos] = attachmentList.map((a) => (a.toObject ? a.toObject() : a));
+      });
+      return result;
     },
   });
 }
@@ -173,6 +200,12 @@ export function attachMoleculeMethods(node) {
     },
     clone() {
       return deepCloneMolecule(this);
+    },
+    toObject() {
+      return {
+        type: this.type,
+        components: this.components.map((c) => (c.toObject ? c.toObject() : c)),
+      };
     },
   });
 }
@@ -200,6 +233,12 @@ export function attachFusedRingMethods(node) {
     },
     clone() {
       return deepCloneFusedRing(this);
+    },
+    toObject() {
+      return {
+        type: this.type,
+        rings: this.rings.map((r) => ({ ...r })),
+      };
     },
   });
 }
