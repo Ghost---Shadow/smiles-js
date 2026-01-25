@@ -72,6 +72,48 @@ describe('Parser - Ring Substitutions', () => {
   });
 });
 
+describe('Parser - Ring Attachments', () => {
+  test('parses ring with single attachment', () => {
+    const ast = parse('C1CCC(C)CC1');
+    expect(ast.toObject()).toEqual({
+      type: 'ring',
+      atoms: 'C',
+      size: 6,
+      ringNumber: 1,
+      offset: 0,
+      substitutions: {},
+      attachments: {
+        4: [
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+        ],
+      },
+    });
+  });
+
+  test('round-trip for ring with attachment', () => {
+    const smiles = 'C1CCC(C)CC1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses ring with multiple attachments', () => {
+    const ast = parse('C1(C)CC(C)CC1');
+    expect(ast.type).toBe('ring');
+    expect(ast.size).toBe(5);
+    expect(ast.attachments[1]).toBeDefined();
+    expect(ast.attachments[3]).toBeDefined();
+  });
+
+  test('round-trip for ring with multiple attachments', () => {
+    const smiles = 'C1(C)CC(C)CC1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+});
+
 describe('Parser - Molecules with Multiple Components', () => {
   test('parses toluene', () => {
     const ast = parse('Cc1ccccc1');

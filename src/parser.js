@@ -125,8 +125,32 @@ function buildSingleRingNode(ring, atoms, offset = 0, ringNumber = 1) {
     }
   });
 
-  // TODO: Extract attachments from branches
+  // Extract attachments from branches
   const attachments = {};
+  ringAtoms.forEach((atom, localIdx) => {
+    const globalIdx = atom.index;
+
+    // Find all atoms that branch from this atom
+    const branchAtoms = atoms.filter((a) => a.parentIndex === globalIdx && a.branchDepth > 0);
+
+    if (branchAtoms.length > 0) {
+      // Group branches by branchId to handle multiple branches
+      const branchGroups = [];
+      const processed = new Set();
+
+      branchAtoms.forEach((branchAtom) => {
+        if (processed.has(branchAtom.index)) return;
+
+        // Collect consecutive atoms at this branch
+        const branchChain = collectBranchChain(branchAtom, atoms, processed);
+        branchGroups.push(branchChain);
+      });
+
+      // Build Linear nodes for each branch group
+      const position = localIdx + 1; // Convert to 1-indexed position
+      attachments[position] = branchGroups.map((group) => buildLinearNode(group, atoms, true));
+    }
+  });
 
   return Ring({
     atoms: baseAtom,
@@ -378,10 +402,13 @@ function buildAtomList(tokens) {
         // Close ring - build the full ring atom sequence
         const startIndex = ringStacks.get(ringNumber);
 
-        // Collect all atoms from start to current (inclusive on both ends)
+        // Collect only main chain atoms (depth 0) from start to current
         const ringPositions = [];
         for (let idx = startIndex; idx <= currentAtomIndex; idx += 1) {
-          ringPositions.push(idx);
+          // Only include atoms at depth 0 (not in branches)
+          if (atoms[idx] && atoms[idx].branchDepth === 0) {
+            ringPositions.push(idx);
+          }
         }
 
         ringBoundaries.push({
