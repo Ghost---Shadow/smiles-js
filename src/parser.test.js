@@ -100,18 +100,25 @@ describe('Parser - Molecules with Multiple Components', () => {
 });
 
 describe('Parser - Fused Rings', () => {
-  test.skip('parses naphthalene', () => {
-    // TODO: Fused ring parsing is complex - rings interleave rather than being consecutive
-    // This test is skipped for now
+  test.skip('parses naphthalene - SMILES generation needs fix', () => {
+    // Parsing works but SMILES generation for interleaved fused rings is incorrect
+    // Input: C1CC2CCCCC2CC1
+    // Output: C21CCCCC2CCCC1 (wrong)
+    // TODO: Fix buildFusedRingSMILES to handle interleaved ring structures
     const ast = parse('C1CC2CCCCC2CC1');
     expect(ast.type).toBe('fused_ring');
     expect(ast.rings).toHaveLength(2);
 
-    expect(ast.rings[0].size).toBe(10);
-    expect(ast.rings[0].ringNumber).toBe(1);
+    // Ring 1 should be the 10-membered ring
+    const ring1 = ast.rings.find((r) => r.ringNumber === 1);
+    expect(ring1.size).toBe(10);
 
-    expect(ast.rings[1].size).toBe(6);
-    expect(ast.rings[1].ringNumber).toBe(2);
+    // Ring 2 should be the 6-membered ring
+    const ring2 = ast.rings.find((r) => r.ringNumber === 2);
+    expect(ring2.size).toBe(6);
+
+    // Check round-trip
+    expect(ast.smiles).toBe('C1CC2CCCCC2CC1');
   });
 });
 
@@ -189,6 +196,36 @@ describe('Parser - Branches', () => {
 
     const smiles2 = 'CC(=O)C';
     expect(parse(smiles2).smiles).toBe(smiles2);
+  });
+
+  test('parses multiple branches at same position', () => {
+    const ast = parse('CC(C)(C)C');
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C', 'C'],
+      bonds: [],
+      attachments: {
+        2: [
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+        ],
+      },
+    });
+  });
+
+  test('round-trip for multiple branches', () => {
+    const smiles = 'CC(C)(C)C';
+    expect(parse(smiles).smiles).toBe(smiles);
   });
 });
 

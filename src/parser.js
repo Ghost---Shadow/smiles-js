@@ -32,9 +32,10 @@ function collectBranchChain(branchAtom, allAtoms, processed) {
     const nextAtom = atomsByIndex.get(currentIdx);
     if (!nextAtom) break;
 
-    // Stop if we hit a different branch level or parent
+    // Stop if we hit a different branch level, parent, or branch ID
     if (nextAtom.branchDepth !== branchAtom.branchDepth) break;
     if (nextAtom.parentIndex !== branchAtom.parentIndex) break;
+    if (nextAtom.branchId !== branchAtom.branchId) break;
 
     branchChain.push(nextAtom);
     processed.add(nextAtom.index);
@@ -320,6 +321,7 @@ function buildAtomList(tokens) {
   const branches = [];
 
   let currentAtomIndex = -1;
+  let lastMainChainAtomIndex = -1; // Track last atom at depth 0
   let currentBond = null;
   let i = 0;
 
@@ -333,6 +335,10 @@ function buildAtomList(tokens) {
         ? branchStack[branchStack.length - 1].parentIndex
         : null;
 
+      const branchId = branchStack.length > 0
+        ? branchStack[branchStack.length - 1].branchId
+        : null;
+
       const atom = {
         index: currentAtomIndex,
         value: token.atom,
@@ -341,9 +347,16 @@ function buildAtomList(tokens) {
         rings: [], // Ring numbers this atom participates in
         branchDepth: branchStack.length,
         parentIndex,
+        branchId, // Unique ID of the branch this atom belongs to
       };
 
       atoms.push(atom);
+
+      // Update last main chain atom if we're at depth 0
+      if (branchStack.length === 0) {
+        lastMainChainAtomIndex = currentAtomIndex;
+      }
+
       currentBond = null;
       i += 1;
 
@@ -396,10 +409,16 @@ function buildAtomList(tokens) {
     }
 
     if (token.type === TokenType.BRANCH_OPEN) {
-      // Start new branch
+      // Start new branch - assign unique branch ID
+      // Parent is the last atom at the current depth (not currentAtomIndex)
+      const parentIdx = branchStack.length === 0
+        ? lastMainChainAtomIndex
+        : branchStack[branchStack.length - 1].parentIndex;
+
       branchStack.push({
-        parentIndex: currentAtomIndex,
+        parentIndex: parentIdx,
         depth: branchStack.length,
+        branchId: i, // Use token position as unique ID
       });
 
       i += 1;

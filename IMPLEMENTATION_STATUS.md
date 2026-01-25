@@ -4,31 +4,30 @@ This document tracks the implementation progress of the SMILES-JS AST refactor.
 
 ## Summary
 
-**Checkpoints Completed**: 14 out of 21 (67%)
-**Current Status**: Core construction API + Tokenizer + Parser with branch support + Complete manipulation methods
+**Checkpoints Completed**: 15 out of 21 (71%)
+**Current Status**: Core construction API + Tokenizer + Parser + Manipulation methods + Decompiler complete
 
 ### What Works ✅
 - All 4 constructors (Ring, Linear, FusedRing, Molecule)
-- **Ring manipulation** (attach, substitute, substituteMultiple, fuse, concat, clone)
-- **Linear manipulation** (attach, branch, branchAt, concat, clone)
-- **FusedRing manipulation** (addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone)
-- **Molecule manipulation** (append, prepend, concat, getComponent, replaceComponent, clone)
+- **Ring manipulation** (attach, substitute, substituteMultiple, fuse, concat, clone, toObject, toCode)
+- **Linear manipulation** (attach, branch, branchAt, concat, clone, toObject, toCode)
+- **FusedRing manipulation** (addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone, toObject, toCode)
+- **Molecule manipulation** (append, prepend, concat, getComponent, replaceComponent, clone, toObject, toCode)
 - **Standard SMILES serialization** for all node types including branches
 - **Complete tokenizer** - converts SMILES strings to token stream
-- **Parser with branch support** - converts SMILES strings to AST with branch attachments
-- **Round-trip capability** - SMILES → AST → SMILES works for most structures
+- **Parser with full branch support** - converts SMILES strings to AST with branch attachments
+- **Multiple branches at same position** - `CC(C)(C)C` parses correctly
+- **Decompiler** - converts AST back to JavaScript constructor code
+- **Round-trip capability** - SMILES → AST → SMILES → Code works for most structures
 - Immutable operations throughout
-- Full test coverage (109 passing tests, 1 skipped)
+- Full test coverage (124 passing tests, 1 skipped)
 
 ### What's Missing ❌
-- **Parser fused ring handling** - fused rings parse incorrectly (1 skipped test)
-- **Multiple branches at same position** - currently groups them incorrectly
+- **Parser fused ring handling** - fused rings with interleaved atoms (1 skipped test)
 - Fragment integration - **not started**
-- Decompiler (Phase 5) - **not started**
 
 ### Known Limitations ⚠️
-- Multiple consecutive branches `C(C)(C)C` are parsed as nested instead of separate
-- Fused ring parsing is incomplete (rings that interleave atoms)
+- Fused ring SMILES generation is incomplete for interleaved structures (naphthalene)
 - No bond handling beyond basic storage in Linear nodes
 
 ## Completed Checkpoints
@@ -274,19 +273,21 @@ const tokens = tokenize('c1ccccc1');
 - [x] Implement Pass 2: AST building
 - [x] Integrate branch attachments into Linear nodes
 - [x] Update codegen to serialize branches
-- [x] Write parser tests (25 tests, 1 skipped for fused rings)
-- [ ] Handle multiple branches at same position (currently nests incorrectly)
+- [x] Write parser tests (27 tests, 1 skipped for fused rings)
+- [x] Handle multiple branches at same position
 
-**Status**: Mostly complete - simple branches work, multiple branches need fix
+**Status**: Complete - all branch types work correctly
 
 **Working**:
 - Simple branches: `C(C)C` → parses correctly with attachment
 - Branches with bonds: `CC(=O)C` → bond preserved in attachment
 - Branch round-trip: Parse and regenerate identical SMILES
 - Nested branches: `C(CC)C` → works correctly
+- Multiple branches: `CC(C)(C)C` → creates separate attachments at same position ✅
 
-**Not Yet Working**:
-- Multiple branches: `CC(C)(C)C` → currently creates nested structure instead of multiple attachments
+**Implementation Details**:
+- Uses branchId tracking to distinguish separate branches at same position
+- Tracks lastMainChainAtomIndex to ensure consecutive branches attach to correct parent
 
 **Example**:
 ```javascript
@@ -326,6 +327,35 @@ const ast = parse('CC(=O)C');
 - Multiple branches at same position (`CC(C)(C)C` - groups as nested)
 - Complex fused rings with interleaving atoms (naphthalene C1CC2CCCCC2CC1)
 
+### ✅ Checkpoint 16-18: Decompiler (Phase 5)
+- [x] Create `src/decompiler.js`
+- [x] Implement `decompile()` function for all node types
+- [x] Add `.toCode()` method to all nodes
+- [x] Write decompiler tests (13 tests)
+- [x] Create decompiler examples
+
+**Status**: Complete and tested
+
+**Features**:
+- Converts any AST node to JavaScript constructor code
+- Preserves structure and attachments
+- Customizable variable names
+- Works with all node types (Ring, Linear, FusedRing, Molecule)
+
+**Example**:
+```javascript
+const benzene = Ring({ atoms: 'c', size: 6 });
+console.log(benzene.toCode('benzene'));
+// Output: const benzene = Ring({ atoms: 'c', size: 6 });
+
+const ast = parse('CCCc1ccccc1');
+console.log(ast.toCode('compound'));
+// Output:
+// const compoundComponent1 = Linear(['C', 'C', 'C']);
+// const compoundComponent2 = Ring({ atoms: 'c', size: 6 });
+// const compound = Molecule([compoundComponent1, compoundComponent2]);
+```
+
 ## Pending Checkpoints
 
 ### ⏳ Checkpoint 14: Fragment Integration
@@ -336,18 +366,10 @@ const ast = parse('CC(=O)C');
 
 **Status**: Not started
 
-### ⏳ Checkpoint 16-18: Decompiler (Phase 5)
-- [ ] Create `src/decompiler.js`
-- [ ] Implement JavaScript code generation from AST
-- [ ] Add `Fragment.prototype.toCode()` method
-- [ ] Write decompiler tests
-
-**Status**: Not started
-
 ## Test Summary
 
-**Total Tests**: 110
-**Passing**: 109 ✅
+**Total Tests**: 125
+**Passing**: 124 ✅
 **Skipped**: 1 ⏭️
 **Failing**: 0 ❌
 
@@ -356,7 +378,8 @@ const ast = parse('CC(=O)C');
 - `src/constructors.test.js`: 16 tests ✅
 - `src/manipulation.test.js`: 40 tests ✅ (11 Linear tests, 9 FusedRing tests)
 - `src/tokenizer.test.js`: 29 tests ✅
-- `src/parser.test.js`: 25 tests (24 ✅, 1 ⏭️ - fused rings only)
+- `src/parser.test.js`: 27 tests (26 ✅, 1 ⏭️ - fused rings only)
+- `src/decompiler.test.js`: 13 tests ✅
 
 ## Key Features Implemented
 
@@ -371,12 +394,18 @@ const ast = parse('CC(=O)C');
    - **Standard notation**: Ring markers appear after atoms (e.g., `c1ccccc1`)
 
 3. **Immutable Manipulation API**
-   - Ring: attach, substitute, substituteMultiple, fuse, concat, clone
-   - Linear: attach, branch, branchAt, concat, clone
-   - FusedRing: addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone
-   - Molecule: append, prepend, concat, getComponent, replaceComponent, clone
+   - Ring: attach, substitute, substituteMultiple, fuse, concat, clone, toObject, toCode
+   - Linear: attach, branch, branchAt, concat, clone, toObject, toCode
+   - FusedRing: addRing, getRing, substituteInRing, attachToRing, renumber, concat, clone, toObject, toCode
+   - Molecule: append, prepend, concat, getComponent, replaceComponent, clone, toObject, toCode
 
-4. **Type Safety**
+4. **Decompiler**
+   - decompile() function converts AST to JavaScript code
+   - .toCode() method on all nodes
+   - Enables AST → Constructor code conversion
+   - Useful for debugging and code generation
+
+5. **Type Safety**
    - Type checking utilities (isRingNode, etc.)
    - Input validation (validateAtoms, validateSize, validatePosition)
    - Clear error messages
