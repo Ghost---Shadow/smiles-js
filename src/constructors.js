@@ -11,6 +11,7 @@ import {
 } from './ast.js';
 
 import { buildSMILES } from './codegen.js';
+import { decompile } from './decompiler.js';
 import {
   ringAttach,
   ringSubstitute,
@@ -144,6 +145,9 @@ export function attachRingMethods(node) {
       });
       return result;
     },
+    toCode(varName = 'ring') {
+      return decompile(this, { varName });
+    },
   });
 }
 
@@ -177,6 +181,9 @@ export function attachLinearMethods(node) {
       });
       return result;
     },
+    toCode(varName = 'linear') {
+      return decompile(this, { varName });
+    },
   });
 }
 
@@ -206,6 +213,9 @@ export function attachMoleculeMethods(node) {
         type: this.type,
         components: this.components.map((c) => (c.toObject ? c.toObject() : c)),
       };
+    },
+    toCode(varName = 'molecule') {
+      return decompile(this, { varName });
     },
   });
 }
@@ -239,6 +249,9 @@ export function attachFusedRingMethods(node) {
         type: this.type,
         rings: this.rings.map((r) => ({ ...r })),
       };
+    },
+    toCode(varName = 'fusedRing') {
+      return decompile(this, { varName });
     },
   });
 }
