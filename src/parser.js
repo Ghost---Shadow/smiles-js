@@ -339,13 +339,14 @@ function buildAtomList(tokens) {
   const ringStacks = new Map();
   // Final ring boundaries: { ringNumber, start, end, positions }
   const ringBoundaries = [];
-  // Stack of branch points: { parentIndex, depth }
+  // Stack of branch points: { parentIndex, depth, branchId }
   const branchStack = [];
   // Branch info: { parentIndex, tokens, depth }
   const branches = [];
+  // Track last atom index at each depth level
+  const lastAtomAtDepth = new Map(); // depth -> atomIndex
 
   let currentAtomIndex = -1;
-  let lastMainChainAtomIndex = -1; // Track last atom at depth 0
   let currentBond = null;
   let i = 0;
 
@@ -376,10 +377,8 @@ function buildAtomList(tokens) {
 
       atoms.push(atom);
 
-      // Update last main chain atom if we're at depth 0
-      if (branchStack.length === 0) {
-        lastMainChainAtomIndex = currentAtomIndex;
-      }
+      // Track last atom at this depth level
+      lastAtomAtDepth.set(branchStack.length, currentAtomIndex);
 
       currentBond = null;
       i += 1;
@@ -437,14 +436,13 @@ function buildAtomList(tokens) {
 
     if (token.type === TokenType.BRANCH_OPEN) {
       // Start new branch - assign unique branch ID
-      // Parent is the last atom at the current depth (not currentAtomIndex)
-      const parentIdx = branchStack.length === 0
-        ? lastMainChainAtomIndex
-        : branchStack[branchStack.length - 1].parentIndex;
+      // Parent is the last atom at the CURRENT depth level
+      const currentDepth = branchStack.length;
+      const parentIdx = lastAtomAtDepth.get(currentDepth);
 
       branchStack.push({
-        parentIndex: parentIdx,
-        depth: branchStack.length,
+        parentIndex: parentIdx !== undefined ? parentIdx : -1,
+        depth: currentDepth,
         branchId: i, // Use token position as unique ID
       });
 

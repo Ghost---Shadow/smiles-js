@@ -302,3 +302,132 @@ describe('Parser - Round-trip', () => {
     expect(ast.smiles).toBe('n1ccccc1');
   });
 });
+
+describe('Parser - Complex Molecules', () => {
+  test('parses aromatic ring with attachment', () => {
+    const ast = parse('c1ccc(C)cc1');
+    expect(ast.type).toBe('ring');
+    expect(ast.atoms).toBe('c');
+    expect(ast.size).toBe(6);
+    expect(ast.attachments[4]).toBeDefined();
+  });
+
+  test('round-trips aromatic ring with attachment', () => {
+    const smiles = 'c1ccc(C)cc1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses ring followed by linear chain', () => {
+    const ast = parse('c1ccccc1C');
+    expect(ast.type).toBe('molecule');
+    expect(ast.components).toHaveLength(2);
+    expect(ast.components[0].type).toBe('ring');
+    expect(ast.components[1].type).toBe('linear');
+  });
+
+  test('round-trips ring followed by linear', () => {
+    const smiles = 'c1ccccc1C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses multiple attachments on ring', () => {
+    const ast = parse('c1c(C)c(C)c(C)cc1');
+    expect(ast.type).toBe('ring');
+    expect(ast.size).toBe(6);
+    expect(ast.attachments[2]).toBeDefined();
+    expect(ast.attachments[3]).toBeDefined();
+    expect(ast.attachments[4]).toBeDefined();
+  });
+
+  test('round-trips multiple attachments on ring', () => {
+    const smiles = 'c1c(C)c(C)c(C)cc1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses nested branches', () => {
+    const ast = parse('CC(C(C))C');
+    expect(ast.type).toBe('linear');
+    expect(ast.atoms).toEqual(['C', 'C', 'C']);
+    expect(ast.attachments[2]).toBeDefined();
+    expect(ast.attachments[2][0].attachments[1]).toBeDefined();
+  });
+
+  test('round-trips nested branches', () => {
+    const smiles = 'CC(C(C))C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses triple branches at same position', () => {
+    const ast = parse('C(C)(C)(C)C');
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C'],
+      bonds: [],
+      attachments: {
+        1: [
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+          {
+            type: 'linear',
+            atoms: ['C'],
+            bonds: [],
+            attachments: {},
+          },
+        ],
+      },
+    });
+  });
+
+  test('round-trips triple branches', () => {
+    const smiles = 'C(C)(C)(C)C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses ring with substitution and attachment', () => {
+    const ast = parse('n1ccc(C)cc1');
+    expect(ast.type).toBe('ring');
+    expect(ast.substitutions[1]).toBe('n');
+    expect(ast.attachments[4]).toBeDefined();
+  });
+
+  test('round-trips ring with substitution and attachment', () => {
+    const smiles = 'n1ccc(C)cc1';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses branches with double bonds', () => {
+    const ast = parse('CC(=O)CC(=O)C');
+    expect(ast.type).toBe('linear');
+    expect(ast.atoms).toEqual(['C', 'C', 'C', 'C', 'C']);
+    expect(ast.attachments[2][0].bonds).toEqual(['=']);
+    expect(ast.attachments[4][0].bonds).toEqual(['=']);
+  });
+
+  test('round-trips branches with double bonds', () => {
+    const smiles = 'CC(=O)CC(=O)C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('parses linear with branches at multiple positions', () => {
+    const ast = parse('CC(C)CC(C)C');
+    expect(ast.type).toBe('linear');
+    expect(ast.atoms).toEqual(['C', 'C', 'C', 'C', 'C']);
+    expect(ast.attachments[2]).toBeDefined();
+    expect(ast.attachments[4]).toBeDefined();
+  });
+
+  test('round-trips linear with multiple branches', () => {
+    const smiles = 'CC(C)CC(C)C';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+});
