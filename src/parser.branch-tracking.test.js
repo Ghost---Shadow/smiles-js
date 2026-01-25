@@ -11,7 +11,7 @@ function testBuildAtomList(tokens) {
 
   let currentAtomIndex = -1;
 
-  for (let i = 0; i < tokens.length; i++) {
+  for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
 
     if (token.type === 'atom') {
