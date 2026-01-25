@@ -16,64 +16,6 @@ import {
 } from './constructors.js';
 
 /**
- * Collect the proper path for a ring, handling interleaved fused rings.
- * When an inner ring closes while we're collecting atoms for an outer ring,
- * the inner ring creates a "shortcut" - we skip from its start to its end.
- *
- * @param {number} startIdx - Starting atom index
- * @param {number} endIdx - Ending atom index
- * @param {Array} atoms - All atoms
- * @param {number} branchDepth - Branch depth of this ring
- * @param {number|null} branchId - Branch ID
- * @param {Array} closedRings - List of rings that closed before this one
- */
-function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedRings) {
-  const positions = [];
-
-  // Find inner rings that start and end within our range
-  // These create shortcuts in our path
-  const innerRings = closedRings.filter((r) => r.start > startIdx && r.end < endIdx);
-
-  // Sort by start position
-  innerRings.sort((a, b) => a.start - b.start);
-
-  let idx = startIdx;
-  while (idx <= endIdx) {
-    const atom = atoms[idx];
-    if (!atom) {
-      idx += 1;
-      continue;
-    }
-
-    // Check if we're at an inner ring's start
-    const innerRing = innerRings.find((r) => r.start === idx);
-    if (innerRing) {
-      // Include the start atom (shared fusion point)
-      if (atom.branchDepth === branchDepth) {
-        if (branchDepth === 0 || atom.branchId === branchId || isInSameBranchContext(atom, atoms[startIdx], atoms)) {
-          positions.push(idx);
-        }
-      }
-      // Jump to the end of the inner ring (which is also a shared fusion point)
-      // The inner ring's atoms between start+1 and end-1 are NOT part of the outer ring
-      idx = innerRing.end;
-      continue;
-    }
-
-    // Regular atom - include if at correct depth
-    if (atom.branchDepth === branchDepth) {
-      if (branchDepth === 0 || atom.branchId === branchId || isInSameBranchContext(atom, atoms[startIdx], atoms)) {
-        positions.push(idx);
-      }
-    }
-
-    idx += 1;
-  }
-
-  return positions;
-}
-
-/**
  * Check if two atoms are in the same branch context
  * (share the same branch ancestry)
  */
@@ -101,9 +43,78 @@ function isInSameBranchContext(atom1, atom2, allAtoms) {
 }
 
 /**
+ * Collect the proper path for a ring, handling interleaved fused rings.
+ * When an inner ring closes while we're collecting atoms for an outer ring,
+ * the inner ring creates a "shortcut" - we skip from its start to its end.
+ *
+ * @param {number} startIdx - Starting atom index
+ * @param {number} endIdx - Ending atom index
+ * @param {Array} atoms - All atoms
+ * @param {number} branchDepth - Branch depth of this ring
+ * @param {number|null} branchId - Branch ID
+ * @param {Array} closedRings - List of rings that closed before this one
+ */
+function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedRings) {
+  const positions = [];
+
+  // Find inner rings that start and end within our range
+  // These create shortcuts in our path
+  const innerRings = closedRings.filter((r) => r.start > startIdx && r.end < endIdx);
+
+  // Sort by start position
+  innerRings.sort((a, b) => a.start - b.start);
+
+  let idx = startIdx;
+  while (idx <= endIdx) {
+    const atom = atoms[idx];
+    if (!atom) {
+      idx += 1;
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    // Check if we're at an inner ring's start
+    const currentIdx = idx;
+    const innerRing = innerRings.find((r) => r.start === currentIdx);
+    if (innerRing) {
+      // Include the start atom (shared fusion point)
+      if (atom.branchDepth === branchDepth) {
+        const startAtom = atoms[startIdx];
+        const inContext = branchDepth === 0
+          || atom.branchId === branchId
+          || isInSameBranchContext(atom, startAtom, atoms);
+        if (inContext) {
+          positions.push(idx);
+        }
+      }
+      // Jump to the end of the inner ring (which is also a shared fusion point)
+      // The inner ring's atoms between start+1 and end-1 are NOT part of the outer ring
+      idx = innerRing.end;
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    // Regular atom - include if at correct depth
+    if (atom.branchDepth === branchDepth) {
+      const startAtom = atoms[startIdx];
+      const inContext = branchDepth === 0
+        || atom.branchId === branchId
+        || isInSameBranchContext(atom, startAtom, atoms);
+      if (inContext) {
+        positions.push(idx);
+      }
+    }
+
+    idx += 1;
+  }
+
+  return positions;
+}
+
+/**
  * Collect consecutive atoms in a branch chain, including sub-branch atoms
  */
-function collectBranchChain(branchAtom, allAtoms, processed, branchId) {
+function collectBranchChain(branchAtom, allAtoms, processed) {
   const branchChain = [branchAtom];
   processed.add(branchAtom.index);
 
@@ -130,408 +141,6 @@ function collectBranchChain(branchAtom, allAtoms, processed, branchId) {
   }
 
   return branchChain;
-}
-
-/**
- * Build an AST node from a list of atoms (could be Linear or Ring)
- * This is the recursive function that handles rings inside branches
- */
-function buildNodeFromAtoms(atomList, allAtoms, ringBoundaries, isBranch = false) {
-  // Check if this atom list forms a ring
-  const atomIndices = new Set(atomList.map((a) => a.index));
-  const containedRings = ringBoundaries.filter((ring) => ring.positions.every((pos) => atomIndices.has(pos)));
-
-  if (containedRings.length > 0) {
-    // This branch contains ring(s) - build ring node(s)
-    return buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries, isBranch);
-  }
-
-  // No rings in this branch - build linear node
-  return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
-}
-
-/**
- * Build a linear chain node from atoms (no rings in this chain)
- */
-function buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch = false) {
-  // Filter to only atoms at the same branch depth as the first atom
-  const baseDepth = atomList[0].branchDepth;
-  const sameDepthAtoms = atomList.filter((a) => a.branchDepth === baseDepth);
-
-  const atomValues = sameDepthAtoms.map((atom) => {
-    if (typeof atom.value === 'string') {
-      return atom.value;
-    }
-    return atom.value.raw || 'C';
-  });
-
-  // For branches, include the bond on the first atom (connection to parent)
-  // For main chain, start from second atom (skip first atom's bond)
-  const bondStart = isBranch ? 0 : 1;
-  const bonds = sameDepthAtoms.slice(bondStart).map((atom) => atom.bond).filter((b) => b !== null);
-
-  // Build attachments from branches
-  const attachments = {};
-
-  // Group branch atoms by their parent index within this linear chain
-  sameDepthAtoms.forEach((atom, localIdx) => {
-    const globalIdx = atom.index;
-
-    // Find all atoms that branch from this atom (one depth level deeper)
-    const branchAtoms = allAtoms.filter((a) => a.parentIndex === globalIdx && a.branchDepth === baseDepth + 1);
-
-    if (branchAtoms.length > 0) {
-      // Group branches by branchId to handle multiple branches
-      const branchGroups = [];
-      const processed = new Set();
-
-      branchAtoms.forEach((branchAtom) => {
-        if (processed.has(branchAtom.index)) return;
-
-        // Collect all atoms in this branch (including deeper sub-branches)
-        const branchChain = collectBranchChain(branchAtom, allAtoms, processed, branchAtom.branchId);
-        branchGroups.push(branchChain);
-      });
-
-      // Build nodes for each branch group (could be Ring or Linear)
-      const position = localIdx + 1; // Convert to 1-indexed position
-      attachments[position] = branchGroups.map((group) => buildNodeFromAtoms(group, allAtoms, ringBoundaries, true));
-    }
-  });
-
-  return Linear(atomValues, bonds, attachments);
-}
-
-/**
- * Build a branch that contains rings
- */
-function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries, isBranch) {
-  // Group fused rings
-  const fusedGroups = groupFusedRings(containedRings);
-
-  // Map atom index to its ring group
-  const atomToGroup = new Map();
-  fusedGroups.forEach((group, groupIdx) => {
-    const allPositions = new Set();
-    group.forEach((ring) => {
-      ring.positions.forEach((pos) => allPositions.add(pos));
-    });
-    allPositions.forEach((pos) => {
-      atomToGroup.set(pos, groupIdx);
-    });
-  });
-
-  // Find atoms in the branch that are NOT in any ring (leading/trailing linear parts)
-  const baseDepth = atomList[0].branchDepth;
-  const sameDepthAtoms = atomList.filter((a) => a.branchDepth === baseDepth);
-
-  const components = [];
-  const processedGroups = new Set();
-  let currentLinear = [];
-
-  for (let i = 0; i < sameDepthAtoms.length; i += 1) {
-    const atom = sameDepthAtoms[i];
-    const globalIdx = atom.index;
-
-    if (atomToGroup.has(globalIdx)) {
-      // Flush pending linear chain
-      if (currentLinear.length > 0) {
-        components.push(buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, isBranch && components.length === 0));
-        currentLinear = [];
-      }
-
-      const groupIdx = atomToGroup.get(globalIdx);
-      if (!processedGroups.has(groupIdx)) {
-        const group = fusedGroups[groupIdx];
-        const ringNode = buildRingGroupNodeWithContext(group, allAtoms, ringBoundaries);
-        components.push(ringNode);
-        processedGroups.add(groupIdx);
-      }
-
-      // Skip remaining atoms in this ring group
-      const group = fusedGroups[groupIdx];
-      const maxPos = Math.max(...group.flatMap((r) => r.positions));
-      while (i + 1 < sameDepthAtoms.length && sameDepthAtoms[i + 1].index <= maxPos) {
-        i += 1;
-      }
-    } else {
-      currentLinear.push(atom);
-    }
-  }
-
-  // Flush remaining linear
-  if (currentLinear.length > 0) {
-    components.push(buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, isBranch && components.length === 0));
-  }
-
-  // Return appropriate node
-  if (components.length === 0) {
-    return Linear([], [], {});
-  }
-  if (components.length === 1) {
-    return components[0];
-  }
-  return Molecule(components);
-}
-
-/**
- * Build a linear chain node from atoms (legacy wrapper for compatibility)
- */
-function buildLinearNode(atomList, allAtoms = [], isBranch = false) {
-  // This is now a wrapper that uses the new buildLinearNodeSimple
-  // but without ringBoundaries context (for backward compatibility in some code paths)
-  const atomValues = atomList.map((atom) => {
-    if (typeof atom.value === 'string') {
-      return atom.value;
-    }
-    return atom.value.raw || 'C';
-  });
-
-  // For branches, include the bond on the first atom (connection to parent)
-  // For main chain, start from second atom (skip first atom's bond)
-  const bondStart = isBranch ? 0 : 1;
-  const bonds = atomList.slice(bondStart).map((atom) => atom.bond).filter((b) => b !== null);
-
-  // Build attachments from branches
-  const attachments = {};
-
-  // Group branch atoms by their parent index within this linear chain
-  atomList.forEach((atom, localIdx) => {
-    const globalIdx = atom.index;
-
-    // Find all atoms that branch from this atom
-    const branchAtoms = allAtoms.filter((a) => a.parentIndex === globalIdx && a.branchDepth > 0);
-
-    if (branchAtoms.length > 0) {
-      // Group branches by depth to handle multiple branches
-      const branchGroups = [];
-      const processed = new Set();
-
-      branchAtoms.forEach((branchAtom) => {
-        if (processed.has(branchAtom.index)) return;
-
-        // Collect consecutive atoms at this branch depth
-        const branchChain = collectBranchChain(branchAtom, allAtoms, processed, branchAtom.branchId);
-        branchGroups.push(branchChain);
-      });
-
-      // Build Linear nodes for each branch group
-      const position = localIdx + 1; // Convert to 1-indexed position
-      attachments[position] = branchGroups.map((group) => buildLinearNode(group, allAtoms, true));
-    }
-  });
-
-  return Linear(atomValues, bonds, attachments);
-}
-
-/**
- * Build a single ring node with ringBoundaries context for nested attachments
- */
-function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0, ringNumber = 1) {
-  const ringAtoms = ring.positions.map((pos) => atoms[pos]);
-
-  // Determine base atom type (most common, prefer later atoms in tie)
-  const atomCounts = new Map();
-  ringAtoms.forEach((atom) => {
-    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
-    atomCounts.set(val, (atomCounts.get(val) || 0) + 1);
-  });
-
-  let baseAtom = 'C';
-  let maxCount = 0;
-  atomCounts.forEach((count, atom) => {
-    if (count >= maxCount) {
-      maxCount = count;
-      baseAtom = atom;
-    }
-  });
-
-  // Calculate substitutions (atoms that differ from base)
-  const substitutions = {};
-  ringAtoms.forEach((atom, idx) => {
-    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
-    if (val !== baseAtom) {
-      substitutions[idx + 1] = val;
-    }
-  });
-
-  // Extract attachments from branches
-  const attachments = {};
-  const ringDepth = ringAtoms[0].branchDepth;
-
-  ringAtoms.forEach((atom, localIdx) => {
-    const globalIdx = atom.index;
-
-    // Find all atoms that branch from this ring atom (one depth deeper)
-    const branchAtoms = atoms.filter((a) => a.parentIndex === globalIdx && a.branchDepth === ringDepth + 1);
-
-    if (branchAtoms.length > 0) {
-      const branchGroups = [];
-      const processed = new Set();
-
-      branchAtoms.forEach((branchAtom) => {
-        if (processed.has(branchAtom.index)) return;
-
-        const branchChain = collectBranchChain(branchAtom, atoms, processed, branchAtom.branchId);
-        branchGroups.push(branchChain);
-      });
-
-      const position = localIdx + 1;
-      attachments[position] = branchGroups.map((group) => buildNodeFromAtoms(group, atoms, ringBoundaries, true));
-    }
-  });
-
-  const ringNode = Ring({
-    atoms: baseAtom,
-    size: ringAtoms.length,
-    ringNumber,
-    offset,
-    substitutions,
-    attachments,
-  });
-
-  // Store the original positions for fused ring codegen
-  // This is needed to properly reconstruct interleaved fused rings
-  ringNode._positions = ring.positions;
-  ringNode._start = ring.start;
-  ringNode._end = ring.end;
-
-  return ringNode;
-}
-
-/**
- * Build a ring or fused ring node from a group with context
- */
-function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
-  if (group.length === 1) {
-    // Pass the ring's actual ringNumber from the parsed boundary
-    return buildSingleRingNodeWithContext(group[0], atoms, ringBoundaries, 0, group[0].ringNumber);
-  }
-
-  // Sort rings by their start position to determine base ring
-  // The ring that starts first (lowest start position) is the base ring
-  const sortedGroup = [...group].sort((a, b) => a.start - b.start);
-  const baseRing = sortedGroup[0];
-
-  // Calculate the total atom span for this fused system
-  const allPositions = new Set();
-  sortedGroup.forEach((ring) => {
-    ring.positions.forEach((pos) => allPositions.add(pos));
-  });
-  const totalAtoms = allPositions.size;
-
-  const rings = sortedGroup.map((ring) => {
-    const offset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
-    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset, ring.ringNumber);
-  });
-
-  const fusedNode = FusedRing(rings);
-  // Store total atoms and all positions for proper codegen
-  fusedNode._totalAtoms = totalAtoms;
-  fusedNode._allPositions = [...allPositions].sort((a, b) => a - b);
-
-  return fusedNode;
-}
-
-/**
- * Build a single ring node
- */
-function buildSingleRingNode(ring, atoms, offset = 0, ringNumber = 1) {
-  const ringAtoms = ring.positions.map((pos) => atoms[pos]);
-
-  // Determine base atom type (most common, prefer later atoms in tie)
-  const atomCounts = new Map();
-  ringAtoms.forEach((atom) => {
-    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
-    atomCounts.set(val, (atomCounts.get(val) || 0) + 1);
-  });
-
-  let baseAtom = 'C';
-  let maxCount = 0;
-  // Use >= instead of > to prefer later atoms in tie (last atom wins)
-  atomCounts.forEach((count, atom) => {
-    if (count >= maxCount) {
-      maxCount = count;
-      baseAtom = atom;
-    }
-  });
-
-  // Calculate substitutions (atoms that differ from base)
-  const substitutions = {};
-  ringAtoms.forEach((atom, idx) => {
-    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
-    if (val !== baseAtom) {
-      substitutions[idx + 1] = val; // 1-indexed positions
-    }
-  });
-
-  // Extract attachments from branches
-  const attachments = {};
-  ringAtoms.forEach((atom, localIdx) => {
-    const globalIdx = atom.index;
-
-    // Find all atoms that branch from this atom
-    const branchAtoms = atoms.filter((a) => a.parentIndex === globalIdx && a.branchDepth > 0);
-
-    if (branchAtoms.length > 0) {
-      // Group branches by branchId to handle multiple branches
-      const branchGroups = [];
-      const processed = new Set();
-
-      branchAtoms.forEach((branchAtom) => {
-        if (processed.has(branchAtom.index)) return;
-
-        // Collect consecutive atoms at this branch
-        const branchChain = collectBranchChain(branchAtom, atoms, processed);
-        branchGroups.push(branchChain);
-      });
-
-      // Build Linear nodes for each branch group
-      const position = localIdx + 1; // Convert to 1-indexed position
-      attachments[position] = branchGroups.map((group) => buildLinearNode(group, atoms, true));
-    }
-  });
-
-  return Ring({
-    atoms: baseAtom,
-    size: ringAtoms.length,
-    ringNumber,
-    offset,
-    substitutions,
-    attachments,
-  });
-}
-
-/**
- * Calculate offset for a fused ring relative to the first ring
- */
-function calculateOffset(ring, baseRing) {
-  // Find the first shared atom
-  const baseSet = new Set(baseRing.positions);
-  const sharedPos = ring.positions.find((pos) => baseSet.has(pos));
-
-  if (sharedPos === undefined) {
-    return 0;
-  }
-
-  return baseRing.positions.indexOf(sharedPos);
-}
-
-/**
- * Build a ring or fused ring node from a group
- */
-function buildRingGroupNode(group, atoms) {
-  if (group.length === 1) {
-    return buildSingleRingNode(group[0], atoms);
-  }
-
-  // Fused ring system
-  const rings = group.map((ring, idx) => {
-    const offset = idx === 0 ? 0 : calculateOffset(ring, group[0]);
-    return buildSingleRingNode(ring, atoms, offset, ring.ringNumber);
-  });
-
-  return FusedRing(rings);
 }
 
 /**
@@ -587,6 +196,292 @@ function groupFusedRings(ringBoundaries) {
   });
 
   return groups;
+}
+
+/**
+ * Calculate offset for a fused ring relative to the first ring
+ */
+function calculateOffset(ring, baseRing) {
+  // Find the first shared atom
+  const baseSet = new Set(baseRing.positions);
+  const sharedPos = ring.positions.find((pos) => baseSet.has(pos));
+
+  if (sharedPos === undefined) {
+    return 0;
+  }
+
+  return baseRing.positions.indexOf(sharedPos);
+}
+
+/**
+ * Build an AST node from a list of atoms (could be Linear or Ring)
+ * This is the recursive function that handles rings inside branches
+ */
+function buildNodeFromAtoms(atomList, allAtoms, ringBoundaries, isBranch = false) {
+  // Check if this atom list forms a ring
+  const atomIndices = new Set(atomList.map((a) => a.index));
+  const containedRings = ringBoundaries.filter(
+    (ring) => ring.positions.every((pos) => atomIndices.has(pos)),
+  );
+
+  if (containedRings.length > 0) {
+    // This branch contains ring(s) - build ring node(s)
+    // eslint-disable-next-line no-use-before-define
+    return buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries, isBranch);
+  }
+
+  // No rings in this branch - build linear node
+  // eslint-disable-next-line no-use-before-define
+  return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
+}
+
+/**
+ * Build a linear chain node from atoms (no rings in this chain)
+ */
+function buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch = false) {
+  // Filter to only atoms at the same branch depth as the first atom
+  const baseDepth = atomList[0].branchDepth;
+  const sameDepthAtoms = atomList.filter((a) => a.branchDepth === baseDepth);
+
+  const atomValues = sameDepthAtoms.map((atom) => {
+    if (typeof atom.value === 'string') {
+      return atom.value;
+    }
+    return atom.value.raw || 'C';
+  });
+
+  // For branches, include the bond on the first atom (connection to parent)
+  // For main chain, start from second atom (skip first atom's bond)
+  const bondStart = isBranch ? 0 : 1;
+  const bonds = sameDepthAtoms.slice(bondStart).map((atom) => atom.bond).filter((b) => b !== null);
+
+  // Build attachments from branches
+  const attachments = {};
+
+  // Group branch atoms by their parent index within this linear chain
+  sameDepthAtoms.forEach((atom, localIdx) => {
+    const globalIdx = atom.index;
+
+    // Find all atoms that branch from this atom (one depth level deeper)
+    const branchAtoms = allAtoms.filter(
+      (a) => a.parentIndex === globalIdx && a.branchDepth === baseDepth + 1,
+    );
+
+    if (branchAtoms.length > 0) {
+      // Group branches by branchId to handle multiple branches
+      const branchGroups = [];
+      const processed = new Set();
+
+      branchAtoms.forEach((branchAtom) => {
+        if (processed.has(branchAtom.index)) return;
+
+        // Collect all atoms in this branch (including deeper sub-branches)
+        const branchChain = collectBranchChain(branchAtom, allAtoms, processed);
+        branchGroups.push(branchChain);
+      });
+
+      // Build nodes for each branch group (could be Ring or Linear)
+      const position = localIdx + 1; // Convert to 1-indexed position
+      attachments[position] = branchGroups.map(
+        (group) => buildNodeFromAtoms(group, allAtoms, ringBoundaries, true),
+      );
+    }
+  });
+
+  return Linear(atomValues, bonds, attachments);
+}
+
+/**
+ * Build a single ring node with ringBoundaries context for nested attachments
+ */
+function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0, ringNumber = 1) {
+  const ringAtoms = ring.positions.map((pos) => atoms[pos]);
+
+  // Determine base atom type (most common, prefer later atoms in tie)
+  const atomCounts = new Map();
+  ringAtoms.forEach((atom) => {
+    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
+    atomCounts.set(val, (atomCounts.get(val) || 0) + 1);
+  });
+
+  let baseAtom = 'C';
+  let maxCount = 0;
+  atomCounts.forEach((count, atom) => {
+    if (count >= maxCount) {
+      maxCount = count;
+      baseAtom = atom;
+    }
+  });
+
+  // Calculate substitutions (atoms that differ from base)
+  const substitutions = {};
+  ringAtoms.forEach((atom, idx) => {
+    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
+    if (val !== baseAtom) {
+      substitutions[idx + 1] = val;
+    }
+  });
+
+  // Extract attachments from branches
+  const attachments = {};
+  const ringDepth = ringAtoms[0].branchDepth;
+
+  ringAtoms.forEach((atom, localIdx) => {
+    const globalIdx = atom.index;
+
+    // Find all atoms that branch from this ring atom (one depth deeper)
+    const branchAtoms = atoms.filter(
+      (a) => a.parentIndex === globalIdx && a.branchDepth === ringDepth + 1,
+    );
+
+    if (branchAtoms.length > 0) {
+      const branchGroups = [];
+      const processed = new Set();
+
+      branchAtoms.forEach((branchAtom) => {
+        if (processed.has(branchAtom.index)) return;
+
+        const branchChain = collectBranchChain(branchAtom, atoms, processed);
+        branchGroups.push(branchChain);
+      });
+
+      const position = localIdx + 1;
+      attachments[position] = branchGroups.map(
+        (group) => buildNodeFromAtoms(group, atoms, ringBoundaries, true),
+      );
+    }
+  });
+
+  const ringNode = Ring({
+    atoms: baseAtom,
+    size: ringAtoms.length,
+    ringNumber,
+    offset,
+    substitutions,
+    attachments,
+  });
+
+  // Store the original positions for fused ring codegen
+  // This is needed to properly reconstruct interleaved fused rings
+  /* eslint-disable no-underscore-dangle */
+  ringNode._positions = ring.positions;
+  ringNode._start = ring.start;
+  ringNode._end = ring.end;
+  /* eslint-enable no-underscore-dangle */
+
+  return ringNode;
+}
+
+/**
+ * Build a ring or fused ring node from a group with context
+ */
+function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
+  if (group.length === 1) {
+    // Pass the ring's actual ringNumber from the parsed boundary
+    return buildSingleRingNodeWithContext(group[0], atoms, ringBoundaries, 0, group[0].ringNumber);
+  }
+
+  // Sort rings by their start position to determine base ring
+  // The ring that starts first (lowest start position) is the base ring
+  const sortedGroup = [...group].sort((a, b) => a.start - b.start);
+  const baseRing = sortedGroup[0];
+
+  // Calculate the total atom span for this fused system
+  const allPositions = new Set();
+  sortedGroup.forEach((ring) => {
+    ring.positions.forEach((pos) => allPositions.add(pos));
+  });
+  const totalAtoms = allPositions.size;
+
+  const rings = sortedGroup.map((ring) => {
+    const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
+    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, ringOffset, ring.ringNumber);
+  });
+
+  const fusedNode = FusedRing(rings);
+  // Store total atoms and all positions for proper codegen
+  /* eslint-disable no-underscore-dangle */
+  fusedNode._totalAtoms = totalAtoms;
+  fusedNode._allPositions = [...allPositions].sort((a, b) => a - b);
+  /* eslint-enable no-underscore-dangle */
+
+  return fusedNode;
+}
+
+/**
+ * Build a branch that contains rings
+ */
+function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries, isBranch) {
+  // Group fused rings
+  const fusedGroups = groupFusedRings(containedRings);
+
+  // Map atom index to its ring group
+  const atomToGroup = new Map();
+  fusedGroups.forEach((group, groupIdx) => {
+    const allPositions = new Set();
+    group.forEach((ring) => {
+      ring.positions.forEach((pos) => allPositions.add(pos));
+    });
+    allPositions.forEach((pos) => {
+      atomToGroup.set(pos, groupIdx);
+    });
+  });
+
+  // Find atoms in the branch that are NOT in any ring (leading/trailing linear parts)
+  const baseDepth = atomList[0].branchDepth;
+  const sameDepthAtoms = atomList.filter((a) => a.branchDepth === baseDepth);
+
+  const components = [];
+  const processedGroups = new Set();
+  let currentLinear = [];
+
+  for (let i = 0; i < sameDepthAtoms.length; i += 1) {
+    const atom = sameDepthAtoms[i];
+    const globalIdx = atom.index;
+
+    if (atomToGroup.has(globalIdx)) {
+      // Flush pending linear chain
+      if (currentLinear.length > 0) {
+        const linearIsBranch = isBranch && components.length === 0;
+        // eslint-disable-next-line max-len
+        const linearNode = buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, linearIsBranch);
+        components.push(linearNode);
+        currentLinear = [];
+      }
+
+      const groupIdx = atomToGroup.get(globalIdx);
+      if (!processedGroups.has(groupIdx)) {
+        const group = fusedGroups[groupIdx];
+        const ringNode = buildRingGroupNodeWithContext(group, allAtoms, ringBoundaries);
+        components.push(ringNode);
+        processedGroups.add(groupIdx);
+      }
+
+      // Skip remaining atoms in this ring group
+      const group = fusedGroups[groupIdx];
+      const maxPos = Math.max(...group.flatMap((r) => r.positions));
+      while (i + 1 < sameDepthAtoms.length && sameDepthAtoms[i + 1].index <= maxPos) {
+        i += 1;
+      }
+    } else {
+      currentLinear.push(atom);
+    }
+  }
+
+  // Flush remaining linear
+  if (currentLinear.length > 0) {
+    const linearIsBranch = isBranch && components.length === 0;
+    components.push(buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, linearIsBranch));
+  }
+
+  // Return appropriate node
+  if (components.length === 0) {
+    return Linear([], [], {});
+  }
+  if (components.length === 1) {
+    return components[0];
+  }
+  return Molecule(components);
 }
 
 /**
@@ -745,7 +640,8 @@ function buildAtomList(tokens) {
 
       if (ringStacks.has(ringNumber)) {
         // Close ring - build the full ring atom sequence
-        const { startIndex, branchDepth: ringBranchDepth, branchId: ringBranchId } = ringStacks.get(ringNumber);
+        const ringData = ringStacks.get(ringNumber);
+        const { startIndex, branchDepth: ringBranchDepth, branchId: ringBranchId } = ringData;
 
         // For interleaved fused rings, we need to calculate the proper path.
         // When a ring opens INSIDE another ring, it creates a "shortcut" - the outer ring
@@ -784,7 +680,8 @@ function buildAtomList(tokens) {
       } else {
         // Open ring - record current depth and branch context
         const currentDepth = branchStack.length;
-        const currentBranchId = branchStack.length > 0 ? branchStack[branchStack.length - 1].branchId : null;
+        const stackTop = branchStack[branchStack.length - 1];
+        const currentBranchId = branchStack.length > 0 ? stackTop.branchId : null;
 
         ringStacks.set(ringNumber, {
           startIndex: currentAtomIndex,
@@ -853,10 +750,10 @@ export function parse(smiles) {
   const tokens = tokenize(smiles);
 
   // Pass 1: Build linear atom list with ring tracking
-  const { atoms, ringBoundaries, branches } = buildAtomList(tokens);
+  const { atoms, ringBoundaries } = buildAtomList(tokens);
 
   // Pass 2: Build hierarchical AST from atoms and ring info
-  const ast = buildAST(atoms, ringBoundaries, branches);
+  const ast = buildAST(atoms, ringBoundaries);
 
   return ast;
 }

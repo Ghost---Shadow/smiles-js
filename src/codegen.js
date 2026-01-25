@@ -11,12 +11,36 @@ import {
 } from './ast.js';
 
 /**
+ * Main entry point: Convert any AST node to SMILES string
+ * @param {Object} ast - AST node
+ * @returns {string} SMILES string
+ */
+export function buildSMILES(ast) {
+  if (isMoleculeNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
+    return buildMoleculeSMILES(ast);
+  }
+  if (isFusedRingNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
+    return buildFusedRingSMILES(ast);
+  }
+  if (isRingNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
+    return buildRingSMILES(ast);
+  }
+  if (isLinearNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
+    return buildLinearSMILES(ast);
+  }
+  throw new Error(`Unknown AST node type: ${ast?.type}`);
+}
+
+/**
  * Build SMILES for a Molecule node
  * @param {Object} molecule - Molecule AST node
  * @returns {string} SMILES string
  */
 export function buildMoleculeSMILES(molecule) {
-  // eslint-disable-next-line no-use-before-define
   const parts = molecule.components.map((component) => buildSMILES(component));
   return parts.join('');
 }
@@ -52,7 +76,6 @@ export function buildLinearSMILES(linear) {
     const position = i + 1;
     if (attachments[position]) {
       attachments[position].forEach((attachment) => {
-        // eslint-disable-next-line no-use-before-define
         const attachmentSMILES = buildSMILES(attachment);
         parts.push(`(${attachmentSMILES})`);
       });
@@ -92,7 +115,6 @@ export function buildRingSMILES(ring) {
       const attachmentList = attachments[i];
       attachmentList.forEach((attachment) => {
         parts.push('(');
-        // eslint-disable-next-line no-use-before-define
         parts.push(buildSMILES(attachment));
         parts.push(')');
       });
@@ -108,34 +130,11 @@ export function buildRingSMILES(ring) {
 }
 
 /**
- * Build SMILES for a FusedRing node
- *
- * For interleaved fused rings (like naphthalene C1CC2CCCCC2CC1), we use
- * the stored positions to properly reconstruct the SMILES with correct
- * ring marker placement.
- *
- * @param {Object} fusedRing - FusedRing AST node
- * @returns {string} SMILES string
- */
-export function buildFusedRingSMILES(fusedRing) {
-  const { rings } = fusedRing;
-
-  // Check if we have position data for interleaved fused ring handling
-  const hasPositionData = rings.some((r) => r._positions);
-
-  if (hasPositionData && fusedRing._allPositions) {
-    return buildInterleavedFusedRingSMILES(fusedRing);
-  }
-
-  // Fall back to offset-based approach for simple fused rings
-  return buildSimpleFusedRingSMILES(fusedRing);
-}
-
-/**
  * Build SMILES for interleaved fused rings using stored position data
  */
 function buildInterleavedFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
+  // eslint-disable-next-line no-underscore-dangle
   const allPositions = fusedRing._allPositions;
 
   // Build the atom sequence with attachments
@@ -144,10 +143,15 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
   // Collect all ring markers and build atom sequence
   rings.forEach((ring) => {
+    // eslint-disable-next-line no-underscore-dangle
     const positions = ring._positions || [];
+    // eslint-disable-next-line no-underscore-dangle
     const start = ring._start;
+    // eslint-disable-next-line no-underscore-dangle
     const end = ring._end;
-    const { ringNumber, atoms, substitutions = {}, attachments = {} } = ring;
+    const {
+      ringNumber, atoms, substitutions = {}, attachments = {},
+    } = ring;
 
     // Ring opens at its first position (which is the start atom index)
     if (!ringMarkers.has(start)) {
@@ -287,7 +291,6 @@ function buildSimpleFusedRingSMILES(fusedRing) {
 
     attachments.forEach((attachment) => {
       parts.push('(');
-      // eslint-disable-next-line no-use-before-define
       parts.push(buildSMILES(attachment));
       parts.push(')');
     });
@@ -297,22 +300,27 @@ function buildSimpleFusedRingSMILES(fusedRing) {
 }
 
 /**
- * Main entry point: Convert any AST node to SMILES string
- * @param {Object} ast - AST node
+ * Build SMILES for a FusedRing node
+ *
+ * For interleaved fused rings (like naphthalene C1CC2CCCCC2CC1), we use
+ * the stored positions to properly reconstruct the SMILES with correct
+ * ring marker placement.
+ *
+ * @param {Object} fusedRing - FusedRing AST node
  * @returns {string} SMILES string
  */
-export function buildSMILES(ast) {
-  if (isMoleculeNode(ast)) {
-    return buildMoleculeSMILES(ast);
+export function buildFusedRingSMILES(fusedRing) {
+  const { rings } = fusedRing;
+
+  // Check if we have position data for interleaved fused ring handling
+  // eslint-disable-next-line no-underscore-dangle
+  const hasPositionData = rings.some((r) => r._positions);
+
+  // eslint-disable-next-line no-underscore-dangle
+  if (hasPositionData && fusedRing._allPositions) {
+    return buildInterleavedFusedRingSMILES(fusedRing);
   }
-  if (isFusedRingNode(ast)) {
-    return buildFusedRingSMILES(ast);
-  }
-  if (isRingNode(ast)) {
-    return buildRingSMILES(ast);
-  }
-  if (isLinearNode(ast)) {
-    return buildLinearSMILES(ast);
-  }
-  throw new Error(`Unknown AST node type: ${ast?.type}`);
+
+  // Fall back to offset-based approach for simple fused rings
+  return buildSimpleFusedRingSMILES(fusedRing);
 }
