@@ -227,10 +227,10 @@ function buildSimpleFusedRingSMILES(fusedRing) {
   const atomSequence = new Array(maxEnd);
   const ringMarkers = [];
 
-  // Fill atom sequence with ring atoms
+  // Fill atom sequence with ring atoms and attachments
   sortedRings.forEach((ring) => {
     const {
-      offset, size, atoms, substitutions = {}, ringNumber,
+      offset, size, atoms, substitutions = {}, attachments = {}, ringNumber,
     } = ring;
 
     // Record ring opening and closing positions
@@ -245,7 +245,7 @@ function buildSimpleFusedRingSMILES(fusedRing) {
       type: 'close',
     });
 
-    // Place atoms
+    // Place atoms and attachments
     Array.from({ length: size }, (_, idx) => idx).forEach((i) => {
       const pos = offset + i;
       const relativePos = i + 1; // 1-indexed position within the ring
@@ -253,6 +253,12 @@ function buildSimpleFusedRingSMILES(fusedRing) {
 
       if (!atomSequence[pos]) {
         atomSequence[pos] = { atom, attachments: [] };
+      }
+
+      // Add attachments at this relative position (if any)
+      // Attachments are added even if atom was already set by another ring
+      if (attachments[relativePos]) {
+        atomSequence[pos].attachments.push(...attachments[relativePos]);
       }
     });
   });

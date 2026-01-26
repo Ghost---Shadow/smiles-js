@@ -47,22 +47,57 @@ function isInSameBranchContext(atom1, atom2, allAtoms) {
  * When an inner ring closes while we're collecting atoms for an outer ring,
  * the inner ring creates a "shortcut" - we skip from its start to its end.
  *
+ * Important: A ring can traverse into deeper branches. For example:
+ * C1CC(C1) - ring 1 opens at depth 0, enters branch at depth 1, closes inside branch
+ *
+ * However, we must distinguish between:
+ * - Branches that are PART of the ring path (ring continues through them)
+ * - Branches that are ATTACHMENTS (separate substituents)
+ *
+ * A branch is part of the ring path if the ring CLOSURE occurs within it.
+ *
  * @param {number} startIdx - Starting atom index
  * @param {number} endIdx - Ending atom index
  * @param {Array} atoms - All atoms
- * @param {number} branchDepth - Branch depth of this ring
- * @param {number|null} branchId - Branch ID
+ * @param {number} branchDepth - Branch depth where ring opened (may close at deeper depth)
+ * @param {number|null} branchId - Branch ID where ring opened
  * @param {Array} closedRings - List of rings that closed before this one
  */
 function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedRings) {
   const positions = [];
 
-  // Find inner rings that start and end within our range
-  // These create shortcuts in our path
-  const innerRings = closedRings.filter((r) => r.start > startIdx && r.end < endIdx);
+  // Find inner rings that are ACTUALLY FUSED with this ring (not just in branches)
+  // A ring is fused if it starts at the same branch depth as our ring
+  // Rings inside branches are attachments, not fused rings
+  const innerRings = closedRings.filter((r) => {
+    if (r.start <= startIdx || r.end >= endIdx) return false;
+    // Check if the inner ring is at the same branch depth (truly interleaved)
+    const innerStartAtom = atoms[r.start];
+    return innerStartAtom && innerStartAtom.branchDepth === branchDepth;
+  });
 
   // Sort by start position
   innerRings.sort((a, b) => a.start - b.start);
+
+  // Determine which branches the ring path must traverse
+  // If end atom is at a deeper depth, we need to enter that branch
+  const endAtom = atoms[endIdx];
+  const ringEntersDeepBranch = endAtom && endAtom.branchDepth > branchDepth;
+
+  // If ring enters a deep branch, find the path of branch IDs from start to end
+  const ringPathBranchIds = new Set();
+  if (ringEntersDeepBranch) {
+    // Trace from end atom back to find which branches we traverse
+    let traceAtom = endAtom;
+    while (traceAtom && traceAtom.branchDepth > branchDepth) {
+      if (traceAtom.branchId !== null) {
+        ringPathBranchIds.add(traceAtom.branchId);
+      }
+      // Find parent atom at shallower depth
+      const parentIdx = traceAtom.parentIndex;
+      traceAtom = parentIdx !== null ? atoms[parentIdx] : null;
+    }
+  }
 
   let idx = startIdx;
   while (idx <= endIdx) {
@@ -73,36 +108,33 @@ function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedR
       continue;
     }
 
-    // Check if we're at an inner ring's start
+    // Check if we're at an inner ring's start (creates a shortcut for fused rings)
     const currentIdx = idx;
     const innerRing = innerRings.find((r) => r.start === currentIdx);
     if (innerRing) {
       // Include the start atom (shared fusion point)
-      if (atom.branchDepth === branchDepth) {
-        const startAtom = atoms[startIdx];
-        const inContext = branchDepth === 0
-          || atom.branchId === branchId
-          || isInSameBranchContext(atom, startAtom, atoms);
-        if (inContext) {
-          positions.push(idx);
-        }
-      }
+      positions.push(idx);
       // Jump to the end of the inner ring (which is also a shared fusion point)
-      // The inner ring's atoms between start+1 and end-1 are NOT part of the outer ring
       idx = innerRing.end;
       // eslint-disable-next-line no-continue
       continue;
     }
 
-    // Regular atom - include if at correct depth
-    if (atom.branchDepth === branchDepth) {
+    // Check if atom is part of the ring path
+    const atOriginalDepth = atom.branchDepth === branchDepth;
+    const inRingPathBranch = ringPathBranchIds.has(atom.branchId);
+
+    if (atOriginalDepth) {
+      // At original depth - check branch context
       const startAtom = atoms[startIdx];
-      const inContext = branchDepth === 0
-        || atom.branchId === branchId
+      const inContext = branchDepth === 0 || atom.branchId === branchId
         || isInSameBranchContext(atom, startAtom, atoms);
       if (inContext) {
         positions.push(idx);
       }
+    } else if (inRingPathBranch) {
+      // In a branch that the ring path traverses
+      positions.push(idx);
     }
 
     idx += 1;

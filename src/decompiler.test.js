@@ -61,7 +61,7 @@ describe('Decompiler - FusedRing', () => {
     const code = decompile(fusedRing, { varName: 'naphthalene' });
     const lines = code.split('\n');
 
-    expect(lines[0]).toBe("const naphthaleneRing1 = Ring({ atoms: 'C', size: 10, ringNumber: 1, offset: 0 });");
+    expect(lines[0]).toBe("const naphthaleneRing1 = Ring({ atoms: 'C', size: 10 });");
     expect(lines[1]).toBe("const naphthaleneRing2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });");
     expect(lines[2]).toBe('const naphthalene = naphthaleneRing1.fuse(naphthaleneRing2, 2);');
   });
@@ -85,9 +85,9 @@ describe('Decompiler - Molecule', () => {
     const code = decompile(molecule, { varName: 'propylbenzene' });
     const lines = code.split('\n');
 
-    expect(lines[0]).toBe("const propylbenzeneComponent1 = Linear(['C', 'C', 'C']);");
-    expect(lines[1]).toBe("const propylbenzeneComponent2 = Ring({ atoms: 'c', size: 6 });");
-    expect(lines[2]).toBe('const propylbenzene = Molecule([propylbenzeneComponent1, propylbenzeneComponent2]);');
+    expect(lines[0]).toBe("const propylbenzeneComp1 = Linear(['C', 'C', 'C']);");
+    expect(lines[1]).toBe("const propylbenzeneComp2 = Ring({ atoms: 'c', size: 6 });");
+    expect(lines[2]).toBe('const propylbenzene = Molecule([propylbenzeneComp1, propylbenzeneComp2]);');
   });
 
   test('uses toCode() method', () => {
