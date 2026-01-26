@@ -92,6 +92,7 @@ describe('Parser - Ring Attachments', () => {
           },
         ],
       },
+      bonds: [null, null, null, null, null, null],
     });
   });
 
@@ -444,6 +445,7 @@ describe('Parser - Rings Inside Branches', () => {
             offset: 0,
             substitutions: {},
             attachments: {},
+            bonds: [null, null, null, null, null, null],
           },
         ],
       },

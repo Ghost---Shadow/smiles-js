@@ -92,13 +92,22 @@ export function buildLinearSMILES(linear) {
  */
 export function buildRingSMILES(ring) {
   const {
-    atoms, size, ringNumber, substitutions = {}, attachments = {},
+    atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
   } = ring;
   const parts = [];
 
   // Build ring with standard SMILES notation
   // Ring marker appears AFTER the first atom (standard notation)
+  // Bonds array: bonds[i-1] is the bond BEFORE atom i (for i=2..size)
+  // bonds[size-1] is the ring closure bond (if any)
   Array.from({ length: size }, (_, idx) => idx + 1).forEach((i) => {
+    // Add bond before atom (for atoms 2 through size)
+    // bonds[0] is the bond between atom 1 and atom 2
+    // bonds[i-2] is the bond before atom i (for i >= 2)
+    if (i > 1 && bonds[i - 2]) {
+      parts.push(bonds[i - 2]);
+    }
+
     // Get the atom at this position (base atom or substitution)
     const atom = substitutions[i] || atoms;
 
@@ -106,7 +115,13 @@ export function buildRingSMILES(ring) {
     parts.push(atom);
 
     // Add ring opening marker after position 1 (standard SMILES)
+    // Include the ring closure bond if present
     if (i === 1) {
+      // Ring closure bond (bonds[size-1]) should be added before the ring marker
+      const closureBond = bonds[size - 1];
+      if (closureBond) {
+        parts.push(closureBond);
+      }
       parts.push(ringNumber.toString());
     }
 
@@ -137,11 +152,12 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   // eslint-disable-next-line no-underscore-dangle
   const allPositions = fusedRing._allPositions;
 
-  // Build the atom sequence with attachments
+  // Build the atom sequence with attachments and bonds
   const atomSequence = [];
-  const ringMarkers = new Map(); // position -> [{ringNumber, type}]
+  const ringMarkers = new Map(); // position -> [{ringNumber, type, closureBond?}]
+  const bondsBefore = new Map(); // position -> bond (bond to add before atom at this position)
 
-  // Collect all ring markers and build atom sequence
+  // Collect all ring markers, atom sequence, and bonds
   rings.forEach((ring) => {
     // eslint-disable-next-line no-underscore-dangle
     const positions = ring._positions || [];
@@ -150,14 +166,16 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
     // eslint-disable-next-line no-underscore-dangle
     const end = ring._end;
     const {
-      ringNumber, atoms, substitutions = {}, attachments = {},
+      ringNumber, atoms, substitutions = {}, attachments = {}, bonds = [],
     } = ring;
 
     // Ring opens at its first position (which is the start atom index)
+    // Include the ring closure bond if present
+    const closureBond = bonds[ring.size - 1] || null;
     if (!ringMarkers.has(start)) {
       ringMarkers.set(start, []);
     }
-    ringMarkers.get(start).push({ ringNumber, type: 'open' });
+    ringMarkers.get(start).push({ ringNumber, type: 'open', closureBond });
 
     // Ring closes at its last position (which is the end atom index)
     if (!ringMarkers.has(end)) {
@@ -165,13 +183,20 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
     }
     ringMarkers.get(end).push({ ringNumber, type: 'close' });
 
-    // Fill in atom values and attachments for this ring's positions
+    // Fill in atom values, bonds, and attachments for this ring's positions
     positions.forEach((pos, idx) => {
       const relativePos = idx + 1;
       const atomValue = substitutions[relativePos] || atoms;
       if (!atomSequence[pos]) {
         atomSequence[pos] = { atom: atomValue, attachments: [] };
       }
+
+      // For positions > 1 in the ring, add the bond before this atom
+      // bonds[idx-1] is the bond before the (idx+1)th atom (1-indexed relative position)
+      if (idx > 0 && bonds[idx - 1] && !bondsBefore.has(pos)) {
+        bondsBefore.set(pos, bonds[idx - 1]);
+      }
+
       // Add attachments at this relative position (if any)
       if (attachments[relativePos]) {
         atomSequence[pos].attachments.push(...attachments[relativePos]);
@@ -181,9 +206,14 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
   // Build SMILES by walking through all positions in order
   const parts = [];
-  allPositions.forEach((pos) => {
+  allPositions.forEach((pos, idx) => {
     const entry = atomSequence[pos];
     if (!entry) return;
+
+    // Add bond before atom (if not first atom)
+    if (idx > 0 && bondsBefore.has(pos)) {
+      parts.push(bondsBefore.get(pos));
+    }
 
     // Add atom
     parts.push(entry.atom);
@@ -199,6 +229,10 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
     });
 
     markers.forEach((marker) => {
+      // Add ring closure bond before ring number for opening markers
+      if (marker.type === 'open' && marker.closureBond) {
+        parts.push(marker.closureBond);
+      }
       parts.push(marker.ringNumber.toString());
     });
 
@@ -226,18 +260,21 @@ function buildSimpleFusedRingSMILES(fusedRing) {
   const maxEnd = Math.max(...sortedRings.map((r) => r.offset + r.size));
   const atomSequence = new Array(maxEnd);
   const ringMarkers = [];
+  const bondsBefore = new Map(); // position -> bond
 
-  // Fill atom sequence with ring atoms and attachments
+  // Fill atom sequence with ring atoms, bonds, and attachments
   sortedRings.forEach((ring) => {
     const {
-      offset, size, atoms, substitutions = {}, attachments = {}, ringNumber,
+      offset, size, atoms, substitutions = {}, attachments = {}, ringNumber, bonds = [],
     } = ring;
 
-    // Record ring opening and closing positions
+    // Record ring opening and closing positions with closure bond
+    const closureBond = bonds[size - 1] || null;
     ringMarkers.push({
       position: offset,
       ringNumber,
       type: 'open',
+      closureBond,
     });
     ringMarkers.push({
       position: offset + size - 1,
@@ -245,7 +282,7 @@ function buildSimpleFusedRingSMILES(fusedRing) {
       type: 'close',
     });
 
-    // Place atoms and attachments
+    // Place atoms, bonds, and attachments
     Array.from({ length: size }, (_, idx) => idx).forEach((i) => {
       const pos = offset + i;
       const relativePos = i + 1; // 1-indexed position within the ring
@@ -253,6 +290,11 @@ function buildSimpleFusedRingSMILES(fusedRing) {
 
       if (!atomSequence[pos]) {
         atomSequence[pos] = { atom, attachments: [] };
+      }
+
+      // Add bond before this atom (for atoms after the first in the ring)
+      if (i > 0 && bonds[i - 1] && !bondsBefore.has(pos)) {
+        bondsBefore.set(pos, bonds[i - 1]);
       }
 
       // Add attachments at this relative position (if any)
@@ -276,10 +318,15 @@ function buildSimpleFusedRingSMILES(fusedRing) {
 
   // Build SMILES string using standard notation
   const parts = [];
-  atomSequence.forEach((entry) => {
+  atomSequence.forEach((entry, pos) => {
     if (!entry) return;
 
     const { atom, markers = [], attachments = [] } = entry;
+
+    // Add bond before atom (if not first atom and bond exists)
+    if (pos > 0 && bondsBefore.has(pos)) {
+      parts.push(bondsBefore.get(pos));
+    }
 
     if (atom) {
       parts.push(atom);
@@ -287,6 +334,10 @@ function buildSimpleFusedRingSMILES(fusedRing) {
 
     const openMarkers = markers.filter((m) => m.type === 'open');
     openMarkers.forEach((marker) => {
+      // Add ring closure bond before ring number
+      if (marker.closureBond) {
+        parts.push(marker.closureBond);
+      }
       parts.push(marker.ringNumber.toString());
     });
 

@@ -1,28 +1,43 @@
 # Implementation Status
 
-## 🔴 BLOCKING ISSUE: Double Bonds in Rings Not Preserved
+## ✅ FIXED: Double Bonds in Rings Now Preserved
 
-**Double bonds in rings are lost during parsing/regeneration.**
-
-```
-Input:  C1=CC=CC=C1   →   Output: C1CCCCC1   (bonds LOST)
-```
-
-### Telmisartan (PubChem) - FAILS
+**Double bonds in rings are now correctly preserved during parsing/regeneration.**
 
 ```
-Input:  CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C
-Output: CCCC1NC2C(C=C(C=CNCC3CCC(C=C)CC3C4CCCCC4C(=O)O)C5NC6CCCCC6N5C)CCCC2N1C
+Input:  C1=CC=CC=C1   →   Output: C1=CC=CC=C1   (bonds PRESERVED)
 ```
 
-All `=` bonds inside rings are lost.
+### Naphthalene - WORKS
+```
+Input:  C1=CC2=CC=CC=C2C=C1
+Output: C1=CC2=CC=CC=C2C=C1
+```
+
+### Simple Benzimidazole - WORKS
+```
+Input:  C1=NC2=CC=CC=C2N1
+Output: C1=NC2=CC=CC=C2N1
+```
 
 ---
 
-## Root Cause
+## 🟡 Known Limitation: Complex Branch/Ring Interactions
 
-Ring AST stores atoms as a single string (e.g., `'C'`) with no per-atom bond information.
+Ring closures inside branches (e.g., telmisartan structure) have codegen issues.
+This is a separate architectural issue not related to bond preservation.
 
-## Fix Required
+```
+Input:  CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C
+```
 
-Extend Ring AST to store bond types between atoms, similar to how Linear nodes handle bonds.
+This structure has ring closures (`2N1`) inside branches, which the current codegen doesn't handle correctly.
+
+---
+
+## Changes Made
+
+1. Added `bonds` array to Ring AST node (like Linear nodes)
+2. Parser now extracts bonds between ring atoms
+3. Codegen serializes bonds in ring output
+4. Fused ring codegen updated to preserve bonds

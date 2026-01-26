@@ -61,6 +61,7 @@ export function deepCloneRing(ring) {
     ...ring,
     substitutions: cloneSubstitutions(ring.substitutions),
     attachments: cloneAttachments(ring.attachments),
+    bonds: [...(ring.bonds || [])],
   };
 }
 
@@ -139,6 +140,7 @@ export function attachRingMethods(node) {
         offset: this.offset,
         substitutions: { ...this.substitutions },
         attachments: {},
+        bonds: [...(this.bonds || [])],
       };
       Object.entries(this.attachments).forEach(([pos, attachmentList]) => {
         result.attachments[pos] = attachmentList.map((a) => (a.toObject ? a.toObject() : a));
@@ -268,7 +270,7 @@ export function attachFusedRingMethods(node) {
  * Internal factory functions
  */
 
-export function createRingNode(atoms, size, ringNumber, offset, substitutions, attachments) {
+export function createRingNode(atoms, size, ringNumber, offset, substitutions, attachments, bonds = []) {
   const node = {
     type: ASTNodeType.RING,
     atoms,
@@ -277,6 +279,7 @@ export function createRingNode(atoms, size, ringNumber, offset, substitutions, a
     offset,
     substitutions: { ...substitutions },
     attachments: { ...attachments },
+    bonds: [...bonds],
   };
   attachSmilesGetter(node);
   attachRingMethods(node);
@@ -418,6 +421,7 @@ export function createMoleculeNode(components) {
  * @param {number} [options.offset=0] - Offset for fused rings
  * @param {Object} [options.substitutions={}] - Position -> atom substitutions
  * @param {Object} [options.attachments={}] - Position -> attachment list
+ * @param {Array} [options.bonds=[]] - Bond types between atoms (size-1 bonds, or size for ring closure)
  * @returns {Object} Ring AST node
  */
 export function Ring(options) {
@@ -428,12 +432,13 @@ export function Ring(options) {
     offset = 0,
     substitutions = {},
     attachments = {},
+    bonds = [],
   } = options;
 
   validateAtoms(atoms);
   validateSize(size);
 
-  return createRingNode(atoms, size, ringNumber, offset, substitutions, attachments);
+  return createRingNode(atoms, size, ringNumber, offset, substitutions, attachments, bonds);
 }
 
 /**

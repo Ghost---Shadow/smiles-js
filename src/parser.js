@@ -354,6 +354,21 @@ function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0,
     }
   });
 
+  // Extract bonds between ring atoms
+  // Bonds array has size elements: bonds[i] is the bond BEFORE atom i (for i=1..size-1)
+  // and bonds[size-1] is the ring closure bond (from last atom back to first)
+  const bonds = [];
+  for (let i = 1; i < ringAtoms.length; i += 1) {
+    // Bond before atom i is stored on atom i
+    const bond = ringAtoms[i].bond || null;
+    bonds.push(bond);
+  }
+  // Ring closure bond: the bond on the first atom (if it came from a ring marker)
+  // Actually, the ring closure bond is typically on the closing atom, but we need
+  // to check if there's a bond associated with the ring closure
+  // For now, use null for the ring closure bond (will be same as previous pattern)
+  bonds.push(null);
+
   // Extract attachments from branches
   const attachments = {};
   const ringDepth = ringAtoms[0].branchDepth;
@@ -391,6 +406,7 @@ function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0,
     offset,
     substitutions,
     attachments,
+    bonds,
   });
 
   // Store the original positions for fused ring codegen

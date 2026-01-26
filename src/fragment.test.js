@@ -57,6 +57,7 @@ describe('Fragment', () => {
       offset: 0,
       substitutions: {},
       attachments: {},
+      bonds: [null, null, null, null, null, null],
     });
   });
 
