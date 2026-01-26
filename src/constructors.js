@@ -247,7 +247,15 @@ export function attachFusedRingMethods(node) {
     toObject() {
       return {
         type: this.type,
-        rings: this.rings.map((r) => ({ ...r })),
+        rings: this.rings.map((r) => (r.toObject ? r.toObject() : {
+          type: r.type,
+          atoms: r.atoms,
+          size: r.size,
+          ringNumber: r.ringNumber,
+          offset: r.offset,
+          substitutions: { ...r.substitutions },
+          attachments: {},
+        })),
       };
     },
     toCode(varName = 'fusedRing') {
@@ -287,11 +295,101 @@ export function createLinearNode(atoms, bonds, attachments = {}) {
   return node;
 }
 
+/**
+ * Compute position metadata for fused rings
+ * This enables proper interleaved SMILES generation
+ *
+ * For benzimidazole-like fused rings (5+6 with offset 2):
+ * - Ring 1 (5 atoms): positions [0, 1, 2, 7, 8]
+ * - Ring 2 (6 atoms): positions [2, 3, 4, 5, 6, 7]
+ * - Shared: positions 2 and 7 (2 atoms)
+ * - Total: 5 + 6 - 2 = 9 atoms
+ */
+function computeFusedRingPositions(fusedRingNode) {
+  const { rings } = fusedRingNode;
+
+  // Sort rings by offset
+  const sortedRings = [...rings].sort((a, b) => a.offset - b.offset);
+
+  // For two-ring fused systems (most common case)
+  if (sortedRings.length === 2) {
+    const ring1 = sortedRings[0]; // Base ring (offset 0)
+    const ring2 = sortedRings[1]; // Second ring (offset > 0)
+
+    const { offset } = ring2;
+    // Number of shared atoms between rings (typically 2 for benzene-like fusion)
+    const sharedAtoms = 2;
+
+    // Total atoms in the fused system
+    const totalAtoms = ring1.size + ring2.size - sharedAtoms;
+
+    // Compute positions for ring 1 (interleaved pattern)
+    // First part: atoms 0 through offset (inclusive) → offset + 1 atoms
+    // Remaining atoms: ring1.size - (offset + 1) atoms at the end
+    const ring1FirstPartCount = offset + 1;
+    const ring1SecondPartCount = ring1.size - ring1FirstPartCount;
+
+    const ring1Positions = [];
+    // First part: [0, 1, ..., offset]
+    for (let i = 0; i < ring1FirstPartCount; i += 1) {
+      ring1Positions.push(i);
+    }
+    // Second part: last ring1SecondPartCount positions
+    const secondPartStart = totalAtoms - ring1SecondPartCount;
+    for (let i = secondPartStart; i < totalAtoms; i += 1) {
+      ring1Positions.push(i);
+    }
+
+    // Compute positions for ring 2
+    // Ring 2 spans from offset to offset + ring2.size - 1
+    // But we need to account for the interleaving
+    // Ring 2 ends at position (offset + ring2.size - 1) but that overlaps with ring 1's second part
+    // Actually ring 2 positions are: offset to (totalAtoms - ring1SecondPartCount - 1 + 1)
+    // Let me think... ring 2 has 6 atoms starting at offset 2
+    // They go at positions: 2, 3, 4, 5, 6, 7 (6 positions)
+    // Ring 1's second part starts at 7, so ring 2 ends at 7 (shared)
+    const ring2Positions = [];
+    for (let i = 0; i < ring2.size; i += 1) {
+      ring2Positions.push(offset + i);
+    }
+
+    // Store position metadata
+    /* eslint-disable no-underscore-dangle, no-param-reassign */
+    ring1._positions = ring1Positions;
+    ring1._start = 0;
+    ring1._end = totalAtoms - 1;
+
+    ring2._positions = ring2Positions;
+    ring2._start = offset;
+    ring2._end = offset + ring2.size - 1;
+
+    fusedRingNode._allPositions = Array.from({ length: totalAtoms }, (_, i) => i);
+    fusedRingNode._totalAtoms = totalAtoms;
+    /* eslint-enable no-underscore-dangle, no-param-reassign */
+  }
+  // For more complex fused systems, fall back to simple offset model
+  // (position metadata won't be set, triggering buildSimpleFusedRingSMILES)
+}
+
 export function createFusedRingNode(rings) {
+  // Create base node
   const node = {
     type: ASTNodeType.FUSED_RING,
     rings: rings.map((r) => ({ ...r })),
   };
+
+  // Only compute position metadata if not already present from parser
+  // Parser-generated rings have _positions, API-created rings don't
+  /* eslint-disable no-underscore-dangle */
+  const hasParserPositions = rings.some((r) => r._positions);
+  /* eslint-enable no-underscore-dangle */
+
+  if (!hasParserPositions) {
+    // Compute interleaved position metadata for proper SMILES generation
+    // This is needed when rings are created via API (not parser)
+    computeFusedRingPositions(node);
+  }
+
   attachSmilesGetter(node);
   attachFusedRingMethods(node);
   return node;
