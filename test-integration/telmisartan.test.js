@@ -8,39 +8,39 @@ const TELMISARTAN_SMILES = 'CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)
 const TELMISARTAN_OUTPUT = 'CCCC1NC2C(C=C(C=CNCC3CCC(C=C)CC3C4CCCCC4C(=O)O)C5NC6CCCCC6N5C)CCCC2N1C';
 const BENZIMIDAZOLE_SMILES = 'c1nc2ccccc2n1';
 
-const TELMISARTAN_CODE = `const telmisartanComp1 = Linear(['C', 'C', 'C']);
-const telmisartanComp2Ring1 = Ring({ atoms: 'C', size: 5 });
-const telmisartanComp2Ring1Sub2 = telmisartanComp2Ring1.substitute(2, 'N');
-const telmisartanComp2Ring1Sub2Sub5 = telmisartanComp2Ring1Sub2.substitute(5, 'N');
-const telmisartanComp2Ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
-const telmisartanComp2Ring2Attach2_0Comp1 = Linear(['C', 'C'], ['=']);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp1 = Linear(['C', 'C', 'N', 'C'], ['=']);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp2 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp2Attach4_0 = Linear(['C', 'C'], ['=']);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp2WithAttach4_0 = telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp2.attach(telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp2Attach4_0, 4);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp3 = Ring({ atoms: 'C', size: 6, ringNumber: 4 });
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp4 = Linear(['C', 'O']);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp4Attach1_0 = Linear(['O'], ['=']);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp4WithAttach1_0 = telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp4.attach(telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp4Attach1_0, 1);
-const telmisartanComp2Ring2Attach2_0Comp1Attach2_0 = Molecule([telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp1, telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp2WithAttach4_0, telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp3, telmisartanComp2Ring2Attach2_0Comp1Attach2_0Comp4WithAttach1_0]);
-const telmisartanComp2Ring2Attach2_0Comp1WithAttach2_0 = telmisartanComp2Ring2Attach2_0Comp1.attach(telmisartanComp2Ring2Attach2_0Comp1Attach2_0, 2);
-const telmisartanComp2Ring2Attach2_0Comp2Ring1 = Ring({ atoms: 'C', size: 5, ringNumber: 5 });
-const telmisartanComp2Ring2Attach2_0Comp2Ring1Sub2 = telmisartanComp2Ring2Attach2_0Comp2Ring1.substitute(2, 'N');
-const telmisartanComp2Ring2Attach2_0Comp2Ring1Sub2Sub5 = telmisartanComp2Ring2Attach2_0Comp2Ring1Sub2.substitute(5, 'N');
-const telmisartanComp2Ring2Attach2_0Comp2Ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 6, offset: 2 });
-const telmisartanComp2Ring2Attach2_0Comp2 = telmisartanComp2Ring2Attach2_0Comp2Ring1Sub2Sub5.fuse(telmisartanComp2Ring2Attach2_0Comp2Ring2, 2);
-const telmisartanComp2Ring2Attach2_0Comp3 = Linear(['C']);
-const telmisartanComp2Ring2Attach2_0 = Molecule([telmisartanComp2Ring2Attach2_0Comp1WithAttach2_0, telmisartanComp2Ring2Attach2_0Comp2, telmisartanComp2Ring2Attach2_0Comp3]);
-const telmisartanComp2Ring2WithAttach2_0 = telmisartanComp2Ring2.attach(telmisartanComp2Ring2Attach2_0, 2);
-const telmisartanComp2 = telmisartanComp2Ring1Sub2Sub5.fuse(telmisartanComp2Ring2WithAttach2_0, 2);
-const telmisartanComp3 = Linear(['C']);
-const telmisartan = Molecule([telmisartanComp1, telmisartanComp2, telmisartanComp3]);`;
+const TELMISARTAN_CODE = `const v1 = Linear(['C', 'C', 'C']);
+const v2 = Ring({ atoms: 'C', size: 5 });
+const v3 = v2.substitute(2, 'N');
+const v4 = v3.substitute(5, 'N');
+const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
+const v6 = Linear(['C', 'C'], ['=']);
+const v7 = Linear(['C', 'C', 'N', 'C'], ['=']);
+const v8 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
+const v9 = Linear(['C', 'C'], ['=']);
+const v10 = v8.attach(v9, 4);
+const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 4 });
+const v12 = Linear(['C', 'O']);
+const v13 = Linear(['O'], ['=']);
+const v14 = v12.attach(v13, 1);
+const v15 = Molecule([v7, v10, v11, v14]);
+const v16 = v6.attach(v15, 2);
+const v17 = Ring({ atoms: 'C', size: 5, ringNumber: 5 });
+const v18 = v17.substitute(2, 'N');
+const v19 = v18.substitute(5, 'N');
+const v20 = Ring({ atoms: 'C', size: 6, ringNumber: 6, offset: 2 });
+const v21 = v19.fuse(v20, 2);
+const v22 = Linear(['C']);
+const v23 = Molecule([v16, v21, v22]);
+const v24 = v5.attach(v23, 2);
+const v25 = v4.fuse(v24, 2);
+const v26 = Linear(['C']);
+const v27 = Molecule([v1, v25, v26]);`;
 
-const BENZIMIDAZOLE_CODE = `const benzimidazoleRing1 = Ring({ atoms: 'c', size: 5 });
-const benzimidazoleRing1Sub2 = benzimidazoleRing1.substitute(2, 'n');
-const benzimidazoleRing1Sub2Sub5 = benzimidazoleRing1Sub2.substitute(5, 'n');
-const benzimidazoleRing2 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 2 });
-const benzimidazole = benzimidazoleRing1Sub2Sub5.fuse(benzimidazoleRing2, 2);`;
+const BENZIMIDAZOLE_CODE = `const v1 = Ring({ atoms: 'c', size: 5 });
+const v2 = v1.substitute(2, 'n');
+const v3 = v2.substitute(5, 'n');
+const v4 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 2 });
+const v5 = v3.fuse(v4, 2);`;
 
 describe('Telmisartan Integration Test', () => {
   test('parses telmisartan', () => {
@@ -67,13 +67,13 @@ describe('Telmisartan Integration Test', () => {
 
   test('generates code via toCode()', () => {
     const ast = parse(TELMISARTAN_SMILES);
-    const code = ast.toCode('telmisartan');
+    const code = ast.toCode('v');
     expect(code).toBe(TELMISARTAN_CODE);
   });
 
   test('generated code is valid JavaScript', () => {
     const ast = parse(TELMISARTAN_SMILES);
-    const code = ast.toCode('telmisartan');
+    const code = ast.toCode('v');
 
     let factory;
     expect(() => {
@@ -85,10 +85,10 @@ describe('Telmisartan Integration Test', () => {
 
   test('generated code produces valid AST when executed', () => {
     const ast = parse(TELMISARTAN_SMILES);
-    const code = ast.toCode('telmisartan');
+    const code = ast.toCode('v');
 
     // eslint-disable-next-line no-new-func
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn telmisartan;`);
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn v27;`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     expect(reconstructed.type).toBe('molecule');
@@ -98,10 +98,10 @@ describe('Telmisartan Integration Test', () => {
 
   test('codegen round-trip: generated code produces same SMILES', () => {
     const ast = parse(TELMISARTAN_SMILES);
-    const code = ast.toCode('telmisartan');
+    const code = ast.toCode('v');
 
     // eslint-disable-next-line no-new-func
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn telmisartan;`);
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn v27;`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     expect(reconstructed.smiles).toBe(ast.smiles);
@@ -109,12 +109,12 @@ describe('Telmisartan Integration Test', () => {
 
   test('simple benzimidazole codegen round-trip', () => {
     const ast = parse(BENZIMIDAZOLE_SMILES);
-    const code = ast.toCode('benzimidazole');
+    const code = ast.toCode('v');
 
     expect(code).toBe(BENZIMIDAZOLE_CODE);
 
     // eslint-disable-next-line no-new-func
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn benzimidazole;`);
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn v5;`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     expect(ast.smiles).toBe(BENZIMIDAZOLE_SMILES);

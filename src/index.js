@@ -10,3 +10,4 @@ export { buildSMILES } from './codegen.js';
 export { tokenize, TokenType } from './tokenizer.js';
 export { parse } from './parser.js';
 export { decompile } from './decompiler.js';
+export { Fragment } from './fragment.js';
