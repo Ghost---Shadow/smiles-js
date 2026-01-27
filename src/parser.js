@@ -499,13 +499,18 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
     addedNewPositions = false;
     const currentPositions = [...allPositions];
 
-    currentPositions.forEach((pos) => {
+    for (let pi = 0; pi < currentPositions.length; pi += 1) {
+      const pos = currentPositions[pi];
       const posAtom = atoms[pos];
-      if (posAtom.branchId === null) return; // Skip main chain atoms
+      if (posAtom.branchId === null) {
+        // eslint-disable-next-line no-continue
+        continue; // Skip main chain atoms
+      }
 
       // Find atoms that directly follow this position (sequential continuation)
       // OR atoms that continue after a nested branch closes (afterBranchClose)
-      atoms.forEach((a) => {
+      for (let ai = 0; ai < atoms.length; ai += 1) {
+        const a = atoms[ai];
         if (a.prevAtomIndex === pos
             && a.branchDepth === posAtom.branchDepth
             && a.branchId === posAtom.branchId
@@ -517,12 +522,13 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
           );
           if (atomRing) {
             // Add all atoms of this ring to allPositions
-            atomRing.positions.forEach((ringPos) => {
+            for (let ri = 0; ri < atomRing.positions.length; ri += 1) {
+              const ringPos = atomRing.positions[ri];
               if (!allPositions.has(ringPos)) {
                 allPositions.add(ringPos);
                 addedNewPositions = true;
               }
-            });
+            }
             // Track this ring for codegen if not already tracked
             if (!sequentialRings.includes(atomRing)) {
               sequentialRings.push(atomRing);
@@ -533,8 +539,8 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
             addedNewPositions = true;
           }
         }
-      });
-    });
+      }
+    }
   }
 
   const totalAtoms = allPositions.size;
@@ -545,7 +551,9 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   });
 
   // Build ring nodes for sequential continuation rings (not part of the fused group)
-  const seqRingNodes = sequentialRings.map((ring) => buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber));
+  const seqRingNodes = sequentialRings.map(
+    (ring) => buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber),
+  );
 
   const fusedNode = FusedRing(rings);
   // Store total atoms and all positions for proper codegen
@@ -554,25 +562,27 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   fusedNode._allPositions = [...allPositions].sort((a, b) => a - b);
   // Store sequential continuation rings for codegen to output their markers
   fusedNode._sequentialRings = seqRingNodes;
-  // Build position-to-branchDepth map and atom value map for codegen
-  // Use the atoms array to get branch depth and atom value info
+  // Build position-to-branchDepth map, atom value map, and bond map for codegen
+  // Use the atoms array to get branch depth, atom value, and bond info
   const branchDepthMap = new Map();
   const parentIndexMap = new Map();
   const atomValueMap = new Map();
+  const bondMap = new Map();
   fusedNode._allPositions.forEach((pos) => {
     branchDepthMap.set(pos, atoms[pos].branchDepth);
     parentIndexMap.set(pos, atoms[pos].parentIndex);
     atomValueMap.set(pos, atoms[pos].value);
+    bondMap.set(pos, atoms[pos].bond);
   });
   fusedNode._branchDepthMap = branchDepthMap;
   fusedNode._parentIndexMap = parentIndexMap;
   fusedNode._atomValueMap = atomValueMap;
+  fusedNode._bondMap = bondMap;
 
   // Build attachments for sequential continuation atoms (non-ring positions)
   // These are atoms that have branches attached at depth+1
   const ringPositionsForAttachments = new Set();
   [...rings, ...seqRingNodes].forEach((r) => {
-    // eslint-disable-next-line no-underscore-dangle
     (r._positions || []).forEach((pos) => ringPositionsForAttachments.add(pos));
   });
 
@@ -949,7 +959,7 @@ export function buildAtomList(tokens) {
       });
 
       // Clear lastAtomAtDepth for the new depth level
-      // This ensures atoms in this branch don't link to atoms from previous branches at the same depth
+      // This ensures atoms in this branch don't link to atoms from previous branches
       lastAtomAtDepth.delete(currentDepth + 1);
 
       i += 1;

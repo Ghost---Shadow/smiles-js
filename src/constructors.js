@@ -270,14 +270,14 @@ export function attachFusedRingMethods(node) {
  * Internal factory functions
  */
 
-export function createRingNode(atoms, size, ringNumber, offset, substitutions, attachments, bonds = []) {
+export function createRingNode(atoms, size, ringNumber, offset, subs, attachments, bonds = []) {
   const node = {
     type: ASTNodeType.RING,
     atoms,
     size,
     ringNumber,
     offset,
-    substitutions: { ...substitutions },
+    substitutions: { ...subs },
     attachments: { ...attachments },
     bonds: [...bonds],
   };
@@ -421,7 +421,7 @@ export function createMoleculeNode(components) {
  * @param {number} [options.offset=0] - Offset for fused rings
  * @param {Object} [options.substitutions={}] - Position -> atom substitutions
  * @param {Object} [options.attachments={}] - Position -> attachment list
- * @param {Array} [options.bonds=[]] - Bond types between atoms (size-1 bonds, or size for ring closure)
+ * @param {Array} [options.bonds=[]] - Bond types between atoms (size-1 or size for closure)
  * @returns {Object} Ring AST node
  */
 export function Ring(options) {

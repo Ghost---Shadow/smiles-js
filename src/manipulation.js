@@ -38,6 +38,7 @@ export function ringAttach(ring, attachment, position) {
     ring.offset,
     ring.substitutions,
     updatedAttachments,
+    ring.bonds || [],
   );
 }
 
@@ -60,6 +61,7 @@ export function ringSubstitute(ring, position, newAtom) {
     ring.offset,
     updatedSubstitutions,
     ring.attachments,
+    ring.bonds || [],
   );
 }
 
@@ -78,6 +80,7 @@ export function ringFuse(ring, otherRing, offset) {
     0,
     ring.substitutions,
     ring.attachments,
+    ring.bonds || [],
   );
 
   const ring2 = createRingNode(
@@ -87,6 +90,7 @@ export function ringFuse(ring, otherRing, offset) {
     offset,
     otherRing.substitutions,
     otherRing.attachments,
+    otherRing.bonds || [],
   );
 
   return createFusedRingNode([ring1, ring2]);
