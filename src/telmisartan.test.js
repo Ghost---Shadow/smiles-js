@@ -48,8 +48,7 @@ describe('Telmisartan - Real Structure', () => {
     expect(() => parse(TELMISARTAN_SMILES)).not.toThrow();
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('round-trips correctly', () => {
+  test('round-trips correctly', () => {
     const ast = parse(TELMISARTAN_SMILES);
     expect(ast.smiles).toBe(TELMISARTAN_OUTPUT);
   });
@@ -143,8 +142,7 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
     expect(ast.smiles).toBe('C1=NC2=C(C5=NC6=CC=CC=C6N5)CCCC2=N1');
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('telmisartan without second benzimidazole', () => {
+  test('telmisartan without second benzimidazole', () => {
     const ast = parse('CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C)C');
     expect(ast.smiles).toBe('CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C)C');
   });
@@ -154,14 +152,12 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
     expect(ast.smiles).toBe('c1nc2c(C)cc(C)cc2n1');
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('telmisartan with all branches except ring 5+6', () => {
+  test('telmisartan with all branches except ring 5+6', () => {
     const ast = parse('CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C)C');
     expect(ast.smiles).toBe('CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C)C');
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('telmisartan adding fused ring in deep branch', () => {
+  test('telmisartan adding fused ring in deep branch', () => {
     const ast = parse('CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C');
     expect(ast.smiles).toBe(TELMISARTAN_OUTPUT);
   });
@@ -191,14 +187,12 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
     expect(ast.smiles).toBe('C1=NC2=CCCCC2=N1CC3=CC=C(C4=CC=CC=C4)C=C3');
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('benzimidazole with nested branch structure', () => {
+  test('benzimidazole with nested branch structure', () => {
     const ast = parse('C1=NC2=C(C=C(C)C=C2N1)C');
     expect(ast.smiles).toBe('C1=NC2=C(C=C(C)C=C2N1)C');
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('benzimidazole with deeper nested branches', () => {
+  test('benzimidazole with deeper nested branches', () => {
     const ast = parse('C1=NC2=C(C=C(C=C2N1C)C)C');
     expect(ast.smiles).toBe('C1=NC2=C(C=C(C=C2N1C)C)C');
   });
@@ -213,8 +207,7 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
     expect(ast.smiles).toBe('C1=NC2=C(C)CCC2=N1');
   });
 
-  // TODO: Ring closures inside branches not yet supported in codegen
-  test.skip('fused ring - ring1 closure inside branch of ring2', () => {
+  test('fused ring - ring1 closure inside branch of ring2', () => {
     const ast = parse('C1=NC2=C(CC2N1)C');
     expect(ast.smiles).toBe('C1=NC2=C(CC2N1)C');
   });
@@ -225,6 +218,9 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
   });
 
   test('ring closure can be at different branch depth than ring opening', () => {
+    // C1CC(C1) is cyclobutane - the C1 inside the branch closes the ring
+    // The branch notation doesn't create an attachment; it just places the ring-closing atom
+    // inside parentheses. Output should be the canonical form: C1CCC1
     const ast = parse('C1CC(C1)');
     expect(ast.toObject()).toEqual({
       type: 'ring',
@@ -233,14 +229,10 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
       ringNumber: 1,
       offset: 0,
       substitutions: {},
-      attachments: {
-        3: [{
-          type: 'linear', atoms: ['C'], bonds: [], attachments: {},
-        }],
-      },
+      attachments: {},
       bonds: [null, null, null, null],
     });
-    expect(ast.smiles).toBe('C1CC(C)C1');
+    expect(ast.smiles).toBe('C1CCC1');
   });
 
   test('branch with separate ring - first atom shared', () => {

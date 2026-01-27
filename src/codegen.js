@@ -151,14 +151,32 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
   // eslint-disable-next-line no-underscore-dangle
   const allPositions = fusedRing._allPositions;
+  // eslint-disable-next-line no-underscore-dangle
+  const rawBranchDepthMap = fusedRing._branchDepthMap || new Map();
+
+  // Normalize branch depths - the fused ring may be inside a branch (as an attachment),
+  // so we need relative depths starting from 0, not absolute depths from parsing
+  const minDepth = allPositions.length > 0
+    ? Math.min(...allPositions.map((pos) => rawBranchDepthMap.get(pos) || 0))
+    : 0;
+  const branchDepthMap = new Map();
+  allPositions.forEach((pos) => {
+    const rawDepth = rawBranchDepthMap.get(pos) || 0;
+    branchDepthMap.set(pos, rawDepth - minDepth);
+  });
 
   // Build the atom sequence with attachments and bonds
   const atomSequence = [];
   const ringMarkers = new Map(); // position -> [{ringNumber, type, closureBond?}]
   const bondsBefore = new Map(); // position -> bond (bond to add before atom at this position)
 
+  // Include sequential continuation rings in addition to fused group rings
+  // eslint-disable-next-line no-underscore-dangle
+  const sequentialRings = fusedRing._sequentialRings || [];
+  const allRings = [...rings, ...sequentialRings];
+
   // Collect all ring markers, atom sequence, and bonds
-  rings.forEach((ring) => {
+  allRings.forEach((ring) => {
     // eslint-disable-next-line no-underscore-dangle
     const positions = ring._positions || [];
     // eslint-disable-next-line no-underscore-dangle
@@ -204,14 +222,48 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
     });
   });
 
+  // For positions that aren't in any ring (sequential continuations), we need to
+  // create atomSequence entries. These are atoms that follow ring-closing atoms
+  // but aren't part of the ring structure.
+  // eslint-disable-next-line no-underscore-dangle
+  const allRingPositions = new Set(allRings.flatMap((r) => r._positions || []));
+  // eslint-disable-next-line no-underscore-dangle
+  const atomValueMap = fusedRing._atomValueMap || new Map();
+  // eslint-disable-next-line no-underscore-dangle
+  const seqAtomAttachments = fusedRing._seqAtomAttachments || new Map();
+  allPositions.forEach((pos) => {
+    if (!atomSequence[pos] && !allRingPositions.has(pos)) {
+      // This is a sequential continuation atom - use stored atom value and attachments
+      const atomValue = atomValueMap.get(pos) || 'C';
+      const attachments = seqAtomAttachments.get(pos) || [];
+      atomSequence[pos] = { atom: atomValue, attachments };
+    }
+  });
+
   // Build SMILES by walking through all positions in order
+  // Track branch depth to insert ( and ) correctly
   const parts = [];
+  let currentDepth = 0;
+
   allPositions.forEach((pos, idx) => {
     const entry = atomSequence[pos];
     if (!entry) return;
 
-    // Add bond before atom (if not first atom)
-    if (idx > 0 && bondsBefore.has(pos)) {
+    const posDepth = branchDepthMap.get(pos) || 0;
+
+    // Handle branch depth changes
+    while (currentDepth < posDepth) {
+      parts.push('(');
+      currentDepth += 1;
+    }
+    while (currentDepth > posDepth) {
+      parts.push(')');
+      currentDepth -= 1;
+    }
+
+    // Add bond before atom (if not first atom and not right after opening paren)
+    const lastPart = parts[parts.length - 1];
+    if (idx > 0 && bondsBefore.has(pos) && lastPart !== '(') {
       parts.push(bondsBefore.get(pos));
     }
 
@@ -243,6 +295,12 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
       parts.push(')');
     });
   });
+
+  // Close any remaining open branches
+  while (currentDepth > 0) {
+    parts.push(')');
+    currentDepth -= 1;
+  }
 
   return parts.join('');
 }
