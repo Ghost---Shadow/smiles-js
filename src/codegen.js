@@ -94,6 +94,19 @@ export function buildRingSMILES(ring) {
   const {
     atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
   } = ring;
+
+  // Check if this ring crosses branch boundaries (ring closure inside a branch)
+  // eslint-disable-next-line no-underscore-dangle
+  const branchDepths = ring._branchDepths || [];
+  const hasBranchCrossing = branchDepths.length > 0
+    && branchDepths.some((d) => d !== branchDepths[0]);
+
+  if (hasBranchCrossing) {
+    // Use the branch-aware codegen for rings that cross branch boundaries
+    // eslint-disable-next-line no-use-before-define
+    return buildBranchCrossingRingSMILES(ring);
+  }
+
   const parts = [];
 
   // Build ring with standard SMILES notation
@@ -125,7 +138,12 @@ export function buildRingSMILES(ring) {
       parts.push(ringNumber.toString());
     }
 
-    // Then add attachments if any
+    // Add ring closing marker at the last position
+    if (i === size) {
+      parts.push(ringNumber.toString());
+    }
+
+    // Then add attachments if any (AFTER ring markers)
     if (attachments[i]) {
       const attachmentList = attachments[i];
       attachmentList.forEach((attachment) => {
@@ -134,12 +152,86 @@ export function buildRingSMILES(ring) {
         parts.push(')');
       });
     }
+  });
 
-    // Add ring closing marker at the last position
+  return parts.join('');
+}
+
+/**
+ * Build SMILES for a ring that crosses branch boundaries
+ * (ring closure happens inside a branch)
+ */
+function buildBranchCrossingRingSMILES(ring) {
+  const {
+    atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
+  } = ring;
+  // eslint-disable-next-line no-underscore-dangle
+  const branchDepths = ring._branchDepths || [];
+
+  // Normalize branch depths to start from 0
+  const minDepth = Math.min(...branchDepths);
+  const normalizedDepths = branchDepths.map((d) => d - minDepth);
+
+  const parts = [];
+  let currentDepth = 0;
+
+  // Build ring with branch handling
+  Array.from({ length: size }, (_, idx) => idx + 1).forEach((i) => {
+    const posDepth = normalizedDepths[i - 1] || 0;
+
+    // Handle branch depth changes
+    while (currentDepth < posDepth) {
+      parts.push('(');
+      currentDepth += 1;
+    }
+    // Don't close branches mid-ring - they close after the ring marker
+
+    // Add bond before atom (for atoms 2 through size)
+    if (i > 1 && bonds[i - 2]) {
+      parts.push(bonds[i - 2]);
+    }
+
+    // Get the atom at this position (base atom or substitution)
+    const atom = substitutions[i] || atoms;
+    parts.push(atom);
+
+    // Add ring opening marker after position 1
+    if (i === 1) {
+      const closureBond = bonds[size - 1];
+      if (closureBond) {
+        parts.push(closureBond);
+      }
+      parts.push(ringNumber.toString());
+    }
+
+    // Add ring closing marker at the last position (before closing branches)
     if (i === size) {
       parts.push(ringNumber.toString());
     }
+
+    // Close branches back to the atom's depth AFTER ring markers
+    // But we need to handle attachments correctly
+    const nextDepth = i < size ? (normalizedDepths[i] || 0) : 0;
+    while (currentDepth > nextDepth && currentDepth > 0) {
+      parts.push(')');
+      currentDepth -= 1;
+    }
+
+    // Add attachments after branch handling
+    if (attachments[i]) {
+      attachments[i].forEach((attachment) => {
+        parts.push('(');
+        parts.push(buildSMILES(attachment));
+        parts.push(')');
+      });
+    }
   });
+
+  // Close any remaining open branches
+  while (currentDepth > 0) {
+    parts.push(')');
+    currentDepth -= 1;
+  }
 
   return parts.join('');
 }

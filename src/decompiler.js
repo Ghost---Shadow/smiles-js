@@ -86,8 +86,10 @@ function decompileLinear(linear, indent, nextVar) {
 
   const atomsStr = linear.atoms.map((a) => `'${a}'`).join(', ');
 
-  if (linear.bonds.length > 0) {
-    const bondsStr = linear.bonds.map((b) => `'${b}'`).join(', ');
+  // Only include bonds array if there are non-null bonds
+  const hasNonNullBonds = linear.bonds.some((b) => b !== null);
+  if (hasNonNullBonds) {
+    const bondsStr = linear.bonds.map((b) => (b === null ? 'null' : `'${b}'`)).join(', ');
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${bondsStr}]);`);
   } else {
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}]);`);

@@ -284,8 +284,9 @@ function buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch = fa
 
   // For branches, include the bond on the first atom (connection to parent)
   // For main chain, start from second atom (skip first atom's bond)
+  // Keep null bonds to preserve positions - bonds[i] is the bond BEFORE atom i+1
   const bondStart = isBranch ? 0 : 1;
-  const bonds = sameDepthAtoms.slice(bondStart).map((atom) => atom.bond).filter((b) => b !== null);
+  const bonds = sameDepthAtoms.slice(bondStart).map((atom) => atom.bond);
 
   // Build attachments from branches
   const attachments = {};
@@ -405,6 +406,10 @@ function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0,
     // Note: Sequential continuation atoms (like "N1C" where C follows N after ring closure)
     // are NOT attachments - they're handled by including them in _allPositions and outputting
     // them inline in the codegen. Only true branch attachments (depth + 1) are added here.
+    //
+    // Atoms that continue AFTER a branch closes (like "N(...)C") are also NOT attachments
+    // in the ring sense - they're continuations of the main chain and should be handled
+    // by buildAST as part of the main chain, output after the ring component.
 
     const allBranchAtoms = [...branchAtoms];
 

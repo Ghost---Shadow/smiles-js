@@ -33,7 +33,7 @@ describe('Acetaminophen Integration Test', () => {
         {
           type: 'linear',
           atoms: ['C', 'C', 'N'],
-          bonds: [],
+          bonds: [null, null],
           attachments: {
             2: [
               {
@@ -57,7 +57,7 @@ describe('Acetaminophen Integration Test', () => {
               {
                 type: 'linear',
                 atoms: ['O'],
-                bonds: [],
+                bonds: [null],
                 attachments: {},
               },
             ],
@@ -112,7 +112,7 @@ describe('Phenacetin Integration Test', () => {
         {
           type: 'linear',
           atoms: ['C', 'C', 'N'],
-          bonds: [],
+          bonds: [null, null],
           attachments: {
             2: [
               {
@@ -136,7 +136,7 @@ describe('Phenacetin Integration Test', () => {
               {
                 type: 'linear',
                 atoms: ['O', 'C', 'C'],
-                bonds: [],
+                bonds: [null, null, null],
                 attachments: {},
               },
             ],

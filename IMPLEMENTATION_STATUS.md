@@ -62,6 +62,12 @@ Input:  C1CC(C1)
 Output: C1CCC1   (canonical cyclobutane)
 ```
 
+### Piperidine with ring closure in branch - WORKS
+```
+Input:  C1CCN(CC1)C
+Output: C1CCN(CC1)C
+```
+
 ---
 
 ## ✅ FIXED: Full Telmisartan Structure
@@ -73,13 +79,6 @@ Output: C1CCC1   (canonical cyclobutane)
 Input:  CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C
 Output: CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C
 ```
-
-This structure has:
-- Multiple ring closures inside nested branches
-- Ring closures (`2N1`) at different depths than where rings opened
-- Fused ring systems as branch attachments
-- Sequential continuation rings (rings 3, 4 appearing inline after ring closures)
-- Attachments on sequential continuation atoms (carboxylic acid group)
 
 ---
 
@@ -125,6 +124,42 @@ Output: CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(F)C(O)CC2(C)C1(O)C(=O)CO
 
 ---
 
+## ✅ FIXED: Opioids (Piperidine-based)
+
+**Opioids with piperidine rings that close inside branches now work correctly.**
+
+### Fentanyl - WORKS
+```
+Input:  CCC(=O)N(C1CCN(CC1)CCC2=CC=CC=C2)C3=CC=CC=C3
+Output: CCC(=O)N(C1CCN(CC1)CCC2=CC=CC=C2)C3=CC=CC=C3
+```
+
+### Tramadol - WORKS
+```
+Input:  CN(C)CC1CCCCC1(C2=CC(=CC=C2)OC)O
+Output: CN(C)CC1CCCCC1(C2=CC(=CC=C2)OC)O
+```
+
+---
+
+## ✅ FIXED: Linear Chain Double Bonds
+
+**Double bonds in linear chains are now correctly preserved at their original positions.**
+
+### Anandamide - WORKS
+```
+Input:  CCCCCC=CCC=CCC=CCC=CCCCC(=O)NCCO
+Output: CCCCCC=CCC=CCC=CCC=CCCCC(=O)NCCO
+```
+
+### 2-Arachidonoylglycerol - WORKS
+```
+Input:  CCCCCC=CCC=CCC=CCC=CCCCC(=O)OC(CO)CO
+Output: CCCCCC=CCC=CCC=CCC=CCCCC(=O)OC(CO)CO
+```
+
+---
+
 ## 🟡 Known Limitation: toCode() for Complex Structures
 
 The `toCode()` method (generating JS constructor code from AST) does not yet fully support complex nested structures with sequential continuation rings. The SMILES parsing and serialization works correctly, but the generated JavaScript code may not reproduce the full structure.
@@ -146,36 +181,33 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 11. Store attachments for sequential continuation atoms in `_seqAtomAttachments`
 12. Fixed `lastAtomAtDepth` to clear when entering new branches (prevents cross-branch linking)
 13. Fixed duplicate attachments on shared atoms in fused rings (positionsWithAttachments tracking)
+14. Fixed ring marker placement - ring closures now come before attachments at closing position
+15. Added `buildBranchCrossingRingSMILES` for rings that traverse branch boundaries
+16. Fixed linear chain bonds - keep null values to preserve positional information
 
 ---
 
 ## 🔴 Known Parser Bugs
 
-### Opioid Morphinan Structures
+### Complex Morphinan Structures (Oxycodone)
 
-Complex polycyclic opioids with bridged ring systems fail or produce unstable output.
-
-**Broken opioids:**
+**Broken:**
 - Oxycodone: `CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O`
-- Fentanyl: `CCC(=O)N(C1CCN(CC1)CCC2=CC=CC=C2)C3=CC=CC=C3`
-- Tramadol: `CN(C)CC1CCCCC1(C2=CC(=CC=C2)OC)O`
 
-### Cannabinoid Structures
+Complex polycyclic structures with multiple ring numbers (2, 3, 4, 5) sharing atoms across deeply nested branches fail.
 
-THC-like structures with complex ring systems fail.
+### Cannabinoid Tricyclic Structures
 
-**Broken cannabinoids:**
-- Anandamide: `CCCCCC=CCC=CCC=CCC=CCCCC(=O)NCCO`
-- 2-Arachidonoylglycerol: `CCCCCC=CCC=CCC=CCC=CCCCC(=O)OC(CO)CO`
+**Broken:**
 - THC: `CCCCCC1=CC(=C2C3C=C(CCC3C(OC2=C1)(C)C)C)O`
 - CBD: `CCCCCC1=CC(=C(C(=C1)O)C2C=C(CCC2C(=C)C)C)O`
 - Nabilone: `CCCCCCC(C)(C)C1=CC(=C2C3CC(=O)CCC3C(OC2=C1)(C)C)O`
 
-### Complex Prescription NSAIDs
+These have complex nested ring systems with multiple rings (2, 3) defined inside branches.
 
-Several COX-2 inhibitors and oxicam-class drugs fail.
+### Complex Heterocyclic NSAIDs
 
-**Broken NSAIDs:**
+**Broken:**
 - Celecoxib: `CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F`
 - Meloxicam: `CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C`
 - Piroxicam: `CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3`
@@ -183,7 +215,7 @@ Several COX-2 inhibitors and oxicam-class drugs fail.
 - Etoricoxib: `CC1=NC=C(C=C1)C2=CC=C(C=C2)S(=O)(=O)C3=CC=CC=C3`
 - Nabumetone: `COC1=CC2=CC(=CC=C2C=C1)CCC(=O)C`
 - Oxaprozin: `OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3`
-- Ketoprofen: `CC(c1cccc(c1)C(=O)c2ccccc2)C(=O)O` (ketone bridge dropped)
+- Ketoprofen: `CC(c1cccc(c1)C(=O)c2ccccc2)C(=O)O`
 
 ### Para-Substituted Benzene Normalization
 
@@ -198,5 +230,6 @@ The parser normalizes `C=C(C=C1)` patterns. Chemically equivalent but SMILES dif
 
 ## Test Coverage
 
-- 178 tests passing across 10 integration test files
+- 196 tests passing across 12 integration test files
+- 12 tests skipped (known broken molecules)
 - Tests cover parsing, code generation, and round-trip validation

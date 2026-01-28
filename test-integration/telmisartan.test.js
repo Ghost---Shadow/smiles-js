@@ -58,7 +58,7 @@ describe('Telmisartan Integration Test', () => {
         {
           type: 'linear',
           atoms: ['C', 'C', 'C'],
-          bonds: [],
+          bonds: [null, null],
           attachments: {},
         },
         {
@@ -131,7 +131,8 @@ describe('Telmisartan Integration Test', () => {
     // Note: SMILES won't match exactly due to inline ring closure limitation
     // but the structure is valid
     expect(reconstructed.type).toBe('molecule');
-    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C(C(=O)O)3)C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
+    // Ring markers now come before attachments at closing position
+    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C3(C(=O)O))C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
   });
 
   // The generated code produces a valid molecule, but with a different SMILES representation.
@@ -150,7 +151,8 @@ describe('Telmisartan Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // The SMILES won't be identical but should be valid
-    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C(C(=O)O)3)C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
+    // Ring markers come before attachments at closing position
+    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C3(C(=O)O))C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
   });
 
   test('simple benzimidazole codegen round-trip', () => {
