@@ -52,21 +52,47 @@ describe('Telmisartan Integration Test', () => {
   test('parses telmisartan', () => {
     const ast = parse(TELMISARTAN_SMILES);
     const obj = ast.toObject();
-    expect(obj.type).toBe('molecule');
-    expect(obj.components.length).toBe(3);
-    expect(obj.components[0]).toEqual({
-      type: 'linear',
-      atoms: ['C', 'C', 'C'],
-      bonds: [],
-      attachments: {},
-    });
-    expect(obj.components[1].type).toBe('fused_ring');
-    expect(obj.components[1].rings.length).toBe(2);
-    expect(obj.components[2]).toEqual({
-      type: 'linear',
-      atoms: ['C'],
-      bonds: [],
-      attachments: {},
+    expect(obj).toEqual({
+      type: 'molecule',
+      components: [
+        {
+          type: 'linear',
+          atoms: ['C', 'C', 'C'],
+          bonds: [],
+          attachments: {},
+        },
+        {
+          type: 'fused_ring',
+          rings: [
+            {
+              type: 'ring',
+              atoms: 'C',
+              size: 5,
+              ringNumber: 1,
+              offset: 0,
+              substitutions: { 2: 'N', 5: 'N' },
+              attachments: {},
+              bonds: ['=', null, '=', null, null],
+            },
+            {
+              type: 'ring',
+              atoms: 'C',
+              size: 6,
+              ringNumber: 2,
+              offset: 2,
+              substitutions: {},
+              attachments: {},
+              bonds: ['=', null, '=', null, '=', null],
+            },
+          ],
+        },
+        {
+          type: 'linear',
+          atoms: ['C'],
+          bonds: [],
+          attachments: {},
+        },
+      ],
     });
     expect(ast.smiles).toBe(TELMISARTAN_OUTPUT);
   });
@@ -102,12 +128,10 @@ describe('Telmisartan Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    expect(reconstructed.type).toBe('molecule');
-    expect(reconstructed.components.length).toBe(3);
     // Note: SMILES won't match exactly due to inline ring closure limitation
     // but the structure is valid
-    expect(typeof reconstructed.smiles).toBe('string');
-    expect(reconstructed.smiles.length).toBeGreaterThan(0);
+    expect(reconstructed.type).toBe('molecule');
+    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C(C(=O)O)3)C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
   });
 
   // The generated code produces a valid molecule, but with a different SMILES representation.
@@ -126,11 +150,7 @@ describe('Telmisartan Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // The SMILES won't be identical but should be valid
-    expect(typeof reconstructed.smiles).toBe('string');
-    expect(reconstructed.smiles.length).toBeGreaterThan(0);
-    // Should contain the key structural elements
-    expect(reconstructed.smiles).toContain('CCC'); // propyl chain
-    expect(reconstructed.smiles).toContain('C(=O)O'); // carboxylic acid
+    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C(C(=O)O)3)C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
   });
 
   test('simple benzimidazole codegen round-trip', () => {
