@@ -488,3 +488,32 @@ export function Molecule(components = []) {
 
   return createMoleculeNode(components);
 }
+
+/**
+ * Create a RawFragment node that stores and echoes back raw SMILES
+ * Useful for visual comparison with RDKit output
+ * @param {string} smilesString - Raw SMILES string to store
+ * @returns {Object} RawFragment node
+ */
+export function RawFragment(smilesString) {
+  if (typeof smilesString !== 'string') {
+    throw new Error('RawFragment requires a SMILES string');
+  }
+
+  return {
+    type: 'raw_fragment',
+    smiles: smilesString,
+    toObject() {
+      return {
+        type: 'raw_fragment',
+        smiles: smilesString,
+      };
+    },
+    toCode(varName = 'raw') {
+      return `const ${varName}1 = RawFragment(${JSON.stringify(smilesString)});`;
+    },
+    clone() {
+      return RawFragment(smilesString);
+    },
+  };
+}
