@@ -326,8 +326,21 @@ function buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch = fa
 
 /**
  * Build a single ring node with ringBoundaries context for nested attachments
+ * @param {Object} ring - Ring boundary info
+ * @param {Array} atoms - All atoms
+ * @param {Array} ringBoundaries - All ring boundaries
+ * @param {number} offset - Offset in fused ring system
+ * @param {number} ringNumber - Ring number
+ * @param {Set} fusedGroupPositions - Optional set of all positions in the fused group
  */
-function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0, ringNumber = 1) {
+function buildSingleRingNodeWithContext(
+  ring,
+  atoms,
+  ringBoundaries,
+  offset = 0,
+  ringNumber = 1,
+  fusedGroupPositions = null,
+) {
   const ringAtoms = ring.positions.map((pos) => atoms[pos]);
 
   // Determine base atom type (most common, prefer later atoms in tie)
@@ -373,17 +386,25 @@ function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0,
   // Extract attachments from branches
   const attachments = {};
 
-  // Build a set of atom positions that are part of rings at the SAME branch depth
-  // Only these should be excluded from attachments. Rings in deeper branches
-  // are legitimate attachments and should be included (buildNodeFromAtoms handles them).
-  // We need to get the ring's branch depth from the first atom
-  const ringBranchDepth = ringAtoms[0]?.branchDepth ?? 0;
-  const sameDepthRingPositions = new Set();
-  ringBoundaries.forEach((rb) => {
-    if (rb.branchDepth === ringBranchDepth) {
-      rb.positions.forEach((pos) => sameDepthRingPositions.add(pos));
-    }
-  });
+  // Build a set of atom positions that should be excluded from attachments
+  // If we have fused group positions, use those (they include all rings in the fused group)
+  // Otherwise fall back to same-depth ring positions for standalone rings
+  let excludedPositions;
+  if (fusedGroupPositions) {
+    excludedPositions = fusedGroupPositions;
+  } else {
+    // Build a set of atom positions that are part of rings at the SAME branch depth
+    // Only these should be excluded from attachments. Rings in deeper branches
+    // are legitimate attachments and should be included (buildNodeFromAtoms handles them).
+    // We need to get the ring's branch depth from the first atom
+    const ringBranchDepth = ringAtoms[0]?.branchDepth ?? 0;
+    excludedPositions = new Set();
+    ringBoundaries.forEach((rb) => {
+      if (rb.branchDepth === ringBranchDepth) {
+        rb.positions.forEach((pos) => excludedPositions.add(pos));
+      }
+    });
+  }
 
   ringAtoms.forEach((atom, localIdx) => {
     const globalIdx = atom.index;
@@ -395,12 +416,12 @@ function buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, offset = 0,
     // Only include atoms that start a new branch. An atom starts a new branch if:
     // 1. prevAtomIndex is null (first atom at this depth), OR
     // 2. prevAtomIndex points to an atom in a different branch (different branchId)
-    // Exclude atoms that are part of any ring's path
+    // Exclude atoms that are part of any ring's path in the fused group
     const branchAtoms = atoms.filter(
       (a) => a.parentIndex === globalIdx
         && a.branchDepth === atomDepth + 1
         && (a.prevAtomIndex === null || atoms[a.prevAtomIndex]?.branchId !== a.branchId)
-        && !sameDepthRingPositions.has(a.index),
+        && !excludedPositions.has(a.index),
     );
 
     // Note: Sequential continuation atoms (like "N1C" where C follows N after ring closure)
@@ -526,20 +547,24 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
             (rb) => rb.positions.includes(a.index) && rb.branchDepth === a.branchDepth,
           );
           if (atomRing) {
-            // Add all atoms of this ring to allPositions
+            // Add all atoms of this ring to allPositions AND allRingPositions
+            // (allRingPositions is used later to exclude ring atoms from being attachments)
             for (let ri = 0; ri < atomRing.positions.length; ri += 1) {
               const ringPos = atomRing.positions[ri];
               if (!allPositions.has(ringPos)) {
                 allPositions.add(ringPos);
                 addedNewPositions = true;
               }
+              // Also add to allRingPositions so these atoms won't become attachments
+              allRingPositions.add(ringPos);
             }
             // Track this ring for codegen if not already tracked
             if (!sequentialRings.includes(atomRing)) {
               sequentialRings.push(atomRing);
             }
           } else {
-            // Regular atom
+            // Regular atom (not part of any ring)
+            // Add it as sequential continuation - it follows a ring atom and is in the same branch
             allPositions.add(a.index);
             addedNewPositions = true;
           }
@@ -550,14 +575,30 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
 
   const totalAtoms = allPositions.size;
 
+  // Pass allRingPositions to exclude them from attachments - these atoms are part
+  // of the fused ring structure and should not be treated as branch attachments
   const rings = sortedGroup.map((ring) => {
     const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
-    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, ringOffset, ring.ringNumber);
+    return buildSingleRingNodeWithContext(
+      ring,
+      atoms,
+      ringBoundaries,
+      ringOffset,
+      ring.ringNumber,
+      allRingPositions,
+    );
   });
 
   // Build ring nodes for sequential continuation rings (not part of the fused group)
   const seqRingNodes = sequentialRings.map(
-    (ring) => buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber),
+    (ring) => buildSingleRingNodeWithContext(
+      ring,
+      atoms,
+      ringBoundaries,
+      0,
+      ring.ringNumber,
+      allRingPositions,
+    ),
   );
 
   const fusedNode = FusedRing(rings);
@@ -733,11 +774,31 @@ function buildAST(atoms, ringBoundaries) {
     return Molecule([]);
   }
 
-  // Filter to main chain rings only (depth 0) for top-level structure
+  // Start with main chain rings (depth 0), but also include rings at deeper depths
+  // if they share atoms with the main chain rings. This handles cases like oxycodone
+  // where a ring (ring 5) spans from depth 1 into depth 2-3 but shares atoms (13,14,15)
+  // with depth-0 rings (rings 3 and 4).
   const mainChainRings = ringBoundaries.filter((r) => r.branchDepth === 0);
 
+  // Collect all atom positions covered by main chain rings
+  const mainChainPositions = new Set();
+  mainChainRings.forEach((r) => {
+    r.positions.forEach((pos) => mainChainPositions.add(pos));
+  });
+
+  // Find rings at other depths that share atoms with main chain rings
+  // These are "bridge rings" that connect different depths
+  const bridgeRings = ringBoundaries.filter((r) => {
+    if (r.branchDepth === 0) return false; // Already in mainChainRings
+    // Check if this ring shares any atoms with main chain positions
+    return r.positions.some((pos) => mainChainPositions.has(pos));
+  });
+
+  // Combine main chain rings with bridge rings for grouping
+  const ringsToGroup = [...mainChainRings, ...bridgeRings];
+
   // Group fused rings (rings that share atoms)
-  const fusedGroups = groupFusedRings(mainChainRings);
+  const fusedGroups = groupFusedRings(ringsToGroup);
 
   // Map each atom index to its group (if in a ring)
   const atomToGroup = new Map();

@@ -361,9 +361,9 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
       currentDepth -= 1;
     }
 
-    // Add bond before atom (if not first atom and not right after opening paren)
-    const lastPart = parts[parts.length - 1];
-    if (idx > 0 && bondsBefore.has(pos) && lastPart !== '(') {
+    // Add bond before atom (if not first atom in the sequence)
+    // Bonds CAN come right after opening paren - e.g., C(=C) means C double-bonded to branch C
+    if (idx > 0 && bondsBefore.has(pos)) {
       parts.push(bondsBefore.get(pos));
     }
 

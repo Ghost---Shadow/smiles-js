@@ -87,7 +87,7 @@ describe('Parser - Ring Attachments', () => {
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null], // Bonds array preserves positional info
             attachments: {},
           },
         ],
@@ -195,13 +195,13 @@ describe('Parser - Branches', () => {
     expect(ast.toObject()).toEqual({
       type: 'linear',
       atoms: ['C', 'C'],
-      bonds: [],
+      bonds: [null], // Bonds array preserves positional info
       attachments: {
         1: [
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null],
             attachments: {},
           },
         ],
@@ -214,7 +214,7 @@ describe('Parser - Branches', () => {
     expect(ast.toObject()).toEqual({
       type: 'linear',
       atoms: ['C', 'C', 'C'],
-      bonds: [],
+      bonds: [null, null], // Bonds array preserves positional info
       attachments: {
         2: [
           {
@@ -241,19 +241,19 @@ describe('Parser - Branches', () => {
     expect(ast.toObject()).toEqual({
       type: 'linear',
       atoms: ['C', 'C', 'C'],
-      bonds: [],
+      bonds: [null, null], // Bonds array preserves positional info
       attachments: {
         2: [
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null],
             attachments: {},
           },
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null],
             attachments: {},
           },
         ],
@@ -358,25 +358,25 @@ describe('Parser - Complex Molecules', () => {
     expect(ast.toObject()).toEqual({
       type: 'linear',
       atoms: ['C', 'C'],
-      bonds: [],
+      bonds: [null], // Bonds array preserves positional info
       attachments: {
         1: [
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null],
             attachments: {},
           },
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null],
             attachments: {},
           },
           {
             type: 'linear',
             atoms: ['C'],
-            bonds: [],
+            bonds: [null],
             attachments: {},
           },
         ],
@@ -434,7 +434,7 @@ describe('Parser - Rings Inside Branches', () => {
     expect(ast.toObject()).toEqual({
       type: 'linear',
       atoms: ['C', 'C'],
-      bonds: [],
+      bonds: [null], // Bonds array preserves positional info
       attachments: {
         1: [
           {

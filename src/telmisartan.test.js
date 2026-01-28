@@ -219,8 +219,9 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
 
   test('ring closure can be at different branch depth than ring opening', () => {
     // C1CC(C1) is cyclobutane - the C1 inside the branch closes the ring
-    // The branch notation doesn't create an attachment; it just places the ring-closing atom
-    // inside parentheses. Output should be the canonical form: C1CCC1
+    // The branch notation is preserved in the output (both are valid SMILES for cyclobutane)
+    // Preserving branch notation is necessary for more complex cases like fentanyl
+    // where content follows the branch: N(CC1)CCC
     const ast = parse('C1CC(C1)');
     expect(ast.toObject()).toEqual({
       type: 'ring',
@@ -232,7 +233,8 @@ describe('Telmisartan - Deeply Nested Branch Issue', () => {
       attachments: {},
       bonds: [null, null, null, null],
     });
-    expect(ast.smiles).toBe('C1CCC1');
+    // Both C1CC(C1) and C1CCC1 are valid SMILES - we preserve the branch structure
+    expect(ast.smiles).toBe('C1CC(C1)');
   });
 
   test('branch with separate ring - first atom shared', () => {

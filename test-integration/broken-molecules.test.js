@@ -14,8 +14,8 @@ describe('Opioids', () => {
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
-  test.skip('Oxycodone round-trips', () => {
-    // Complex morphinan structure - still broken
+  test('Oxycodone round-trips', () => {
+    // Complex morphinan structure - now working!
     const smiles = 'CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O';
     expect(parse(smiles).smiles).toBe(smiles);
   });

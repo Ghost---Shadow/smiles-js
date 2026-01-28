@@ -187,14 +187,23 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 
 ---
 
+## ✅ FIXED: Complex Morphinan Structures (Oxycodone)
+
+**Oxycodone now works correctly:**
+```
+Input:  CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O
+Output: CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O
+```
+
+The fix involved:
+1. Detecting "bridge rings" that share atoms with main chain rings but are at different branch depths
+2. Including these bridge rings in the fused ring group
+3. Properly excluding bridge ring atoms from being treated as attachments
+4. Updating `allRingPositions` when sequential continuation rings are discovered
+
+---
+
 ## 🔴 Known Parser Bugs
-
-### Complex Morphinan Structures (Oxycodone)
-
-**Broken:**
-- Oxycodone: `CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O`
-
-Complex polycyclic structures with multiple ring numbers (2, 3, 4, 5) sharing atoms across deeply nested branches fail.
 
 ### Cannabinoid Tricyclic Structures
 
@@ -230,6 +239,6 @@ The parser normalizes `C=C(C=C1)` patterns. Chemically equivalent but SMILES dif
 
 ## Test Coverage
 
-- 196 tests passing across 12 integration test files
-- 12 tests skipped (known broken molecules)
+- 415 tests passing across 21 test files
+- 11 tests skipped (known broken molecules)
 - Tests cover parsing, code generation, and round-trip validation
