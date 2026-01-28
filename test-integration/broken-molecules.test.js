@@ -19,6 +19,30 @@ describe('Opioids', () => {
     const smiles = 'CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O';
     expect(parse(smiles).smiles).toBe(smiles);
   });
+
+  test('Morphine round-trips', () => {
+    // NOW WORKING after oxycodone fix!
+    const smiles = 'CN1CCC23C4OC5=C(O)C=CC(=C25)C(O)C=CC3C1C4';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('Codeine round-trips', () => {
+    // NOW WORKING after oxycodone fix!
+    const smiles = 'CN1CCC23C4OC5=C(OC)C=CC(=C25)C(O)C=CC3C1C4';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('Hydrocodone round-trips', () => {
+    // NOW WORKING after oxycodone fix!
+    const smiles = 'CN1CCC23C4OC5=C(OC)C=CC(=C25)C(=O)CCC3C1C4';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('Hydromorphone round-trips', () => {
+    // NOW WORKING after oxycodone fix!
+    const smiles = 'CN1CCC23C4OC5=C(O)C=CC(=C25)C(=O)CCC3C1C4';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
 });
 
 describe('Cannabinoids', () => {
@@ -53,42 +77,62 @@ describe('Cannabinoids', () => {
 
 describe('NSAIDs', () => {
   test.skip('Celecoxib round-trips', () => {
+    // Still broken - complex pyrazole with nested rings
     const smiles = 'CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
   test.skip('Meloxicam round-trips', () => {
+    // Still broken - thiazole with nested benzothiazine
     const smiles = 'CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
   test.skip('Piroxicam round-trips', () => {
+    // Still broken - sulfur oxidation state issue S(=O)=O vs S(=O)(=O)
     const smiles = 'CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
-  test.skip('Rofecoxib round-trips', () => {
+  test('Rofecoxib round-trips', () => {
+    // NOW WORKING after oxycodone fix!
     const smiles = 'CS(=O)(=O)C1=CC=C(C=C1)C2=C(C(=O)OC2)C3=CC=CC=C3';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
-  test.skip('Etoricoxib round-trips', () => {
+  test('Etoricoxib round-trips', () => {
+    // NOW WORKING after oxycodone fix!
     const smiles = 'CC1=NC=C(C=C1)C2=CC=C(C=C2)S(=O)(=O)C3=CC=CC=C3';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
-  test.skip('Nabumetone round-trips', () => {
+  test('Nabumetone round-trips', () => {
+    // NOW WORKING after oxycodone fix!
     const smiles = 'COC1=CC2=CC(=CC=C2C=C1)CCC(=O)C';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
   test.skip('Oxaprozin round-trips', () => {
+    // Still broken - oxazole with nested phenyl rings
     const smiles = 'OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
-  test.skip('Ketoprofen round-trips', () => {
+  test('Ketoprofen round-trips', () => {
+    // NOW WORKING after oxycodone fix!
     const smiles = 'CC(c1cccc(c1)C(=O)c2ccccc2)C(=O)O';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('Ibuprofen round-trips', () => {
+    // NOW WORKING after oxycodone fix!
+    const smiles = 'CC(C)Cc1ccc(cc1)C(C)C(=O)O';
+    expect(parse(smiles).smiles).toBe(smiles);
+  });
+
+  test('Benzocaine round-trips', () => {
+    // NOW WORKING after oxycodone fix!
+    const smiles = 'CCOC(=O)C1=CC=C(C=C1)N';
     expect(parse(smiles).smiles).toBe(smiles);
   });
 });

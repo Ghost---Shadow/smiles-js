@@ -189,7 +189,7 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 
 ## ✅ FIXED: Complex Morphinan Structures (Oxycodone)
 
-**Oxycodone now works correctly:**
+**Oxycodone and related morphinans now work correctly:**
 ```
 Input:  CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O
 Output: CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O
@@ -200,6 +200,56 @@ The fix involved:
 2. Including these bridge rings in the fused ring group
 3. Properly excluding bridge ring atoms from being treated as attachments
 4. Updating `allRingPositions` when sequential continuation rings are discovered
+
+### All Morphinans - NOW WORKING
+```
+Morphine:      CN1CCC23C4OC5=C(O)C=CC(=C25)C(O)C=CC3C1C4
+Codeine:       CN1CCC23C4OC5=C(OC)C=CC(=C25)C(O)C=CC3C1C4
+Hydrocodone:   CN1CCC23C4OC5=C(OC)C=CC(=C25)C(=O)CCC3C1C4
+Hydromorphone: CN1CCC23C4OC5=C(O)C=CC(=C25)C(=O)CCC3C1C4
+```
+
+---
+
+## ✅ FIXED: Additional NSAIDs (After Oxycodone Fix)
+
+These NSAIDs started working after the bridge ring detection fix:
+
+### Rofecoxib - NOW WORKING
+```
+Input:  CS(=O)(=O)C1=CC=C(C=C1)C2=C(C(=O)OC2)C3=CC=CC=C3
+Output: CS(=O)(=O)C1=CC=C(C=C1)C2=C(C(=O)OC2)C3=CC=CC=C3
+```
+
+### Etoricoxib - NOW WORKING
+```
+Input:  CC1=NC=C(C=C1)C2=CC=C(C=C2)S(=O)(=O)C3=CC=CC=C3
+Output: CC1=NC=C(C=C1)C2=CC=C(C=C2)S(=O)(=O)C3=CC=CC=C3
+```
+
+### Nabumetone - NOW WORKING
+```
+Input:  COC1=CC2=CC(=CC=C2C=C1)CCC(=O)C
+Output: COC1=CC2=CC(=CC=C2C=C1)CCC(=O)C
+```
+
+### Ketoprofen - NOW WORKING
+```
+Input:  CC(c1cccc(c1)C(=O)c2ccccc2)C(=O)O
+Output: CC(c1cccc(c1)C(=O)c2ccccc2)C(=O)O
+```
+
+### Ibuprofen - NOW WORKING
+```
+Input:  CC(C)Cc1ccc(cc1)C(C)C(=O)O
+Output: CC(C)Cc1ccc(cc1)C(C)C(=O)O
+```
+
+### Benzocaine - NOW WORKING
+```
+Input:  CCOC(=O)C1=CC=C(C=C1)N
+Output: CCOC(=O)C1=CC=C(C=C1)N
+```
 
 ---
 
@@ -220,25 +270,14 @@ These have complex nested ring systems with multiple rings (2, 3) defined inside
 - Celecoxib: `CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F`
 - Meloxicam: `CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C`
 - Piroxicam: `CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3`
-- Rofecoxib: `CS(=O)(=O)C1=CC=C(C=C1)C2=C(C(=O)OC2)C3=CC=CC=C3`
-- Etoricoxib: `CC1=NC=C(C=C1)C2=CC=C(C=C2)S(=O)(=O)C3=CC=CC=C3`
-- Nabumetone: `COC1=CC2=CC(=CC=C2C=C1)CCC(=O)C`
 - Oxaprozin: `OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3`
-- Ketoprofen: `CC(c1cccc(c1)C(=O)c2ccccc2)C(=O)O`
-
-### Para-Substituted Benzene Normalization
-
-The parser normalizes `C=C(C=C1)` patterns. Chemically equivalent but SMILES differ.
-
-**Affected molecules:**
-- Ibuprofen: `CC(C)Cc1ccc(cc1)C(C)C(=O)O` → `CC(C)Cc1ccccc1C(C)C(=O)O`
-- Benzocaine: `CCOC(=O)C1=CC=C(C=C1)N` → `CCOC(=O)C1=CC=CC=C1N`
-- Losartan, Valsartan, Irbesartan (similar pattern)
+- Losartan: `CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO`
+- Valsartan: `CCCCC(=O)N(Cc1ccc(cc1)c2ccccc2c3n[nH]nn3)C(C(C)C)C(=O)O`
 
 ---
 
 ## Test Coverage
 
-- 415 tests passing across 21 test files
-- 11 tests skipped (known broken molecules)
+- 430 tests passing across 22 test files
+- 7 tests skipped (known broken molecules)
 - Tests cover parsing, code generation, and round-trip validation
