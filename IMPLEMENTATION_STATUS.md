@@ -111,6 +111,18 @@ Input:  CC12CC(=O)C=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12
 Output: CC12CC(=O)C=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12
 ```
 
+### Methylprednisolone - WORKS
+```
+Input:  CC12CC(=O)C(C)=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12
+Output: CC12CC(=O)C(C)=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12
+```
+
+### Dexamethasone - WORKS
+```
+Input:  CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(F)C(O)CC2(C)C1(O)C(=O)CO
+Output: CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(F)C(O)CC2(C)C1(O)C(=O)CO
+```
+
 ---
 
 ## 🟡 Known Limitation: toCode() for Complex Structures
