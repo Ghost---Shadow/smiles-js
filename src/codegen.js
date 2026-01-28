@@ -175,6 +175,11 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   const sequentialRings = fusedRing._sequentialRings || [];
   const allRings = [...rings, ...sequentialRings];
 
+  // Track which positions have already had attachments added (to avoid duplicates)
+  // When an atom is shared between multiple fused rings, each ring has the same
+  // attachments, but we should only output them once
+  const positionsWithAttachments = new Set();
+
   // Collect all ring markers, atom sequence, and bonds
   allRings.forEach((ring) => {
     // eslint-disable-next-line no-underscore-dangle
@@ -216,8 +221,11 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
       }
 
       // Add attachments at this relative position (if any)
-      if (attachments[relativePos]) {
+      // Only add if we haven't already added attachments for this position
+      // (shared positions between fused rings would otherwise get duplicates)
+      if (attachments[relativePos] && !positionsWithAttachments.has(pos)) {
         atomSequence[pos].attachments.push(...attachments[relativePos]);
+        positionsWithAttachments.add(pos);
       }
     });
   });

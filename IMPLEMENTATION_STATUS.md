@@ -83,6 +83,36 @@ This structure has:
 
 ---
 
+## ✅ FIXED: Steroid Polycyclic Structures
+
+**Complex polycyclic steroids with shared atoms now parse correctly. Fixed duplicate attachment bug on shared fused ring atoms.**
+
+### Cortisone - WORKS
+```
+Input:  CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12
+Output: CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12
+```
+
+### Hydrocortisone - WORKS
+```
+Input:  CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12O
+Output: CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12O
+```
+
+### Prednisone - WORKS
+```
+Input:  CC12CC(=O)C=CC1=CC(O)C1C2CCC2(C)C(C(=O)CO)CCC12
+Output: CC12CC(=O)C=CC1=CC(O)C1C2CCC2(C)C(C(=O)CO)CCC12
+```
+
+### Prednisolone - WORKS
+```
+Input:  CC12CC(=O)C=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12
+Output: CC12CC(=O)C=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12
+```
+
+---
+
 ## 🟡 Known Limitation: toCode() for Complex Structures
 
 The `toCode()` method (generating JS constructor code from AST) does not yet fully support complex nested structures with sequential continuation rings. The SMILES parsing and serialization works correctly, but the generated JavaScript code may not reproduce the full structure.
@@ -103,22 +133,11 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 10. Store atom values for non-ring positions in `_atomValueMap`
 11. Store attachments for sequential continuation atoms in `_seqAtomAttachments`
 12. Fixed `lastAtomAtDepth` to clear when entering new branches (prevents cross-branch linking)
+13. Fixed duplicate attachments on shared atoms in fused rings (positionsWithAttachments tracking)
 
 ---
 
 ## 🔴 Known Parser Bugs
-
-### Complex Polycyclic Structures
-
-Molecules with multiple fused rings and spiro centers produce incorrect output.
-
-**Broken steroids (all corticosteroids):**
-- Cortisone: `CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12`
-- Hydrocortisone: `CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12O`
-- Prednisone: `CC12CC(=O)C=CC1=CC(O)C1C2CCC2(C)C(C(=O)CO)CCC12`
-- Prednisolone: `CC12CC(=O)C=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12`
-- Methylprednisolone: `CC12CC(=O)C(C)=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12`
-- Dexamethasone: `CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(F)C(O)CC2(C)C1(O)C(=O)CO`
 
 ### Opioid Morphinan Structures
 
@@ -167,5 +186,5 @@ The parser normalizes `C=C(C=C1)` patterns. Chemically equivalent but SMILES dif
 
 ## Test Coverage
 
-- 162 tests passing across 10 integration test files
+- 178 tests passing across 10 integration test files
 - Tests cover parsing, code generation, and round-trip validation

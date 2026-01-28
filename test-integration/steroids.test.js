@@ -4,10 +4,10 @@ import {
   Ring, Linear, FusedRing, Molecule,
 } from '../src/constructors.js';
 
-// Note: Steroids have complex polycyclic structures that break the parser
-// All corticosteroids (cortisone, hydrocortisone, prednisone, etc.) fail
-// Only simple linear molecules work
-// BROKEN: Cortisone, Hydrocortisone, Prednisone, Prednisolone, Methylprednisolone, Dexamethasone
+const CORTISONE_SMILES = 'CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12';
+const HYDROCORTISONE_SMILES = 'CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12O';
+const PREDNISONE_SMILES = 'CC12CC(=O)C=CC1=CC(O)C1C2CCC2(C)C(C(=O)CO)CCC12';
+const PREDNISOLONE_SMILES = 'CC12CC(=O)C=CC1=CC(O)C1C2C(O)CC2(C)C(C(=O)CO)CCC12';
 const VALPROIC_ACID_SMILES = 'CCCC(CCC)C(=O)O';
 
 function testRoundTrip(smiles, name) {
@@ -53,4 +53,8 @@ function testRoundTrip(smiles, name) {
   });
 }
 
+testRoundTrip(CORTISONE_SMILES, 'Cortisone');
+testRoundTrip(HYDROCORTISONE_SMILES, 'Hydrocortisone');
+testRoundTrip(PREDNISONE_SMILES, 'Prednisone');
+testRoundTrip(PREDNISOLONE_SMILES, 'Prednisolone');
 testRoundTrip(VALPROIC_ACID_SMILES, 'Valproic Acid');
