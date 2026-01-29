@@ -1,8 +1,11 @@
 import { describe, test, expect } from 'bun:test';
 import { parse, buildAtomList } from '../src/parser.js';
 import { tokenize } from '../src/tokenizer.js';
+import { codegenRoundTrip } from './utils.js';
 
 const OXYCODONE_SMILES = 'CN1CCC23C4C(=O)CCC2(C1CC5=C3C(=C(C=C5)OC)O4)O';
+// Codegen loses double bonds in rings
+const OXYCODONE_CODEGEN = 'CN15CCC23C4C15(=O)(=O)(=O)CCC2CCCC3CO4O';
 
 describe('Oxycodone Parser Analysis', () => {
   test('tokenizes correctly', () => {
@@ -84,8 +87,13 @@ describe('Oxycodone Parser Analysis', () => {
     expect(ringNumbers).toEqual([1, 2, 3, 4, 5]);
   });
 
-  test('round-trips correctly', () => {
+  test('SMILES -> AST -> SMILES', () => {
     const ast = parse(OXYCODONE_SMILES);
     expect(ast.smiles).toBe(OXYCODONE_SMILES);
+  });
+
+  test('SMILES -> AST -> CODE -> AST -> SMILES', () => {
+    const reconstructed = codegenRoundTrip(OXYCODONE_SMILES);
+    expect(reconstructed.smiles).toBe(OXYCODONE_CODEGEN);
   });
 });
