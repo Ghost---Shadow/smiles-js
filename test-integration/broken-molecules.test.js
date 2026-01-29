@@ -88,8 +88,8 @@ describe('NSAIDs', () => {
     expect(parse(smiles).smiles).toBe(smiles);
   });
 
-  test.skip('Piroxicam round-trips', () => {
-    // Still broken - sulfur oxidation state issue S(=O)=O vs S(=O)(=O)
+  test('Piroxicam round-trips', () => {
+    // NOW WORKING - fixed sequential continuation bond handling
     const smiles = 'CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3';
     expect(parse(smiles).smiles).toBe(smiles);
   });

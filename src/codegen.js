@@ -331,12 +331,19 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   const atomValueMap = fusedRing._atomValueMap || new Map();
   // eslint-disable-next-line no-underscore-dangle
   const seqAtomAttachments = fusedRing._seqAtomAttachments || new Map();
+  // eslint-disable-next-line no-underscore-dangle
+  const bondMap = fusedRing._bondMap || new Map();
   allPositions.forEach((pos) => {
     if (!atomSequence[pos] && !allRingPositions.has(pos)) {
       // This is a sequential continuation atom - use stored atom value and attachments
       const atomValue = atomValueMap.get(pos) || 'C';
       const attachments = seqAtomAttachments.get(pos) || [];
       atomSequence[pos] = { atom: atomValue, attachments };
+      // Also add bond for this position if present
+      const bond = bondMap.get(pos);
+      if (bond && !bondsBefore.has(pos)) {
+        bondsBefore.set(pos, bond);
+      }
     }
   });
 
