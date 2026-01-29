@@ -10,9 +10,13 @@ describe('Molecule Status Check - After Oxycodone Fix', () => {
     try {
       const result = parse(smiles);
       const passes = result.smiles === smiles;
-      return { name, smiles, output: result.smiles, passes };
+      return {
+        name, smiles, output: result.smiles, passes,
+      };
     } catch (e) {
-      return { name, smiles, output: null, passes: false, error: e.message };
+      return {
+        name, smiles, output: null, passes: false, error: e.message,
+      };
     }
   };
 

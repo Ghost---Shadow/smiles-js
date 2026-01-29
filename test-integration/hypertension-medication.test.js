@@ -41,7 +41,7 @@ describe('Hypertension Medications', () => {
         const code = ast.toCode('v');
 
         expect(() => {
-          // eslint-disable-next-line no-new-func
+          // eslint-disable-next-line no-new-func, no-new
           new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
         }).not.toThrow();
       });

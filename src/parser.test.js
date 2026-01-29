@@ -111,8 +111,12 @@ describe('Parser - Ring Attachments', () => {
       offset: 0,
       substitutions: {},
       attachments: {
-        1: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
-        3: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        1: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
+        3: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
       },
       bonds: [null, null, null, null, null],
     });
@@ -319,7 +323,9 @@ describe('Parser - Complex Molecules', () => {
       offset: 0,
       substitutions: {},
       attachments: {
-        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        4: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
       },
       bonds: [null, null, null, null, null, null],
     });
@@ -353,9 +359,15 @@ describe('Parser - Complex Molecules', () => {
       offset: 0,
       substitutions: {},
       attachments: {
-        2: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
-        3: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
-        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        2: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
+        3: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
+        4: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
       },
       bonds: [null, null, null, null, null, null],
     });
@@ -378,7 +390,9 @@ describe('Parser - Complex Molecules', () => {
           atoms: ['C'],
           bonds: [null],
           attachments: {
-            1: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+            1: [{
+              type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+            }],
           },
         }],
       },
@@ -436,7 +450,9 @@ describe('Parser - Complex Molecules', () => {
       offset: 0,
       substitutions: { 1: 'n' },
       attachments: {
-        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        4: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
       },
       bonds: [null, null, null, null, null, null],
     });
@@ -467,8 +483,12 @@ describe('Parser - Complex Molecules', () => {
       atoms: ['C', 'C', 'C', 'C', 'C'],
       bonds: [null, null, null, null],
       attachments: {
-        2: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
-        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        2: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
+        4: [{
+          type: 'linear', atoms: ['C'], bonds: [null], attachments: {},
+        }],
       },
     });
   });
@@ -513,7 +533,9 @@ describe('Parser - Rings Inside Branches', () => {
     expect(ast.toObject()).toEqual({
       type: 'molecule',
       components: [
-        { type: 'linear', atoms: ['C'], bonds: [], attachments: {} },
+        {
+          type: 'linear', atoms: ['C'], bonds: [], attachments: {},
+        },
         {
           type: 'ring',
           atoms: 'c',
