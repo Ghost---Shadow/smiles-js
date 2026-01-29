@@ -6,65 +6,93 @@ import {
 
 // Note: Some complex SMILES don't round-trip correctly due to parser limitations
 // Using parser output for now - TODO: fix parser for complex ring systems
-const CELECOXIB_SMILES = 'CC1=CC=CC=C1C2=CC=NN2C(F)(F)F';
-const MELOXICAM_SMILES = 'CC1=CN=CS1C';
-const PIROXICAM_SMILES = 'CN1C=CC=CC=CC=CS=O1C(=O)NC3=CC=CC=N3';
-const ETODOLAC_SMILES = 'CCC1=CC2=C(C=C1CC(=O)O)NC3=C2CCOC3(CC)CC';
-const KETOROLAC_SMILES = 'OC(=O)C1CCN2C1=CC=C2C(=O)C3=CC=CC=C3';
-const ROFECOXIB_SMILES = 'CS(=O)(=O)C1=CC=CC=C1C2=CC(=O)OC2C3=CC=CC=C3';
-const ETORICOXIB_SMILES = 'CC1=NC=CC=C1C2=CC=CC=C2S(=O)(=O)C3=CC=CC=C3';
-const NABUMETONE_SMILES = 'COC1=CC2=CC(CC=C2C=C1)CCC(=O)C';
-const OXAPROZIN_SMILES = 'OC(=O)CCC1=NC=CO1C3=CC=CC=C3';
 
-function testRoundTrip(smiles, name) {
-  describe(`${name} Integration Test`, () => {
-    test(`parses ${name}`, () => {
-      const ast = parse(smiles);
-      expect(ast.smiles).toBe(smiles);
-    });
+const MOLECULES = {
+  Celecoxib: {
+    smiles: 'CC1=CC=CC=C1C2=CC=NN2C(F)(F)F',
+    expectedType: 'molecule',
+    expectedSmiles: 'CC1CCCCC1C2CCNN2C(F)(F)F',
+    lastVar: 'v11',
+  },
+  Meloxicam: {
+    smiles: 'CC1=CN=CS1C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CC1CNCS1C',
+    lastVar: 'v6',
+  },
+  Piroxicam: {
+    smiles: 'CN1C=CC=CC=CC=CS=O1C(=O)NC3=CC=CC=N3',
+    expectedType: 'molecule',
+    expectedSmiles: 'CN1CCCCCCCCSO1C(=O)NC3CCCCN3',
+    lastVar: 'v11',
+  },
+  Etodolac: {
+    smiles: 'CCC1=CC2=C(C=C1CC(=O)O)NC3=C2CCOC3(CC)CC',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCC13CC2CCC13(CC)C2CC',
+    lastVar: 'v11',
+  },
+  Ketorolac: {
+    smiles: 'OC(=O)C1CCN2C1=CC=C2C(=O)C3=CC=CC=C3',
+    expectedType: 'molecule',
+    expectedSmiles: 'OC(=O)C1CCN2CCCC12C(=O)C3CCCCC3',
+    lastVar: 'v13',
+  },
+  Rofecoxib: {
+    smiles: 'CS(=O)(=O)C1=CC=CC=C1C2=CC(=O)OC2C3=CC=CC=C3',
+    expectedType: 'molecule',
+    expectedSmiles: 'CS(=O)(=O)C1CCCCC1C2CC(=O)OC2C3CCCCC3',
+    lastVar: 'v12',
+  },
+  Etoricoxib: {
+    smiles: 'CC1=NC=CC=C1C2=CC=CC=C2S(=O)(=O)C3=CC=CC=C3',
+    expectedType: 'molecule',
+    expectedSmiles: 'CC1NCCCC1C2CCCCC2S(=O)(=O)C3CCCCC3',
+    lastVar: 'v11',
+  },
+  Nabumetone: {
+    smiles: 'COC1=CC2=CC(CC=C2C=C1)CCC(=O)C',
+    expectedType: 'molecule',
+    expectedSmiles: 'COC1CC2CCCCC2CC1CCC(=O)C',
+    lastVar: 'v8',
+  },
+  Oxaprozin: {
+    smiles: 'OC(=O)CCC1=NC=CO1C3=CC=CC=C3',
+    expectedType: 'molecule',
+    expectedSmiles: 'OC(=O)CCC1NCCO1C3CCCCC3',
+    lastVar: 'v8',
+  },
+};
 
-    test('generates valid code via toCode()', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
-      expect(typeof code).toBe('string');
-      expect(code.length).toBeGreaterThan(0);
-    });
+describe('Prescription NSAIDs', () => {
+  Object.entries(MOLECULES).forEach(([name, data]) => {
+    describe(`${name} Integration Test`, () => {
+      test(`parses ${name}`, () => {
+        const ast = parse(data.smiles);
+        expect(ast.smiles).toBe(data.smiles);
+      });
 
-    test('generated code is valid JavaScript', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
+      test('generated code is valid JavaScript', () => {
+        const ast = parse(data.smiles);
+        const code = ast.toCode('v');
 
-      let factory;
-      expect(() => {
+        expect(() => {
+          // eslint-disable-next-line no-new-func
+          new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
+        }).not.toThrow();
+      });
+
+      test('codegen round-trip produces expected output', () => {
+        const ast = parse(data.smiles);
+        const code = ast.toCode('v');
+
         // eslint-disable-next-line no-new-func
-        factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
-      }).not.toThrow();
-      expect(typeof factory).toBe('function');
-    });
+        const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${data.lastVar};`);
+        const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    test('codegen round-trip produces valid SMILES', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
-
-      const varMatch = code.match(/const (v\d+) = /g);
-      const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/const (v\d+)/)[1] : 'v1';
-
-      // eslint-disable-next-line no-new-func
-      const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${lastVar};`);
-      const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-
-      expect(typeof reconstructed.smiles).toBe('string');
-      expect(reconstructed.smiles.length).toBeGreaterThan(0);
+        expect(reconstructed.type).toBe(data.expectedType);
+        expect(reconstructed.smiles).toBe(data.expectedSmiles);
+      });
     });
   });
-}
-
-testRoundTrip(CELECOXIB_SMILES, 'Celecoxib');
-testRoundTrip(MELOXICAM_SMILES, 'Meloxicam');
-testRoundTrip(PIROXICAM_SMILES, 'Piroxicam');
-testRoundTrip(ETODOLAC_SMILES, 'Etodolac');
-testRoundTrip(KETOROLAC_SMILES, 'Ketorolac');
-testRoundTrip(ROFECOXIB_SMILES, 'Rofecoxib');
-testRoundTrip(ETORICOXIB_SMILES, 'Etoricoxib');
-testRoundTrip(NABUMETONE_SMILES, 'Nabumetone');
-testRoundTrip(OXAPROZIN_SMILES, 'Oxaprozin');
+});

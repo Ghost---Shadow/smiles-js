@@ -4,64 +4,88 @@ import {
   Ring, Linear, FusedRing, Molecule,
 } from '../src/constructors.js';
 
-const LIDOCAINE_SMILES = 'CCN(CC)CC(=O)NC1=C(C)C=CC=C1C';
-const BUPIVACAINE_SMILES = 'CCCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C';
-const ROPIVACAINE_SMILES = 'CCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C';
-const MEPIVACAINE_SMILES = 'CN1CCCCC1C(=O)NC2=C(C)C=CC=C2C';
-const PRILOCAINE_SMILES = 'CCCNC(C)C(=O)NC1=CC=CC=C1C';
 // Note: Parser normalizes para-substituted benzene patterns
-const BENZOCAINE_SMILES = 'CCOC(=O)C1=CC=CC=C1N';
-const TETRACAINE_SMILES = 'CCCCNC1=CC=CC=C1C(=O)OCCN(C)C';
-const PROCAINE_SMILES = 'CCN(CC)CCOC(=O)C1=CC=CC=C1N';
 
-function testRoundTrip(smiles, name) {
-  describe(`${name} Integration Test`, () => {
-    test(`parses ${name}`, () => {
-      const ast = parse(smiles);
-      expect(ast.smiles).toBe(smiles);
-    });
+const MOLECULES = {
+  Lidocaine: {
+    smiles: 'CCN(CC)CC(=O)NC1=C(C)C=CC=C1C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCN(CC)CC(=O)NC1C(C)CCCC1C',
+    lastVar: 'v10',
+  },
+  Bupivacaine: {
+    smiles: 'CCCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCCCN1CCCCC1C(=O)NC2C(C)CCCC2C',
+    lastVar: 'v11',
+  },
+  Ropivacaine: {
+    smiles: 'CCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCCN1CCCCC1C(=O)NC2C(C)CCCC2C',
+    lastVar: 'v11',
+  },
+  Mepivacaine: {
+    smiles: 'CN1CCCCC1C(=O)NC2=C(C)C=CC=C2C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CN1CCCCC1C(=O)NC2C(C)CCCC2C',
+    lastVar: 'v11',
+  },
+  Prilocaine: {
+    smiles: 'CCCNC(C)C(=O)NC1=CC=CC=C1C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCCNC(C)C(=O)NC1CCCCC1C',
+    lastVar: 'v8',
+  },
+  Benzocaine: {
+    smiles: 'CCOC(=O)C1=CC=CC=C1N',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCOC(=O)C1CCCCC1N',
+    lastVar: 'v6',
+  },
+  Tetracaine: {
+    smiles: 'CCCCNC1=CC=CC=C1C(=O)OCCN(C)C',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCCCNC1CCCCC1C(=O)OCCN(C)C',
+    lastVar: 'v8',
+  },
+  Procaine: {
+    smiles: 'CCN(CC)CCOC(=O)C1=CC=CC=C1N',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCN(CC)CCOC(=O)C1CCCCC1N',
+    lastVar: 'v8',
+  },
+};
 
-    test('generates valid code via toCode()', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
-      expect(typeof code).toBe('string');
-      expect(code.length).toBeGreaterThan(0);
-    });
+describe('Local Anesthetics', () => {
+  Object.entries(MOLECULES).forEach(([name, data]) => {
+    describe(`${name} Integration Test`, () => {
+      test(`parses ${name}`, () => {
+        const ast = parse(data.smiles);
+        expect(ast.smiles).toBe(data.smiles);
+      });
 
-    test('generated code is valid JavaScript', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
+      test('generated code is valid JavaScript', () => {
+        const ast = parse(data.smiles);
+        const code = ast.toCode('v');
 
-      let factory;
-      expect(() => {
+        expect(() => {
+          // eslint-disable-next-line no-new-func
+          new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
+        }).not.toThrow();
+      });
+
+      test('codegen round-trip produces expected output', () => {
+        const ast = parse(data.smiles);
+        const code = ast.toCode('v');
+
         // eslint-disable-next-line no-new-func
-        factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
-      }).not.toThrow();
-      expect(typeof factory).toBe('function');
-    });
+        const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${data.lastVar};`);
+        const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    test('codegen round-trip produces valid SMILES', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
-
-      const varMatch = code.match(/const (v\d+) = /g);
-      const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/const (v\d+)/)[1] : 'v1';
-
-      // eslint-disable-next-line no-new-func
-      const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${lastVar};`);
-      const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-
-      expect(typeof reconstructed.smiles).toBe('string');
-      expect(reconstructed.smiles.length).toBeGreaterThan(0);
+        expect(reconstructed.type).toBe(data.expectedType);
+        expect(reconstructed.smiles).toBe(data.expectedSmiles);
+      });
     });
   });
-}
-
-testRoundTrip(LIDOCAINE_SMILES, 'Lidocaine');
-testRoundTrip(BUPIVACAINE_SMILES, 'Bupivacaine');
-testRoundTrip(ROPIVACAINE_SMILES, 'Ropivacaine');
-testRoundTrip(MEPIVACAINE_SMILES, 'Mepivacaine');
-testRoundTrip(PRILOCAINE_SMILES, 'Prilocaine');
-testRoundTrip(BENZOCAINE_SMILES, 'Benzocaine');
-testRoundTrip(TETRACAINE_SMILES, 'Tetracaine');
-testRoundTrip(PROCAINE_SMILES, 'Procaine');
+});

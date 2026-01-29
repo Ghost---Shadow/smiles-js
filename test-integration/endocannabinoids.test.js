@@ -7,49 +7,45 @@ import {
 // Note: Many cannabinoid SMILES are too complex for current parser
 // Only PEA works correctly
 // BROKEN: Anandamide, 2-AG, THC, CBD, Nabilone
-const PALMITOYLETHANOLAMIDE_SMILES = 'CCCCCCCCCCCCCCCC(=O)NCCO';
 
-function testRoundTrip(smiles, name) {
-  describe(`${name} Integration Test`, () => {
-    test(`parses ${name}`, () => {
-      const ast = parse(smiles);
-      expect(ast.smiles).toBe(smiles);
-    });
+const MOLECULES = {
+  Palmitoylethanolamide: {
+    smiles: 'CCCCCCCCCCCCCCCC(=O)NCCO',
+    expectedType: 'linear',
+    expectedSmiles: 'CCCCCCCCCCCCCCCC(=O)NCCO',
+    lastVar: 'v3',
+  },
+};
 
-    test('generates valid code via toCode()', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
-      expect(typeof code).toBe('string');
-      expect(code.length).toBeGreaterThan(0);
-    });
+describe('Endocannabinoids', () => {
+  Object.entries(MOLECULES).forEach(([name, data]) => {
+    describe(`${name} Integration Test`, () => {
+      test(`parses ${name}`, () => {
+        const ast = parse(data.smiles);
+        expect(ast.smiles).toBe(data.smiles);
+      });
 
-    test('generated code is valid JavaScript', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
+      test('generated code is valid JavaScript', () => {
+        const ast = parse(data.smiles);
+        const code = ast.toCode('v');
 
-      let factory;
-      expect(() => {
+        expect(() => {
+          // eslint-disable-next-line no-new-func
+          new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
+        }).not.toThrow();
+      });
+
+      test('codegen round-trip produces expected output', () => {
+        const ast = parse(data.smiles);
+        const code = ast.toCode('v');
+
         // eslint-disable-next-line no-new-func
-        factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
-      }).not.toThrow();
-      expect(typeof factory).toBe('function');
-    });
+        const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${data.lastVar};`);
+        const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    test('codegen round-trip produces valid SMILES', () => {
-      const ast = parse(smiles);
-      const code = ast.toCode('v');
-
-      const varMatch = code.match(/const (v\d+) = /g);
-      const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/const (v\d+)/)[1] : 'v1';
-
-      // eslint-disable-next-line no-new-func
-      const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${lastVar};`);
-      const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-
-      expect(typeof reconstructed.smiles).toBe('string');
-      expect(reconstructed.smiles.length).toBeGreaterThan(0);
+        expect(reconstructed.type).toBe(data.expectedType);
+        expect(reconstructed.smiles).toBe(data.expectedSmiles);
+      });
     });
   });
-}
-
-testRoundTrip(PALMITOYLETHANOLAMIDE_SMILES, 'Palmitoylethanolamide');
+});
