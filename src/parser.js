@@ -480,9 +480,43 @@ function buildSingleRingNodeWithContext(
  * Build a ring or fused ring node from a group with context
  */
 function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
+  // For single rings, check if there's a sequential continuation ring in a branch.
+  // This handles the celecoxib pattern: C1CC(C1C2CCC2)C
+  // where ring 2 opens inside a branch that contains ring 1's closure.
   if (group.length === 1) {
-    // Pass the ring's actual ringNumber from the parsed boundary
-    return buildSingleRingNodeWithContext(group[0], atoms, ringBoundaries, 0, group[0].ringNumber);
+    const ring = group[0];
+    const endAtom = atoms[ring.end];
+
+    // Check if ring closes at a deeper branch level than where it opened
+    const hasSeqContinuation = endAtom
+      && endAtom.branchDepth > ring.branchDepth
+      && endAtom.branchId !== null;
+
+    if (hasSeqContinuation) {
+      // Check if there's a ring that immediately follows this ring's close
+      const nextAtom = atoms.find(
+        (a) => a.prevAtomIndex === ring.end
+          && a.branchDepth === endAtom.branchDepth
+          && a.branchId === endAtom.branchId
+          && !a.afterBranchClose,
+      );
+
+      if (nextAtom) {
+        const nextRing = ringBoundaries.find(
+          (rb) => rb.positions.includes(nextAtom.index) && rb.branchDepth === nextAtom.branchDepth,
+        );
+
+        if (nextRing && !group.some((g) => g.ringNumber === nextRing.ringNumber)) {
+          // Found a sequential continuation ring - add it to the group and process together
+          const expandedGroup = [...group, nextRing];
+          // Recursively process the expanded group
+          return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries);
+        }
+      }
+    }
+
+    // No sequential continuation - return a simple ring node
+    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber);
   }
 
   // Sort rings by their start position to determine base ring

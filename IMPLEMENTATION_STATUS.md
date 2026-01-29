@@ -184,6 +184,7 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 14. Fixed ring marker placement - ring closures now come before attachments at closing position
 15. Added `buildBranchCrossingRingSMILES` for rings that traverse branch boundaries
 16. Fixed linear chain bonds - keep null values to preserve positional information
+17. Added sequential continuation ring detection for single-ring groups (celecoxib pattern)
 
 ---
 
@@ -253,6 +254,31 @@ Output: CCOC(=O)C1=CC=C(C=C1)N
 
 ---
 
+## ✅ FIXED: Sequential Continuation Rings (Celecoxib Pattern)
+
+**Rings that open inside a branch containing another ring's closure are now handled correctly.**
+
+This pattern occurs when:
+- Ring 1 closes at a certain branch depth
+- Ring 2 opens immediately after at the same branch depth
+- Ring 2 needs to be processed together with Ring 1
+
+### Celecoxib - NOW WORKING
+```
+Input:  CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F
+Output: CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F
+```
+
+### Minimal Pattern Example
+```
+Input:  C1CC(C1C2CCC2)C    (Ring 2 opens inside branch after Ring 1 closes)
+Output: C1CC(C1C2CCC2)C
+```
+
+The fix detects when a single ring closes at a deeper branch level and recursively includes immediately following rings that are at the same branch depth (without `afterBranchClose` flag).
+
+---
+
 ## 🔴 Known Parser Bugs
 
 ### Cannabinoid Tricyclic Structures
@@ -267,7 +293,6 @@ These have complex nested ring systems with multiple rings (2, 3) defined inside
 ### Complex Heterocyclic NSAIDs
 
 **Broken:**
-- Celecoxib: `CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F`
 - Meloxicam: `CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C`
 - Piroxicam: `CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3`
 - Oxaprozin: `OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3`
@@ -278,6 +303,6 @@ These have complex nested ring systems with multiple rings (2, 3) defined inside
 
 ## Test Coverage
 
-- 430 tests passing across 22 test files
-- 7 tests skipped (known broken molecules)
+- 458 tests passing across 25 test files
+- 6 tests skipped (known broken molecules)
 - Tests cover parsing, code generation, and round-trip validation
