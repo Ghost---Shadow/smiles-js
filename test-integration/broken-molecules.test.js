@@ -76,8 +76,8 @@ describe('Cannabinoids', () => {
 });
 
 describe('NSAIDs', () => {
-  test.skip('Celecoxib round-trips', () => {
-    // Still broken - complex pyrazole with nested rings
+  test('Celecoxib round-trips', () => {
+    // NOW WORKING - complex pyrazole with nested rings
     const smiles = 'CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F';
     expect(parse(smiles).smiles).toBe(smiles);
   });
