@@ -185,6 +185,7 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 15. Added `buildBranchCrossingRingSMILES` for rings that traverse branch boundaries
 16. Fixed linear chain bonds - keep null values to preserve positional information
 17. Added sequential continuation ring detection for single-ring groups (celecoxib pattern)
+18. Converted all test assertions to exact value matching - no `toBeDefined()`, `typeof`, or `toHaveLength()` weak assertions
 
 ---
 
@@ -303,6 +304,7 @@ These have complex nested ring systems with multiple rings (2, 3) defined inside
 
 ## Test Coverage
 
-- 458 tests passing across 25 test files
-- 6 tests skipped (known broken molecules)
+- 419 tests passing across 25 test files
+- 7 tests skipped (known broken molecules)
 - Tests cover parsing, code generation, and round-trip validation
+- All test assertions use exact value matching (`.toEqual()`, `.toBe()`) - no weak assertions
