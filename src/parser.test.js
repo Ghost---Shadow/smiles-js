@@ -103,10 +103,19 @@ describe('Parser - Ring Attachments', () => {
 
   test('parses ring with multiple attachments', () => {
     const ast = parse('C1(C)CC(C)CC1');
-    expect(ast.type).toBe('ring');
-    expect(ast.size).toBe(5);
-    expect(ast.attachments[1]).toBeDefined();
-    expect(ast.attachments[3]).toBeDefined();
+    expect(ast.toObject()).toEqual({
+      type: 'ring',
+      atoms: 'C',
+      size: 5,
+      ringNumber: 1,
+      offset: 0,
+      substitutions: {},
+      attachments: {
+        1: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        3: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+      },
+      bonds: [null, null, null, null, null],
+    });
   });
 
   test('round-trip for ring with multiple attachments', () => {
@@ -302,10 +311,18 @@ describe('Parser - Round-trip', () => {
 describe('Parser - Complex Molecules', () => {
   test('parses aromatic ring with attachment', () => {
     const ast = parse('c1ccc(C)cc1');
-    expect(ast.type).toBe('ring');
-    expect(ast.atoms).toBe('c');
-    expect(ast.size).toBe(6);
-    expect(ast.attachments[4]).toBeDefined();
+    expect(ast.toObject()).toEqual({
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      offset: 0,
+      substitutions: {},
+      attachments: {
+        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+      },
+      bonds: [null, null, null, null, null, null],
+    });
   });
 
   test('round-trips aromatic ring with attachment', () => {
@@ -328,11 +345,20 @@ describe('Parser - Complex Molecules', () => {
 
   test('parses multiple attachments on ring', () => {
     const ast = parse('c1c(C)c(C)c(C)cc1');
-    expect(ast.type).toBe('ring');
-    expect(ast.size).toBe(6);
-    expect(ast.attachments[2]).toBeDefined();
-    expect(ast.attachments[3]).toBeDefined();
-    expect(ast.attachments[4]).toBeDefined();
+    expect(ast.toObject()).toEqual({
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      offset: 0,
+      substitutions: {},
+      attachments: {
+        2: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        3: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+      },
+      bonds: [null, null, null, null, null, null],
+    });
   });
 
   test('round-trips multiple attachments on ring', () => {
@@ -342,10 +368,21 @@ describe('Parser - Complex Molecules', () => {
 
   test('parses nested branches', () => {
     const ast = parse('CC(C(C))C');
-    expect(ast.type).toBe('linear');
-    expect(ast.atoms).toEqual(['C', 'C', 'C']);
-    expect(ast.attachments[2]).toBeDefined();
-    expect(ast.attachments[2][0].attachments[1]).toBeDefined();
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C', 'C'],
+      bonds: [null, null],
+      attachments: {
+        2: [{
+          type: 'linear',
+          atoms: ['C'],
+          bonds: [null],
+          attachments: {
+            1: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+          },
+        }],
+      },
+    });
   });
 
   test('round-trips nested branches', () => {
@@ -391,9 +428,18 @@ describe('Parser - Complex Molecules', () => {
 
   test('parses ring with substitution and attachment', () => {
     const ast = parse('n1ccc(C)cc1');
-    expect(ast.type).toBe('ring');
-    expect(ast.substitutions[1]).toBe('n');
-    expect(ast.attachments[4]).toBeDefined();
+    expect(ast.toObject()).toEqual({
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      offset: 0,
+      substitutions: { 1: 'n' },
+      attachments: {
+        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+      },
+      bonds: [null, null, null, null, null, null],
+    });
   });
 
   test('round-trips ring with substitution and attachment', () => {
@@ -416,10 +462,15 @@ describe('Parser - Complex Molecules', () => {
 
   test('parses linear with branches at multiple positions', () => {
     const ast = parse('CC(C)CC(C)C');
-    expect(ast.type).toBe('linear');
-    expect(ast.atoms).toEqual(['C', 'C', 'C', 'C', 'C']);
-    expect(ast.attachments[2]).toBeDefined();
-    expect(ast.attachments[4]).toBeDefined();
+    expect(ast.toObject()).toEqual({
+      type: 'linear',
+      atoms: ['C', 'C', 'C', 'C', 'C'],
+      bonds: [null, null, null, null],
+      attachments: {
+        2: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+        4: [{ type: 'linear', atoms: ['C'], bonds: [null], attachments: {} }],
+      },
+    });
   });
 
   test('round-trips linear with multiple branches', () => {
@@ -459,13 +510,33 @@ describe('Parser - Rings Inside Branches', () => {
 
   test('parses biphenyl in branch', () => {
     const ast = parse('Cc1ccc(c2ccccc2)cc1');
-    expect(ast.type).toBe('molecule');
-    expect(ast.components).toHaveLength(2);
-    expect(ast.components[0].type).toBe('linear');
-    expect(ast.components[1].type).toBe('ring');
-    expect(ast.components[1].attachments[4]).toBeDefined();
-    expect(ast.components[1].attachments[4][0].type).toBe('ring');
-    expect(ast.components[1].attachments[4][0].ringNumber).toBe(2);
+    expect(ast.toObject()).toEqual({
+      type: 'molecule',
+      components: [
+        { type: 'linear', atoms: ['C'], bonds: [], attachments: {} },
+        {
+          type: 'ring',
+          atoms: 'c',
+          size: 6,
+          ringNumber: 1,
+          offset: 0,
+          substitutions: {},
+          attachments: {
+            4: [{
+              type: 'ring',
+              atoms: 'c',
+              size: 6,
+              ringNumber: 2,
+              offset: 0,
+              substitutions: {},
+              attachments: {},
+              bonds: [null, null, null, null, null, null],
+            }],
+          },
+          bonds: [null, null, null, null, null, null],
+        },
+      ],
+    });
   });
 
   test('round-trips biphenyl in branch', () => {
@@ -475,10 +546,27 @@ describe('Parser - Rings Inside Branches', () => {
 
   test('parses ring with ring attachment having substitution', () => {
     const ast = parse('c1ccc(n2ccccc2)cc1');
-    expect(ast.type).toBe('ring');
-    expect(ast.attachments[4]).toBeDefined();
-    expect(ast.attachments[4][0].type).toBe('ring');
-    expect(ast.attachments[4][0].substitutions[1]).toBe('n');
+    expect(ast.toObject()).toEqual({
+      type: 'ring',
+      atoms: 'c',
+      size: 6,
+      ringNumber: 1,
+      offset: 0,
+      substitutions: {},
+      attachments: {
+        4: [{
+          type: 'ring',
+          atoms: 'c',
+          size: 6,
+          ringNumber: 2,
+          offset: 0,
+          substitutions: { 1: 'n' },
+          attachments: {},
+          bonds: [null, null, null, null, null, null],
+        }],
+      },
+      bonds: [null, null, null, null, null, null],
+    });
   });
 
   test('round-trips ring with ring attachment having substitution', () => {
