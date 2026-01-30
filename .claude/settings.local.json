@@ -20,7 +20,9 @@
       "Bash(move atorvastatin-synthesis.js docs )",
       "Bash(move:*)",
       "Bash(move sildenafil-synthesis.js docs )",
-      "Bash(move ritonavir-synthesis.js docs )"
+      "Bash(move ritonavir-synthesis.js docs )",
+      "Bash(gh run list:*)",
+      "Bash(echo:*)"
     ]
   }
 }
