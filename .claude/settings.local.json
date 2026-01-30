@@ -15,7 +15,12 @@
       "Bash(timeout:*)",
       "Bash(powershell -Command:*)",
       "Bash(findstr:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(move test-drive.js docs )",
+      "Bash(move atorvastatin-synthesis.js docs )",
+      "Bash(move:*)",
+      "Bash(move sildenafil-synthesis.js docs )",
+      "Bash(move ritonavir-synthesis.js docs )"
     ]
   }
 }
