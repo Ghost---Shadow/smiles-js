@@ -510,7 +510,7 @@ export function RawFragment(smilesString) {
       };
     },
     toCode(varName = 'raw') {
-      return `const ${varName}1 = RawFragment(${JSON.stringify(smilesString)});`;
+      return `export const ${varName}1 = RawFragment(${JSON.stringify(smilesString)});`;
     },
     clone() {
       return RawFragment(smilesString);

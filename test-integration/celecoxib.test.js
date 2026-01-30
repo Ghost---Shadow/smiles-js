@@ -3,36 +3,37 @@ import { parse } from '../src/parser.js';
 import {
   Ring, Linear, FusedRing, Molecule,
 } from '../src/constructors.js';
+import { stripExports } from './utils.js';
 
 const CELECOXIB_SMILES = 'CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F';
 
-const CELECOXIB_CODE = `const v1 = Linear(['C']);
-const v2 = Ring({ atoms: 'C', size: 6 });
-const v3 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-const v4 = v3.substitute(4, 'N');
-const v5 = v4.substitute(5, 'N');
-const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
-const v7 = v5.fuse(v6, 0);
-const v8 = Linear(['C', 'F']);
-const v9 = Linear(['F']);
-const v10 = v8.attach(v9, 1);
-const v11 = Linear(['F']);
-const v12 = v10.attach(v11, 1);
-const v13 = Molecule([v1, v2, v7, v12]);`;
+const CELECOXIB_CODE = `export const v1 = Linear(['C']);
+export const v2 = Ring({ atoms: 'C', size: 6 });
+export const v3 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
+export const v4 = v3.substitute(4, 'N');
+export const v5 = v4.substitute(5, 'N');
+export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
+export const v7 = v5.fuse(v6, 0);
+export const v8 = Linear(['C', 'F']);
+export const v9 = Linear(['F']);
+export const v10 = v8.attach(v9, 1);
+export const v11 = Linear(['F']);
+export const v12 = v10.attach(v11, 1);
+export const v13 = Molecule([v1, v2, v7, v12]);`;
 
-const PYRAZOLE_PHENYL_CODE = `const v1 = Ring({ atoms: 'C', size: 5 });
-const v2 = v1.substitute(4, 'N');
-const v3 = v2.substitute(5, 'N');
-const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-const v5 = v3.fuse(v4, 0);
-const v6 = Linear(['C']);
-const v7 = Molecule([v5, v6]);`;
+const PYRAZOLE_PHENYL_CODE = `export const v1 = Ring({ atoms: 'C', size: 5 });
+export const v2 = v1.substitute(4, 'N');
+export const v3 = v2.substitute(5, 'N');
+export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+export const v5 = v3.fuse(v4, 0);
+export const v6 = Linear(['C']);
+export const v7 = Molecule([v5, v6]);`;
 
-const MINIMAL_SEQUENTIAL_CODE = `const v1 = Ring({ atoms: 'C', size: 4 });
-const v2 = Ring({ atoms: 'C', size: 4, ringNumber: 2 });
-const v3 = v1.fuse(v2, 0);
-const v4 = Linear(['C']);
-const v5 = Molecule([v3, v4]);`;
+const MINIMAL_SEQUENTIAL_CODE = `export const v1 = Ring({ atoms: 'C', size: 4 });
+export const v2 = Ring({ atoms: 'C', size: 4, ringNumber: 2 });
+export const v3 = v1.fuse(v2, 0);
+export const v4 = Linear(['C']);
+export const v5 = Molecule([v3, v4]);`;
 
 describe('Celecoxib Investigation', () => {
   test('full molecule parse', () => {
@@ -158,9 +159,10 @@ describe('Celecoxib Code Round-Trip', () => {
   test('generated code produces expected AST when executed', () => {
     const ast = parse(CELECOXIB_SMILES);
     const code = ast.toCode('v');
+    const executableCode = stripExports(code);
 
     // eslint-disable-next-line no-new-func
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn v13;`);
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn v13;`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     expect(reconstructed.type).toBe('molecule');
@@ -171,11 +173,12 @@ describe('Celecoxib Code Round-Trip', () => {
     const smiles = 'C1=CC(=NN1C2=CC=CC=C2)C';
     const ast = parse(smiles);
     const code = ast.toCode('v');
+    const executableCode = stripExports(code);
 
     expect(code).toBe(PYRAZOLE_PHENYL_CODE);
 
     // eslint-disable-next-line no-new-func
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn v7;`);
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn v7;`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     expect(reconstructed.type).toBe('molecule');
@@ -186,11 +189,12 @@ describe('Celecoxib Code Round-Trip', () => {
     const smiles = 'C1CC(C1C2CCC2)C';
     const ast = parse(smiles);
     const code = ast.toCode('v');
+    const executableCode = stripExports(code);
 
     expect(code).toBe(MINIMAL_SEQUENTIAL_CODE);
 
     // eslint-disable-next-line no-new-func
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn v5;`);
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn v5;`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     expect(reconstructed.type).toBe('molecule');

@@ -63,6 +63,6 @@ describe('Fragment', () => {
 
   test('toCode works on fragment', () => {
     const benzene = Fragment('c1ccccc1');
-    expect(benzene.toCode('v')).toBe("const v1 = Ring({ atoms: 'c', size: 6 });");
+    expect(benzene.toCode('v')).toBe("export const v1 = Ring({ atoms: 'c', size: 6 });");
   });
 });

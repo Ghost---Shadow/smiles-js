@@ -806,6 +806,10 @@ function decompileNode(node, indent, nextVar) {
 
 /**
  * Main decompile dispatcher - public API
+ * @param {Object} node - AST node to decompile
+ * @param {Object} options - Options
+ * @param {number} options.indent - Indentation level (default 0)
+ * @param {string} options.varName - Variable name prefix (default 'v')
  */
 export function decompile(node, options = {}) {
   const { indent = 0, varName = 'v' } = options;
@@ -813,5 +817,7 @@ export function decompile(node, options = {}) {
   const nextVar = createCounter(varName);
 
   const { code } = decompileNode(node, indentStr, nextVar);
-  return code;
+
+  // Always use export const
+  return code.replace(/^(\s*)const /gm, '$1export const ');
 }

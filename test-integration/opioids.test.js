@@ -3,6 +3,7 @@ import { parse } from '../src/parser.js';
 import {
   Ring, Linear, FusedRing, Molecule,
 } from '../src/constructors.js';
+import { stripExports } from './utils.js';
 
 // Note: Some complex opioid SMILES don't round-trip correctly due to parser limitations
 // Parser output used where possible - some molecules are unstable
@@ -49,19 +50,21 @@ describe('Opioids', () => {
       test('generated code is valid JavaScript', () => {
         const ast = parse(data.smiles);
         const code = ast.toCode('v');
+        const executableCode = stripExports(code);
 
         expect(() => {
           // eslint-disable-next-line no-new-func, no-new
-          new Function('Ring', 'Linear', 'FusedRing', 'Molecule', code);
+          new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
         }).not.toThrow();
       });
 
       test('codegen round-trip produces expected output', () => {
         const ast = parse(data.smiles);
         const code = ast.toCode('v');
+        const executableCode = stripExports(code);
 
         // eslint-disable-next-line no-new-func
-        const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${code}\nreturn ${data.lastVar};`);
+        const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${data.lastVar};`);
         const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
         expect(reconstructed.type).toBe(data.expectedType);
