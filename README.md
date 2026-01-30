@@ -280,6 +280,51 @@ console.log(ast.toCode());
 // const ring1 = Ring({ atoms: 'c', size: 6 });
 ```
 
+### Round-Trip Validation
+
+Automatically validate SMILES parsing fidelity with built-in round-trip testing:
+
+```javascript
+import {
+  validateRoundTrip,
+  isValidRoundTrip,
+  normalize,
+  parseWithValidation
+} from 'smiles-js';
+
+// Quick boolean check
+if (isValidRoundTrip('c1ccccc1')) {
+  console.log('Perfect round-trip!');
+}
+
+// Detailed validation
+const result = validateRoundTrip('COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1');
+console.log(result.status);  // 'perfect', 'stabilized', or 'unstable'
+
+if (result.stabilizes) {
+  console.log('Use normalized form:', result.firstRoundTrip);
+}
+
+// Automatic normalization
+const normalized = normalize('COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1');
+// Returns stabilized SMILES
+
+// Parse with automatic warnings
+const ast = parseWithValidation(smiles);
+// Warns if round-trip is imperfect
+
+// Silent mode
+const ast2 = parseWithValidation(smiles, { silent: true });
+
+// Strict mode (throws on imperfect)
+const ast3 = parseWithValidation(smiles, { strict: true });
+```
+
+**Round-Trip Validation Logic:**
+1. ✅ **Perfect**: First round-trip matches exactly → No action needed
+2. ⚠️ **Stabilized**: Second round-trip stabilizes → Use `normalize()` to get stable form
+3. ❌ **Unstable**: Doesn't stabilize after 2 round-trips → File a bug report
+
 ---
 
 ## 📊 Validation & Testing

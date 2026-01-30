@@ -6,6 +6,45 @@ This directory contains executable example scripts demonstrating the SMILES-JS l
 
 ## 🧪 Available Examples
 
+### 0. `roundtrip-validation-demo.js` - Round-Trip Validation 🔄 NEW!
+
+**Purpose**: Demonstrate automatic round-trip validation and stabilization detection
+**Features**:
+- Automatic detection of perfect vs. imperfect round-trips
+- Stabilization detection (2nd round-trip check)
+- Normalization of SMILES to stable form
+- Batch validation of multiple molecules
+- User guidance for each case
+
+**Run it:**
+```bash
+node docs/roundtrip-validation-demo.js
+```
+
+**What it shows:**
+- ✅ Perfect round-trip (Atorvastatin) - No action needed
+- ⚠️ Stabilizing molecule (Omeprazole) - Use normalized form
+- 🔄 Automatic normalization with `normalize()`
+- 📊 Batch validation of 5 molecules
+- 💡 API usage: `isValidRoundTrip()`, `validateRoundTrip()`, `normalize()`, `parseWithValidation()`
+
+**Key APIs demonstrated:**
+```javascript
+// Quick check
+isValidRoundTrip(smiles)  // → boolean
+
+// Detailed analysis
+validateRoundTrip(smiles)  // → {perfect, stabilizes, status, ...}
+
+// Get normalized form
+normalize(smiles)  // → normalized SMILES
+
+// Parse with warnings
+parseWithValidation(smiles)  // → AST (with warnings if imperfect)
+```
+
+---
+
 ### 1. `test-drive.js` - Quick Validation Test
 
 **Purpose**: Rapid testing and debugging of the library

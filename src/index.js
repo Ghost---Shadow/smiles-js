@@ -11,3 +11,10 @@ export { tokenize, TokenType } from './tokenizer.js';
 export { parse } from './parser.js';
 export { decompile } from './decompiler.js';
 export { Fragment } from './fragment.js';
+export {
+  validateRoundTrip,
+  parseWithValidation,
+  isValidRoundTrip,
+  normalize,
+  stabilizes,
+} from './roundtrip.js';
