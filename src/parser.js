@@ -415,14 +415,33 @@ function buildSingleRingNodeWithContext(
     // Find all atoms that branch from this ring atom (one depth deeper)
     // Only include atoms that start a new branch. An atom starts a new branch if:
     // 1. prevAtomIndex is null (first atom at this depth), OR
-    // 2. prevAtomIndex points to an atom in a different branch (different branchId)
+    // 2. prevAtomIndex points to an atom in a different branch (different branchId), OR
+    // 3. (Standalone rings only) afterBranchClose is true AND prevAtomIndex is an
+    //    excluded ring atom - this handles branch-crossing rings where the ring
+    //    dives into nested branches and then continues at the original depth
     // Exclude atoms that are part of any ring's path in the fused group
-    const branchAtoms = atoms.filter(
-      (a) => a.parentIndex === globalIdx
-        && a.branchDepth === atomDepth + 1
-        && (a.prevAtomIndex === null || atoms[a.prevAtomIndex]?.branchId !== a.branchId)
-        && !excludedPositions.has(a.index),
-    );
+    const branchAtoms = atoms.filter((a) => {
+      if (a.parentIndex !== globalIdx) return false;
+      if (a.branchDepth !== atomDepth + 1) return false;
+      if (excludedPositions.has(a.index)) return false;
+
+      // Check if this atom starts a new branch
+      if (a.prevAtomIndex === null) return true;
+      if (atoms[a.prevAtomIndex]?.branchId !== a.branchId) return true;
+
+      // Special case for branch-crossing STANDALONE rings only (not fused rings):
+      // If the previous atom at this depth is an excluded ring atom,
+      // this atom starts an attachment chain (it follows the ring inline).
+      // This handles both:
+      // - Sequential continuation: ring closes and chain continues in same branch
+      // - After branch close: a nested branch closed between prev and this atom
+      // For fused rings, this is handled by the fused ring attachment logic.
+      if (!fusedGroupPositions && excludedPositions.has(a.prevAtomIndex)) {
+        return true;
+      }
+
+      return false;
+    });
 
     // Note: Sequential continuation atoms (like "N1C" where C follows N after ring closure)
     // are NOT attachments - they're handled by including them in _allPositions and outputting
@@ -536,13 +555,15 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   // BUT stop when we hit atoms that are part of a different ring.
   const allRingPositions = new Set(allPositions);
 
-  // Build a set of all ring positions that aren't in this fused group
-  // These could be sibling rings OR rings inside branches
-  const otherRingPositions = new Set();
+  // Build a map of position -> ring boundary for rings not in this fused group
+  // We need to distinguish between:
+  // - Sibling rings at the SAME branch depth (should be excluded from sequential continuation)
+  // - Rings at DEEPER branch depths (these are attachments and should NOT be excluded)
+  const otherRingsByPosition = new Map();
   ringBoundaries.forEach((rb) => {
     const isInGroup = group.some((g) => g.ringNumber === rb.ringNumber);
     if (!isInGroup) {
-      rb.positions.forEach((pos) => otherRingPositions.add(pos));
+      rb.positions.forEach((pos) => otherRingsByPosition.set(pos, rb));
     }
   });
 
@@ -569,14 +590,52 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
 
       // Find atoms that directly follow this position (sequential continuation)
       // OR atoms that continue after a nested branch closes (afterBranchClose)
+      // Only exclude atoms that are part of SIBLING rings (same branch depth)
+      // Rings at deeper branch depths are attachments and should be included
       for (let ai = 0; ai < atoms.length; ai += 1) {
         const a = atoms[ai];
-        if (a.prevAtomIndex === pos
-            && a.branchDepth === posAtom.branchDepth
-            && a.branchId === posAtom.branchId
-            && !allRingPositions.has(a.index)
-            && !allPositions.has(a.index)) {
-          // Check if this atom is part of a ring at this depth
+        if (a.prevAtomIndex !== pos) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+        if (a.branchDepth !== posAtom.branchDepth || a.branchId !== posAtom.branchId) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+        if (allRingPositions.has(a.index) || allPositions.has(a.index)) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        // Check if this atom is part of another ring
+        const otherRing = otherRingsByPosition.get(a.index);
+        if (otherRing) {
+          // This atom is part of a ring not in our fused group
+          // Only exclude if it's a SIBLING ring (same branch depth as the fused group's base)
+          // Rings at deeper depths are attachments and should be included
+          const baseBranchDepth = group[0].branchDepth;
+          if (otherRing.branchDepth === baseBranchDepth) {
+            // Sibling ring at same depth - exclude
+            // eslint-disable-next-line no-continue
+            continue;
+          }
+          // Ring at deeper depth - this is an attachment, include it
+          // Add all atoms of this ring to allPositions
+          for (let ri = 0; ri < otherRing.positions.length; ri += 1) {
+            const ringPos = otherRing.positions[ri];
+            if (!allPositions.has(ringPos)) {
+              allPositions.add(ringPos);
+              addedNewPositions = true;
+            }
+            // Add to allRingPositions so these atoms are treated as ring atoms
+            allRingPositions.add(ringPos);
+          }
+          // Track this ring for codegen if not already tracked
+          if (!sequentialRings.includes(otherRing)) {
+            sequentialRings.push(otherRing);
+          }
+        } else {
+          // Check if this atom is part of a ring at this depth (from our fused group)
           const atomRing = ringBoundaries.find(
             (rb) => rb.positions.includes(a.index) && rb.branchDepth === a.branchDepth,
           );
@@ -709,6 +768,13 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
   // Group fused rings
   const fusedGroups = groupFusedRings(containedRings);
 
+  // Build a set of ALL ring positions across all groups
+  // Used to prevent adding atoms from other rings as sequential continuations
+  const globalRingPositions = new Set();
+  containedRings.forEach((ring) => {
+    ring.positions.forEach((pos) => globalRingPositions.add(pos));
+  });
+
   // Map atom index to its ring group
   // Include sequential continuation atoms (atoms that follow ring closures inline)
   const atomToGroup = new Map();
@@ -720,7 +786,8 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
 
     // Also include sequential continuation atoms that follow ring-closing atoms
     // These atoms will be output inline with the fused ring, not as separate linear chains
-    const allRingPositions = new Set(allPositions);
+    // NOTE: We don't add atoms from OTHER rings here - sequential rings are handled
+    // separately in the main loop by processing each group
     group.forEach((ring) => {
       const endPos = ring.end;
       const endAtom = allAtoms[endPos];
@@ -730,7 +797,7 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
               && a.branchDepth === endAtom.branchDepth
               && a.branchId === endAtom.branchId
               && !a.afterBranchClose
-              && !allRingPositions.has(a.index)) {
+              && !globalRingPositions.has(a.index)) {  // Exclude atoms from OTHER rings
             allPositions.add(a.index);
           }
         });
@@ -770,12 +837,21 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
         const ringNode = buildRingGroupNodeWithContext(group, allAtoms, ringBoundaries);
         components.push(ringNode);
         processedGroups.add(groupIdx);
+
+        // Update atomToGroup with all positions from the built ring node
+        // This includes sequential continuation atoms that were discovered during ring building
+        // eslint-disable-next-line no-underscore-dangle
+        const ringAllPositions = ringNode._allPositions || new Set();
+        ringAllPositions.forEach((pos) => {
+          if (!atomToGroup.has(pos)) {
+            atomToGroup.set(pos, groupIdx);
+          }
+        });
       }
 
-      // Skip remaining atoms in this ring group
-      const group = fusedGroups[groupIdx];
-      const maxPos = Math.max(...group.flatMap((r) => r.positions));
-      while (i + 1 < sameDepthAtoms.length && sameDepthAtoms[i + 1].index <= maxPos) {
+      // Skip remaining atoms in this SAME ring group (not other groups)
+      while (i + 1 < sameDepthAtoms.length
+             && atomToGroup.get(sameDepthAtoms[i + 1].index) === groupIdx) {
         i += 1;
       }
     } else {

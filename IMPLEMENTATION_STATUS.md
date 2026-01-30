@@ -186,6 +186,8 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 16. Fixed linear chain bonds - keep null values to preserve positional information
 17. Added sequential continuation ring detection for single-ring groups (celecoxib pattern)
 18. Converted all test assertions to exact value matching - no `toBeDefined()`, `typeof`, or `toHaveLength()` weak assertions
+19. Fixed deeply nested branches with multiple rings being lost (Valsartan, biphenyl patterns)
+20. Fixed sequential non-fused rings in branches being skipped (changed `atomToGroup.has()` to `atomToGroup.get() === groupIdx`)
 
 ---
 
@@ -280,6 +282,29 @@ The fix detects when a single ring closes at a deeper branch level and recursive
 
 ---
 
+## ✅ FIXED: Deeply Nested Branches with Multiple Rings
+
+**Fixed issues with parser losing deeply nested branches containing rings.**
+
+### Valsartan - NOW WORKING
+```
+Input:  CCCCC(=O)N(CC1=CC=CC=C1C2=CC=CC=C2C3=NNN=N3)C(C(C)C)C(=O)O
+Output: CCCCC(=O)N(CC1=CC=CC=C1C2=CC=CC=C2C3=NNN=N3)C(C(C)C)C(=O)O
+```
+
+### Ketoprofen (Biphenyl Variant) - NOW WORKING
+```
+Input:  CC(c1ccccc1c2ccccc2)C(=O)O
+Output: CC(c1ccccc1c2ccccc2)C(=O)O
+```
+
+The fix involved two changes:
+1. **Sequential rings at different depths**: The code for handling sequential continuation atoms was excluding ALL atoms from other rings. Changed to only exclude atoms from **sibling rings** (same branch depth), while properly including atoms from **attachment rings** (deeper branch depths).
+
+2. **Sequential rings in the same branch**: The loop that skips atoms after processing a ring group was skipping atoms from ALL groups instead of just the current group. Changed `atomToGroup.has(...)` to `atomToGroup.get(...) === groupIdx` to only skip atoms in the same group.
+
+---
+
 ## 🔴 Known Parser Bugs
 
 ### Cannabinoid Tricyclic Structures
@@ -298,13 +323,12 @@ These have complex nested ring systems with multiple rings (2, 3) defined inside
 - Piroxicam: `CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3`
 - Oxaprozin: `OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3`
 - Losartan: `CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO`
-- Valsartan: `CCCCC(=O)N(Cc1ccc(cc1)c2ccccc2c3n[nH]nn3)C(C(C)C)C(=O)O`
 
 ---
 
 ## Test Coverage
 
-- 419 tests passing across 25 test files
-- 7 tests skipped (known broken molecules)
+- 450 tests passing across 25 test files
+- 2 tests skipped (known broken molecules)
 - Tests cover parsing, code generation, and round-trip validation
 - All test assertions use exact value matching (`.toEqual()`, `.toBe()`) - no weak assertions

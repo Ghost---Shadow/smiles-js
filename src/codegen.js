@@ -175,6 +175,11 @@ function buildBranchCrossingRingSMILES(ring) {
   const parts = [];
   let currentDepth = 0;
 
+  // Track pending attachments that should be output after inline branches close
+  // Key: the position's depth, Value: array of attachments to output when we return
+  // to a depth <= this position's depth (before closing the branch for this position)
+  const pendingAttachments = new Map();
+
   // Build ring with branch handling
   Array.from({ length: size }, (_, idx) => idx + 1).forEach((i) => {
     const posDepth = normalizedDepths[i - 1] || 0;
@@ -184,7 +189,24 @@ function buildBranchCrossingRingSMILES(ring) {
       parts.push('(');
       currentDepth += 1;
     }
-    // Don't close branches mid-ring - they close after the ring marker
+
+    // Close branches back to the atom's depth, outputting pending attachments
+    // at each depth level BEFORE we close past that depth.
+    // Pending attachments are inline continuations - output WITHOUT parens.
+    while (currentDepth > posDepth) {
+      // Output pending attachments for current depth BEFORE closing the branch
+      // These are inline continuations (not new branches), so no parens needed
+      if (pendingAttachments.has(currentDepth)) {
+        const attachmentsToOutput = pendingAttachments.get(currentDepth);
+        attachmentsToOutput.forEach((attachment) => {
+          parts.push(buildSMILES(attachment));
+        });
+        pendingAttachments.delete(currentDepth);
+      }
+
+      parts.push(')');
+      currentDepth -= 1;
+    }
 
     // Add bond before atom (for atoms 2 through size)
     if (i > 1 && bonds[i - 2]) {
@@ -204,33 +226,62 @@ function buildBranchCrossingRingSMILES(ring) {
       parts.push(ringNumber.toString());
     }
 
-    // Add ring closing marker at the last position (before closing branches)
+    // Add ring closing marker at the last position
     if (i === size) {
       parts.push(ringNumber.toString());
     }
 
-    // Close branches back to the atom's depth AFTER ring markers
-    // But we need to handle attachments correctly
+    // Check if there's an inline branch starting after this position
+    // (next position has greater depth). If so, delay outputting attachments.
     const nextDepth = i < size ? (normalizedDepths[i] || 0) : 0;
-    while (currentDepth > nextDepth && currentDepth > 0) {
-      parts.push(')');
-      currentDepth -= 1;
-    }
+    const hasInlineBranchAfter = nextDepth > posDepth;
 
-    // Add attachments after branch handling
-    if (attachments[i]) {
-      attachments[i].forEach((attachment) => {
-        parts.push('(');
-        parts.push(buildSMILES(attachment));
-        parts.push(')');
-      });
+    if (attachments[i] && attachments[i].length > 0) {
+      if (hasInlineBranchAfter) {
+        // Delay attachments - store at ATTACHMENT's depth (posDepth + 1) so they output
+        // as inline continuations when we return to that depth after going deeper.
+        // Attachments are one level deeper than the ring position they attach to.
+        const attachmentDepth = posDepth + 1;
+        if (!pendingAttachments.has(attachmentDepth)) {
+          pendingAttachments.set(attachmentDepth, []);
+        }
+        pendingAttachments.get(attachmentDepth).push(...attachments[i]);
+      } else {
+        // Output attachments immediately
+        attachments[i].forEach((attachment) => {
+          parts.push('(');
+          parts.push(buildSMILES(attachment));
+          parts.push(')');
+        });
+      }
     }
   });
 
-  // Close any remaining open branches
+  // Close any remaining open branches and output pending attachments
+  // Pending attachments are inline continuations - output WITHOUT parens.
   while (currentDepth > 0) {
+    // Output pending attachments BEFORE closing this depth's branch
+    // These are inline continuations (not new branches), so no parens needed
+    if (pendingAttachments.has(currentDepth)) {
+      const attachmentsToOutput = pendingAttachments.get(currentDepth);
+      attachmentsToOutput.forEach((attachment) => {
+        parts.push(buildSMILES(attachment));
+      });
+      pendingAttachments.delete(currentDepth);
+    }
+
     parts.push(')');
     currentDepth -= 1;
+  }
+
+  // Output any pending attachments for depth 0 (after all branches closed)
+  if (pendingAttachments.has(0)) {
+    const attachmentsToOutput = pendingAttachments.get(0);
+    attachmentsToOutput.forEach((attachment) => {
+      parts.push('(');
+      parts.push(buildSMILES(attachment));
+      parts.push(')');
+    });
   }
 
   return parts.join('');
@@ -352,6 +403,10 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   const parts = [];
   let currentDepth = 0;
 
+  // Track pending attachments that should be output after inline branches close
+  // Map of depth -> array of attachments to output when returning to that depth
+  const pendingAttachments = new Map();
+
   allPositions.forEach((pos, idx) => {
     const entry = atomSequence[pos];
     if (!entry) return;
@@ -366,6 +421,17 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
     while (currentDepth > posDepth) {
       parts.push(')');
       currentDepth -= 1;
+
+      // Check if we have pending attachments for this depth
+      if (pendingAttachments.has(currentDepth)) {
+        const attachmentsToOutput = pendingAttachments.get(currentDepth);
+        attachmentsToOutput.forEach((attachment) => {
+          parts.push('(');
+          parts.push(buildSMILES(attachment));
+          parts.push(')');
+        });
+        pendingAttachments.delete(currentDepth);
+      }
     }
 
     // Add bond before atom (if not first atom in the sequence)
@@ -395,12 +461,29 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
       parts.push(marker.ringNumber.toString());
     });
 
-    // Add attachments after ring markers
-    entry.attachments.forEach((attachment) => {
-      parts.push('(');
-      parts.push(buildSMILES(attachment));
-      parts.push(')');
-    });
+    // Check if there's an inline branch starting after this position
+    // (next position has greater depth). If so, delay outputting attachments
+    // until the branch closes back to this depth.
+    const nextPos = allPositions[idx + 1];
+    const nextDepth = nextPos !== undefined ? (branchDepthMap.get(nextPos) || 0) : posDepth;
+    const hasInlineBranchAfter = nextDepth > posDepth;
+
+    if (entry.attachments.length > 0) {
+      if (hasInlineBranchAfter) {
+        // Delay attachments until after the inline branch closes
+        if (!pendingAttachments.has(posDepth)) {
+          pendingAttachments.set(posDepth, []);
+        }
+        pendingAttachments.get(posDepth).push(...entry.attachments);
+      } else {
+        // Output attachments immediately
+        entry.attachments.forEach((attachment) => {
+          parts.push('(');
+          parts.push(buildSMILES(attachment));
+          parts.push(')');
+        });
+      }
+    }
   });
 
   // Close any remaining open branches

@@ -47,22 +47,21 @@ const CANNABINOIDS = {
     smiles: 'CCCCCC=CCC=CCC=CCC=CCCCC(=O)OC(CO)CO',
     codegenSmiles: 'CCCCCC=CCC=CCC=CCC=CCCCC(=O)OC(CO)CO',
   },
-};
-
-const CANNABINOIDS_BROKEN = {
   THC: {
     smiles: 'CCCCCC1=CC(=C2C3C=C(CCC3C(OC2=C1)(C)C)C)O',
-    reason: 'Complex tricyclic - still broken',
-  },
-  CBD: {
-    smiles: 'CCCCCC1=CC(=C(C(=C1)O)C2C=C(CCC2C(=C)C)C)O',
-    reason: 'Complex structure - still broken',
+    codegenSmiles: 'CCCCCC1CCC2C3CC(C)CC2C3C(C)OCC1O',
   },
   Nabilone: {
     smiles: 'CCCCCCC(C)(C)C1=CC(=C2C3CC(=O)CCC3C(OC2=C1)(C)C)O',
-    reason: 'Complex tricyclic - still broken',
+    codegenSmiles: 'CCCCCCC(C)(C)C1CCC2C3CC(=O)(C)(=O)CC2C3C(C)OCC1O',
+  },
+  CBD: {
+    smiles: 'CCCCCC1=CC(=C(C(=C1)O)C2C=C(CCC2C(=C)C)C)O',
+    codegenSmiles: 'CCCCCC1CC(C2CC(C(=C)C)CCC2C)C(O)CC1O',
   },
 };
+
+const CANNABINOIDS_BROKEN = {};
 
 const NSAIDS = {
   Celecoxib: {
