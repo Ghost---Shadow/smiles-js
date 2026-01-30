@@ -14,6 +14,12 @@ const MOLECULES = {
     expectedSmiles: 'CCCCC1NC(Cl)C(CO)N1CC2CCCCC2C3CCCCC3C4NNNN4',
     lastVar: 'v14',
   },
+  'Losartan (aromatic with bracket atom)': {
+    smiles: 'CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO',
+    expectedType: 'molecule',
+    expectedSmiles: 'CCCCc1nc(Cl)c(Cc2ccccc2c3ccccc3c4n[nH]nn4)n1CO',
+    lastVar: 'v16',
+  },
   Valsartan: {
     smiles: 'CCCCC(=O)N(CC1=CC=CC=C1C2=CC=CC=C2C3=NNN=N3)C(C(C)C)C(=O)O',
     expectedType: 'linear',

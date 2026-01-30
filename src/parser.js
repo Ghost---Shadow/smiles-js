@@ -275,12 +275,7 @@ function buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch = fa
   const baseDepth = atomList[0].branchDepth;
   const sameDepthAtoms = atomList.filter((a) => a.branchDepth === baseDepth);
 
-  const atomValues = sameDepthAtoms.map((atom) => {
-    if (typeof atom.value === 'string') {
-      return atom.value;
-    }
-    return atom.value.raw || 'C';
-  });
+  const atomValues = sameDepthAtoms.map((atom) => atom.rawValue);
 
   // For branches, include the bond on the first atom (connection to parent)
   // For main chain, start from second atom (skip first atom's bond)
@@ -346,8 +341,7 @@ function buildSingleRingNodeWithContext(
   // Determine base atom type (most common, prefer later atoms in tie)
   const atomCounts = new Map();
   ringAtoms.forEach((atom) => {
-    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
-    atomCounts.set(val, (atomCounts.get(val) || 0) + 1);
+    atomCounts.set(atom.rawValue, (atomCounts.get(atom.rawValue) || 0) + 1);
   });
 
   let baseAtom = 'C';
@@ -362,9 +356,8 @@ function buildSingleRingNodeWithContext(
   // Calculate substitutions (atoms that differ from base)
   const substitutions = {};
   ringAtoms.forEach((atom, idx) => {
-    const val = typeof atom.value === 'string' ? atom.value : atom.value.raw || 'C';
-    if (val !== baseAtom) {
-      substitutions[idx + 1] = val;
+    if (atom.rawValue !== baseAtom) {
+      substitutions[idx + 1] = atom.rawValue;
     }
   });
 

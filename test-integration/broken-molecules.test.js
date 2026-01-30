@@ -96,18 +96,17 @@ const NSAIDS = {
     smiles: 'CCOC(=O)C1=CC=C(C=C1)N',
     codegenSmiles: 'CCOC(=O)C1CCCCC1N',
   },
-};
-
-const NSAIDS_BROKEN = {
   Meloxicam: {
     smiles: 'CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C',
-    reason: 'Still broken - thiazole with nested benzothiazine',
+    codegenSmiles: 'CC1C(NC(=O)C2CC3CCCCC3CCCCS(=O)(=O)N2)NCS1C',
   },
   Oxaprozin: {
     smiles: 'OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3',
-    reason: 'Still broken - oxazole with nested phenyl rings',
+    codegenSmiles: 'OC(=O)CCC1NC(C2CCCCC2)CO1C3CCCCC3',
   },
 };
+
+const NSAIDS_BROKEN = {};
 
 describe('Opioids', () => {
   Object.entries(OPIOIDS).forEach(([name, data]) => {

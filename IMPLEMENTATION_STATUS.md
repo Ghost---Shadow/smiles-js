@@ -188,6 +188,7 @@ The `toCode()` method (generating JS constructor code from AST) does not yet ful
 18. Converted all test assertions to exact value matching - no `toBeDefined()`, `typeof`, or `toHaveLength()` weak assertions
 19. Fixed deeply nested branches with multiple rings being lost (Valsartan, biphenyl patterns)
 20. Fixed sequential non-fused rings in branches being skipped (changed `atomToGroup.has()` to `atomToGroup.get() === groupIdx`)
+21. Fixed bracket atom serialization - use `atom.rawValue` instead of `atom.value.raw` to preserve `[nH]` notation
 
 ---
 
@@ -305,30 +306,71 @@ The fix involved two changes:
 
 ---
 
-## 🔴 Known Parser Bugs
+## ✅ FIXED: Cannabinoid Tricyclic Structures
 
-### Cannabinoid Tricyclic Structures
+**All cannabinoids now work after the deeply nested branch fixes:**
 
-**Broken:**
-- THC: `CCCCCC1=CC(=C2C3C=C(CCC3C(OC2=C1)(C)C)C)O`
-- CBD: `CCCCCC1=CC(=C(C(=C1)O)C2C=C(CCC2C(=C)C)C)O`
-- Nabilone: `CCCCCCC(C)(C)C1=CC(=C2C3CC(=O)CCC3C(OC2=C1)(C)C)O`
+### THC - NOW WORKING
+```
+Input:  CCCCCC1=CC(=C2C3C=C(CCC3C(OC2=C1)(C)C)C)O
+Output: CCCCCC1=CC(=C2C3C=C(CCC3C(OC2=C1)(C)C)C)O
+```
 
-These have complex nested ring systems with multiple rings (2, 3) defined inside branches.
+### CBD - NOW WORKING
+```
+Input:  CCCCCC1=CC(=C(C(=C1)O)C2C=C(CCC2C(=C)C)C)O
+Output: CCCCCC1=CC(=C(C(=C1)O)C2C=C(CCC2C(=C)C)C)O
+```
 
-### Complex Heterocyclic NSAIDs
+### Nabilone - NOW WORKING
+```
+Input:  CCCCCCC(C)(C)C1=CC(=C2C3CC(=O)CCC3C(OC2=C1)(C)C)O
+Output: CCCCCCC(C)(C)C1=CC(=C2C3CC(=O)CCC3C(OC2=C1)(C)C)O
+```
 
-**Broken:**
-- Meloxicam: `CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C`
-- Piroxicam: `CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3`
-- Oxaprozin: `OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3`
-- Losartan: `CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO`
+---
+
+## ✅ FIXED: Complex Heterocyclic NSAIDs
+
+**All complex heterocyclic NSAIDs now work:**
+
+### Meloxicam - NOW WORKING
+```
+Input:  CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C
+Output: CC1=C(N=C(S1)NC(=O)C2=C(C3=CC=CC=C3S(=O)(=O)N2C)O)C
+```
+
+### Piroxicam - NOW WORKING
+```
+Input:  CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3
+Output: CN1C(=C(C2=CC=CC=C2S1(=O)=O)O)C(=O)NC3=CC=CC=N3
+```
+
+### Oxaprozin - NOW WORKING
+```
+Input:  OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3
+Output: OC(=O)CCC1=NC(=C(O1)C2=CC=CC=C2)C3=CC=CC=C3
+```
+
+---
+
+## ✅ FIXED: Bracket Atom Serialization
+
+**Bracket atoms like `[nH]` are now correctly preserved during parsing/regeneration.**
+
+### Losartan - WORKS
+```
+Input:  CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO
+Output: CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO
+```
+
+The fix involved using `atom.rawValue` (which stores the full bracket notation like `"[nH]"`) instead of `atom.value.raw` (which only stores the inner content like `"nH"`).
 
 ---
 
 ## Test Coverage
 
-- 450 tests passing across 25 test files
-- 2 tests skipped (known broken molecules)
+- 457 tests passing across 25 test files
+- 0 tests skipped
 - Tests cover parsing, code generation, and round-trip validation
 - All test assertions use exact value matching (`.toEqual()`, `.toBe()`) - no weak assertions

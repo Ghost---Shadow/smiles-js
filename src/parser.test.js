@@ -191,14 +191,13 @@ describe('Parser - Bracketed Atoms', () => {
   test('parses bracketed atom', () => {
     const ast = parse('[NH3+]');
     expect(ast.type).toBe('linear');
-    expect(ast.atoms).toHaveLength(1);
-    expect(ast.atoms[0]).toBe('NH3+');
+    expect(ast.atoms).toEqual(['[NH3+]']);
   });
 
   test('parses isotope notation', () => {
     const ast = parse('[13C]');
     expect(ast.type).toBe('linear');
-    expect(ast.atoms[0]).toBe('13C');
+    expect(ast.atoms).toEqual(['[13C]']);
   });
 });
 
