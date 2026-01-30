@@ -484,7 +484,6 @@ function buildSingleRingNodeWithContext(
   ringNode._branchDepths = ringAtoms.map((a) => a.branchDepth);
   ringNode._parentIndices = ringAtoms.map((a) => a.parentIndex);
   /* eslint-enable no-underscore-dangle */
-
   return ringNode;
 }
 
@@ -790,7 +789,7 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
               && a.branchDepth === endAtom.branchDepth
               && a.branchId === endAtom.branchId
               && !a.afterBranchClose
-              && !globalRingPositions.has(a.index)) {  // Exclude atoms from OTHER rings
+              && !globalRingPositions.has(a.index)) { // Exclude atoms from OTHER rings
             allPositions.add(a.index);
           }
         });
