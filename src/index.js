@@ -3,7 +3,7 @@
  */
 
 export {
-  Ring, Linear, FusedRing, Molecule,
+  Ring, Linear, FusedRing, Molecule, RawFragment,
 } from './constructors.js';
 export { ASTNodeType } from './ast.js';
 export { buildSMILES } from './codegen.js';
