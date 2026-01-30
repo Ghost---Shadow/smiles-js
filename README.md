@@ -409,6 +409,7 @@ console.log(mol.get_svg());
 
 ## 📖 Documentation
 
+- **[Examples & Tutorials](./docs/EXAMPLES.md)** - 6 executable examples with real drugs 🧪
 - **[Implementation Roadmap](./docs/IMPLEMENTATION_ROADMAP.md)** - Complete feature roadmap
 - **[Parser Design](./docs/PARSER_REFACTOR_PLAN.md)** - Grammar and architecture
 - **[Implementation Status](./IMPLEMENTATION_STATUS.md)** - Current status and testing
