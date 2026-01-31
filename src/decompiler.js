@@ -42,6 +42,29 @@ function decompileRing(ring, indent, nextVar) {
     options.offset = ring.offset;
   }
 
+  // Include bonds if present and not all null
+  const bonds = ring.bonds || [];
+  const hasNonNullBonds = bonds.some((b) => b !== null);
+  if (hasNonNullBonds) {
+    const bondsStr = bonds.map((b) => (b === null ? 'null' : `'${b}'`)).join(', ');
+    options.bonds = `[${bondsStr}]`;
+  }
+
+  // Include branchDepths for branch-crossing rings WITH attachments
+  // e.g., Gabapentin C1CCC(CC1)(CC(=O)O)CN has branchDepths [0, 0, 0, 0, 1, 1]
+  // meaning the ring path crosses from depth 0 to depth 1 (enters a branch)
+  // Only needed when there are attachments that need to be placed correctly
+  /* eslint-disable no-underscore-dangle */
+  if (ring._branchDepths && ring._branchDepths.length > 0) {
+    const firstDepth = ring._branchDepths[0];
+    const hasVaryingDepths = ring._branchDepths.some((d) => d !== firstDepth);
+    const hasAttachments = Object.keys(ring.attachments || {}).length > 0;
+    if (hasVaryingDepths && hasAttachments) {
+      options.branchDepths = `[${ring._branchDepths.join(', ')}]`;
+    }
+  }
+  /* eslint-enable no-underscore-dangle */
+
   const optionsStr = Object.entries(options)
     .map(([key, value]) => `${key}: ${value}`)
     .join(', ');
@@ -129,16 +152,29 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
     ringFinalVars.push(ringFinalVar);
   });
 
+  // Check for leading bond (bond connecting to previous component)
+  /* eslint-disable no-underscore-dangle */
+  const leadingBond = fusedRing._leadingBond;
+  /* eslint-enable no-underscore-dangle */
+
   // Fuse rings together
   const finalVar = nextVar();
   if (fusedRing.rings.length === 2) {
     const ring1 = ringFinalVars[0];
     const ring2 = ringFinalVars[1];
     const { offset } = fusedRing.rings[1];
-    lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset});`);
+    if (leadingBond) {
+      lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset}, { leadingBond: '${leadingBond}' });`);
+    } else {
+      lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset});`);
+    }
   } else {
     const ringsStr = ringFinalVars.join(', ');
-    lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}]);`);
+    if (leadingBond) {
+      lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { leadingBond: '${leadingBond}' });`);
+    } else {
+      lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}]);`);
+    }
   }
 
   return { code: lines.join('\n'), finalVar };

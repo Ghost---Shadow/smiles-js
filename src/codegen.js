@@ -41,7 +41,14 @@ export function buildSMILES(ast) {
  * @returns {string} SMILES string
  */
 export function buildMoleculeSMILES(molecule) {
-  const parts = molecule.components.map((component) => buildSMILES(component));
+  const parts = molecule.components.map((component, idx) => {
+    const smiles = buildSMILES(component);
+    // Check if component has a leading bond (connecting to previous component)
+    /* eslint-disable no-underscore-dangle */
+    const leadingBond = idx > 0 && component._leadingBond ? component._leadingBond : '';
+    /* eslint-enable no-underscore-dangle */
+    return leadingBond + smiles;
+  });
   return parts.join('');
 }
 
@@ -175,9 +182,10 @@ function buildBranchCrossingRingSMILES(ring) {
   const parts = [];
   let currentDepth = 0;
 
-  // Track pending attachments that should be output after inline branches close
-  // Key: the position's depth, Value: array of attachments to output when we return
-  // to a depth <= this position's depth (before closing the branch for this position)
+  // Track pending attachments that should be output after we return from deeper branches
+  // Key: the POSITION's 1-indexed index in the ring, Value: { depth, attachments, isSibling }
+  // Sibling attachments are output with their own parens
+  // Inline continuation attachments are output without extra parens
   const pendingAttachments = new Map();
 
   // Build ring with branch handling
@@ -191,21 +199,52 @@ function buildBranchCrossingRingSMILES(ring) {
     }
 
     // Close branches back to the atom's depth, outputting pending attachments
-    // at each depth level BEFORE we close past that depth.
-    // Pending attachments are inline continuations - output WITHOUT parens.
     while (currentDepth > posDepth) {
-      // Output pending attachments for current depth BEFORE closing the branch
-      // These are inline continuations (not new branches), so no parens needed
-      if (pendingAttachments.has(currentDepth)) {
-        const attachmentsToOutput = pendingAttachments.get(currentDepth);
-        attachmentsToOutput.forEach((attachment) => {
-          parts.push(buildSMILES(attachment));
-        });
-        pendingAttachments.delete(currentDepth);
-      }
+      // Output non-sibling attachments BEFORE closing the branch (they're inside)
+      // Non-siblings at depth = currentDepth - 1 should be output now
+      const toDeleteNonSibling = [];
+      pendingAttachments.forEach((data, attachPos) => {
+        if (data.depth === currentDepth - 1) {
+          const nonSiblings = data.attachments.filter((a) => {
+            /* eslint-disable no-underscore-dangle */
+            return a._isSibling === false;
+            /* eslint-enable no-underscore-dangle */
+          });
+          nonSiblings.forEach((attachment) => {
+            parts.push(buildSMILES(attachment));
+          });
+          // Keep only siblings for later
+          /* eslint-disable no-underscore-dangle, no-param-reassign */
+          data.attachments = data.attachments.filter((a) => a._isSibling !== false);
+          /* eslint-enable no-underscore-dangle, no-param-reassign */
+          if (data.attachments.length === 0) {
+            toDeleteNonSibling.push(attachPos);
+          }
+        }
+      });
+      toDeleteNonSibling.forEach((pos) => pendingAttachments.delete(pos));
 
       parts.push(')');
       currentDepth -= 1;
+
+      // Output sibling attachments AFTER closing to this depth (they're outside)
+      const toDeleteSibling = [];
+      pendingAttachments.forEach((data, attachPos) => {
+        if (data.depth === currentDepth) {
+          data.attachments.forEach((attachment) => {
+            /* eslint-disable no-underscore-dangle */
+            const isSibling = attachment._isSibling !== false;
+            /* eslint-enable no-underscore-dangle */
+            if (isSibling) {
+              parts.push('(');
+              parts.push(buildSMILES(attachment));
+              parts.push(')');
+            }
+          });
+          toDeleteSibling.push(attachPos);
+        }
+      });
+      toDeleteSibling.forEach((pos) => pendingAttachments.delete(pos));
     }
 
     // Add bond before atom (for atoms 2 through size)
@@ -238,14 +277,9 @@ function buildBranchCrossingRingSMILES(ring) {
 
     if (attachments[i] && attachments[i].length > 0) {
       if (hasInlineBranchAfter) {
-        // Delay attachments - store at ATTACHMENT's depth (posDepth + 1) so they output
-        // as inline continuations when we return to that depth after going deeper.
-        // Attachments are one level deeper than the ring position they attach to.
-        const attachmentDepth = posDepth + 1;
-        if (!pendingAttachments.has(attachmentDepth)) {
-          pendingAttachments.set(attachmentDepth, []);
-        }
-        pendingAttachments.get(attachmentDepth).push(...attachments[i]);
+        // Delay attachments - output after inline branch closes back to this depth
+        // Both siblings and inline continuations are output when returning to posDepth
+        pendingAttachments.set(i, { depth: posDepth, attachments: [...attachments[i]] });
       } else {
         // Output attachments immediately
         attachments[i].forEach((attachment) => {
@@ -257,32 +291,71 @@ function buildBranchCrossingRingSMILES(ring) {
     }
   });
 
-  // Close any remaining open branches and output pending attachments
-  // Pending attachments are inline continuations - output WITHOUT parens.
+  // Close any remaining open branches
   while (currentDepth > 0) {
-    // Output pending attachments BEFORE closing this depth's branch
-    // These are inline continuations (not new branches), so no parens needed
-    if (pendingAttachments.has(currentDepth)) {
-      const attachmentsToOutput = pendingAttachments.get(currentDepth);
-      attachmentsToOutput.forEach((attachment) => {
-        parts.push(buildSMILES(attachment));
-      });
-      pendingAttachments.delete(currentDepth);
-    }
+    // Output non-sibling attachments BEFORE closing the branch
+    const toDeleteNonSibling = [];
+    pendingAttachments.forEach((data, attachPos) => {
+      if (data.depth === currentDepth - 1) {
+        const nonSiblings = data.attachments.filter((a) => {
+          /* eslint-disable no-underscore-dangle */
+          return a._isSibling === false;
+          /* eslint-enable no-underscore-dangle */
+        });
+        nonSiblings.forEach((attachment) => {
+          parts.push(buildSMILES(attachment));
+        });
+        /* eslint-disable no-underscore-dangle, no-param-reassign */
+        data.attachments = data.attachments.filter((a) => a._isSibling !== false);
+        /* eslint-enable no-underscore-dangle, no-param-reassign */
+        if (data.attachments.length === 0) {
+          toDeleteNonSibling.push(attachPos);
+        }
+      }
+    });
+    toDeleteNonSibling.forEach((pos) => pendingAttachments.delete(pos));
 
     parts.push(')');
     currentDepth -= 1;
+
+    // Output sibling attachments AFTER closing to this depth
+    const toDeleteSibling = [];
+    pendingAttachments.forEach((data, attachPos) => {
+      if (data.depth === currentDepth) {
+        data.attachments.forEach((attachment) => {
+          /* eslint-disable no-underscore-dangle */
+          const isSibling = attachment._isSibling !== false;
+          /* eslint-enable no-underscore-dangle */
+          if (isSibling) {
+            parts.push('(');
+            parts.push(buildSMILES(attachment));
+            parts.push(')');
+          }
+        });
+        toDeleteSibling.push(attachPos);
+      }
+    });
+    toDeleteSibling.forEach((pos) => pendingAttachments.delete(pos));
   }
 
-  // Output any pending attachments for depth 0 (after all branches closed)
-  if (pendingAttachments.has(0)) {
-    const attachmentsToOutput = pendingAttachments.get(0);
-    attachmentsToOutput.forEach((attachment) => {
-      parts.push('(');
-      parts.push(buildSMILES(attachment));
-      parts.push(')');
-    });
-  }
+  // Output any remaining pending attachments for depth 0 (after all branches closed)
+  // Use _isSibling flag to determine if parens are needed
+  pendingAttachments.forEach((data) => {
+    if (data.depth === 0) {
+      data.attachments.forEach((attachment) => {
+        /* eslint-disable no-underscore-dangle */
+        const isSibling = attachment._isSibling !== false; // default to true for safety
+        /* eslint-enable no-underscore-dangle */
+        if (isSibling) {
+          parts.push('(');
+          parts.push(buildSMILES(attachment));
+          parts.push(')');
+        } else {
+          parts.push(buildSMILES(attachment));
+        }
+      });
+    }
+  });
 
   return parts.join('');
 }
@@ -445,11 +518,25 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
     // Add ring markers for this position
     const markers = ringMarkers.get(pos) || [];
-    // Sort: opens first, then by ring number
+
+    // Sort markers: opens first, then by original order from SMILES
+    // The ringOrderMap stores the order of ring markers as they appeared in the original
+    // eslint-disable-next-line no-underscore-dangle
+    const ringOrderMap = fusedRing._ringOrderMap || new Map();
+    const originalOrder = ringOrderMap.get(pos) || [];
+
     markers.sort((a, b) => {
+      // Opens always come before closes
       if (a.type !== b.type) {
         return a.type === 'open' ? -1 : 1;
       }
+      // For same type, use original order from SMILES if available
+      const aIdx = originalOrder.indexOf(a.ringNumber);
+      const bIdx = originalOrder.indexOf(b.ringNumber);
+      if (aIdx !== -1 && bIdx !== -1) {
+        return aIdx - bIdx;
+      }
+      // Fallback to ring number order
       return a.ringNumber - b.ringNumber;
     });
 

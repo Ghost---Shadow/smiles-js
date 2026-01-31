@@ -454,12 +454,38 @@ function buildSingleRingNodeWithContext(
         if (processed.has(branchAtom.index)) return;
 
         const branchChain = collectBranchChain(branchAtom, atoms, processed);
-        branchGroups.push(branchChain);
+        branchGroups.push({ chain: branchChain, branchId: branchAtom.branchId });
       });
+
+      // Collect branchIds that the ring path traverses AFTER this position
+      const ringPathBranchIdsAfter = new Set();
+      for (let j = localIdx + 1; j < ringAtoms.length; j += 1) {
+        if (ringAtoms[j].branchId !== null) {
+          ringPathBranchIdsAfter.add(ringAtoms[j].branchId);
+        }
+      }
+
+      // Check if the ring crosses branches (has varying branchDepths)
+      // This is needed to determine if attachments are truly siblings
+      const branchDepths = ringAtoms.map((a) => a.branchDepth);
+      const firstDepth = branchDepths[0];
+      const hasVaryingDepths = branchDepths.some((d) => d !== firstDepth);
 
       const position = localIdx + 1;
       attachments[position] = branchGroups.map(
-        (group) => buildNodeFromAtoms(group, atoms, ringBoundaries, true),
+        (group) => {
+          const node = buildNodeFromAtoms(group.chain, atoms, ringBoundaries, true);
+          // Mark as sibling only if:
+          // 1. Ring has varying branchDepths (ring crosses branches)
+          // 2. Attachment is in a different branch than the ring path continues in
+          // For simple rings (all same depth), attachments are not siblings
+          /* eslint-disable no-underscore-dangle */
+          if (hasVaryingDepths) {
+            node._isSibling = !ringPathBranchIdsAfter.has(group.branchId);
+          }
+          /* eslint-enable no-underscore-dangle */
+          return node;
+        },
       );
     }
   });
@@ -710,6 +736,17 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   fusedNode._atomValueMap = atomValueMap;
   fusedNode._bondMap = bondMap;
 
+  // Store ring closure order for each position
+  // The atoms[pos].rings array preserves the order of ring markers in the original SMILES
+  // This is important for correctly outputting ring closures (e.g., C31 vs C13)
+  const ringOrderMap = new Map();
+  fusedNode._allPositions.forEach((pos) => {
+    if (atoms[pos].rings && atoms[pos].rings.length > 0) {
+      ringOrderMap.set(pos, [...atoms[pos].rings]);
+    }
+  });
+  fusedNode._ringOrderMap = ringOrderMap;
+
   // Build attachments for sequential continuation atoms (non-ring positions)
   // These are atoms that have branches attached at depth+1
   const ringPositionsForAttachments = new Set();
@@ -940,6 +977,16 @@ function buildAST(atoms, ringBoundaries) {
         // Build ring/fused ring node for this group
         const group = fusedGroups[groupIdx];
         const ringNode = buildRingGroupNodeWithContext(group, atoms, ringBoundaries);
+
+        // Store leading bond (the bond on the first atom of this ring component)
+        // This is the bond connecting this component to the previous component
+        const firstAtomOfGroup = atom; // This is the first atom we encounter for this group
+        /* eslint-disable no-underscore-dangle */
+        if (firstAtomOfGroup.bond && components.length > 0) {
+          ringNode._leadingBond = firstAtomOfGroup.bond;
+        }
+        /* eslint-enable no-underscore-dangle */
+
         components.push(ringNode);
         processedGroups.add(groupIdx);
       }

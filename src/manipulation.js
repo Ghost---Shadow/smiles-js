@@ -39,6 +39,7 @@ export function ringAttach(ring, attachment, position) {
     ring.substitutions,
     updatedAttachments,
     ring.bonds || [],
+    ring._branchDepths || null,
   );
 }
 
@@ -72,7 +73,7 @@ export function ringSubstituteMultiple(ring, substitutionMap) {
   );
 }
 
-export function ringFuse(ring, otherRing, offset) {
+export function ringFuse(ring, otherRing, offset, options = {}) {
   const ring1 = createRingNode(
     ring.atoms,
     ring.size,
@@ -93,7 +94,7 @@ export function ringFuse(ring, otherRing, offset) {
     otherRing.bonds || [],
   );
 
-  return createFusedRingNode([ring1, ring2]);
+  return createFusedRingNode([ring1, ring2], options);
 }
 
 export function ringConcat(ring, other) {

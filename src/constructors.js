@@ -270,7 +270,16 @@ export function attachFusedRingMethods(node) {
  * Internal factory functions
  */
 
-export function createRingNode(atoms, size, ringNumber, offset, subs, attachments, bonds = []) {
+export function createRingNode(
+  atoms,
+  size,
+  ringNumber,
+  offset,
+  subs,
+  attachments,
+  bonds = [],
+  branchDepths = null,
+) {
   const node = {
     type: ASTNodeType.RING,
     atoms,
@@ -281,6 +290,12 @@ export function createRingNode(atoms, size, ringNumber, offset, subs, attachment
     attachments: { ...attachments },
     bonds: [...bonds],
   };
+  // branchDepths tracks which ring positions are inside branches
+  // Used for branch-crossing rings like C1CCC(CC1)(CC(=O)O)CN
+  if (branchDepths) {
+    // eslint-disable-next-line no-underscore-dangle
+    node._branchDepths = [...branchDepths];
+  }
   attachSmilesGetter(node);
   attachRingMethods(node);
   return node;
@@ -302,84 +317,459 @@ export function createLinearNode(atoms, bonds, attachments = {}) {
  * Compute position metadata for fused rings
  * This enables proper interleaved SMILES generation
  *
- * For benzimidazole-like fused rings (5+6 with offset 2):
- * - Ring 1 (5 atoms): positions [0, 1, 2, 7, 8]
- * - Ring 2 (6 atoms): positions [2, 3, 4, 5, 6, 7]
- * - Shared: positions 2 and 7 (2 atoms)
- * - Total: 5 + 6 - 2 = 9 atoms
+ * The algorithm handles multi-ring systems with different fusion topologies:
+ *
+ * 1. Amitriptyline-type: Base ring with multiple inside/endpoint fusions
+ *    - All inner rings fuse directly with the base ring
+ *    - Inner rings are fully contained within base ring traversal
+ *
+ * 2. Carbamazepine-type: "Extending" fusion where inner ring extends beyond base
+ *    - Ring B fuses with ring A but extends beyond A's end
+ *    - Ring A's remaining atoms must be output as a BRANCH
+ *    - Ring C may fuse with ring B (chained fusion)
+ *
+ * For Carbamazepine: C1=CC=C2C(=C1)C=CC3=CC=CC=C3N2
+ * - Ring 1 (benzene, size 6, offset 0): base ring
+ * - Ring 2 (7-ring, size 7, offset 3): fuses at positions 3-4, extends to position 14
+ * - Ring 3 (benzene, size 6, offset 0): fuses with ring 2 (not ring 1)
+ *
+ * Ring 2 extends beyond ring 1 (offset 3 + size 7 - 1 = 9 > ring 1 size 6 - 1 = 5)
+ * So ring 1's position 5 must be output as a branch from position 4.
  */
 function computeFusedRingPositions(fusedRingNode) {
   const { rings } = fusedRingNode;
 
-  // Sort rings by offset
+  // Sort rings by offset - base ring has offset 0
   const sortedRings = [...rings].sort((a, b) => a.offset - b.offset);
+  const baseRing = sortedRings[0];
+  const innerRings = sortedRings.slice(1);
 
-  // For two-ring fused systems (most common case)
-  if (sortedRings.length === 2) {
-    const ring1 = sortedRings[0]; // Base ring (offset 0)
-    const ring2 = sortedRings[1]; // Second ring (offset > 0)
-
-    const { offset } = ring2;
-    // Number of shared atoms between rings (typically 2 for benzene-like fusion)
-    const sharedAtoms = 2;
-
-    // Total atoms in the fused system
-    const totalAtoms = ring1.size + ring2.size - sharedAtoms;
-
-    // Compute positions for ring 1 (interleaved pattern)
-    // First part: atoms 0 through offset (inclusive) → offset + 1 atoms
-    // Remaining atoms: ring1.size - (offset + 1) atoms at the end
-    const ring1FirstPartCount = offset + 1;
-    const ring1SecondPartCount = ring1.size - ring1FirstPartCount;
-
-    const ring1Positions = [];
-    // First part: [0, 1, ..., offset]
-    for (let i = 0; i < ring1FirstPartCount; i += 1) {
-      ring1Positions.push(i);
-    }
-    // Second part: last ring1SecondPartCount positions
-    const secondPartStart = totalAtoms - ring1SecondPartCount;
-    for (let i = secondPartStart; i < totalAtoms; i += 1) {
-      ring1Positions.push(i);
-    }
-
-    // Compute positions for ring 2
-    // Ring 2 spans from offset to offset + ring2.size - 1
-    // But we need to account for the interleaving
-    // Ring 2 ends at position (offset + ring2.size - 1) but that overlaps with ring 1's second part
-    // Actually ring 2 positions are: offset to (totalAtoms - ring1SecondPartCount - 1 + 1)
-    // Let me think... ring 2 has 6 atoms starting at offset 2
-    // They go at positions: 2, 3, 4, 5, 6, 7 (6 positions)
-    // Ring 1's second part starts at 7, so ring 2 ends at 7 (shared)
-    const ring2Positions = [];
-    for (let i = 0; i < ring2.size; i += 1) {
-      ring2Positions.push(offset + i);
-    }
-
-    // Store position metadata
-    /* eslint-disable no-underscore-dangle, no-param-reassign */
-    ring1._positions = ring1Positions;
-    ring1._start = 0;
-    ring1._end = totalAtoms - 1;
-
-    ring2._positions = ring2Positions;
-    ring2._start = offset;
-    ring2._end = offset + ring2.size - 1;
-
-    fusedRingNode._allPositions = Array.from({ length: totalAtoms }, (_, i) => i);
-    fusedRingNode._totalAtoms = totalAtoms;
-    /* eslint-enable no-underscore-dangle, no-param-reassign */
+  // Build fusion graph and classify rings
+  const fusionGraph = new Map();
+  for (let i = 0; i < sortedRings.length; i += 1) {
+    fusionGraph.set(i, new Set());
   }
-  // For more complex fused systems, fall back to simple offset model
-  // (position metadata won't be set, triggering buildSimpleFusedRingSMILES)
+
+  // Rings with offset > 0 fuse with base ring
+  for (let i = 1; i < sortedRings.length; i += 1) {
+    const ring = sortedRings[i];
+    if (ring.offset > 0) {
+      fusionGraph.get(0).add(i);
+      fusionGraph.get(i).add(0);
+    }
+  }
+
+  // Rings with offset 0 (other than base) fuse with another inner ring
+  const offsetZeroInnerRings = innerRings.filter((r) => r.offset === 0);
+  if (offsetZeroInnerRings.length > 0 && innerRings.length > 1) {
+    offsetZeroInnerRings.forEach((ring) => {
+      const ringIndex = sortedRings.indexOf(ring);
+      let fusionPartnerIndex = -1;
+      let maxOffset = -1;
+
+      for (let i = 1; i < sortedRings.length; i += 1) {
+        if (i === ringIndex) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+        const other = sortedRings[i];
+        if (other.offset > maxOffset) {
+          maxOffset = other.offset;
+          fusionPartnerIndex = i;
+        }
+      }
+
+      if (fusionPartnerIndex >= 0) {
+        fusionGraph.get(fusionPartnerIndex).add(ringIndex);
+        fusionGraph.get(ringIndex).add(fusionPartnerIndex);
+        fusionGraph.get(0).delete(ringIndex);
+        fusionGraph.get(ringIndex).delete(0);
+      }
+    });
+  }
+
+  // Classify inner rings
+  const insideRings = []; // Fully contained in base ring traversal
+  const extendingRings = []; // Extend beyond base ring
+  const endpointRings = []; // End at same point as base ring
+  const chainedRings = []; // Fuse with another inner ring, not base
+
+  innerRings.forEach((ring) => {
+    const ringIndex = sortedRings.indexOf(ring);
+    const fusesWithBase = fusionGraph.get(ringIndex).has(0);
+
+    if (!fusesWithBase) {
+      chainedRings.push(ring);
+    } else {
+      const innerEnd = ring.offset + ring.size - 1;
+      const baseEnd = baseRing.size - 1;
+
+      if (innerEnd > baseEnd) {
+        // Inner ring extends BEYOND base ring - need branch for base's remaining atoms
+        extendingRings.push(ring);
+      } else if (innerEnd === baseEnd) {
+        endpointRings.push(ring);
+      } else {
+        insideRings.push(ring);
+      }
+    }
+  });
+
+  // Build the traversal and branch depth map
+  const allPositions = [];
+  const baseRingPositions = [];
+  const branchDepthMap = new Map();
+
+  const innerRingData = new Map();
+  innerRings.forEach((ring) => {
+    innerRingData.set(ring, { positions: [], start: -1, end: -1 });
+  });
+
+  // Maps for quick lookup
+  const insideRingAtOffset = new Map();
+  insideRings.forEach((ring) => insideRingAtOffset.set(ring.offset, ring));
+
+  const extendingRingAtOffset = new Map();
+  extendingRings.forEach((ring) => extendingRingAtOffset.set(ring.offset, ring));
+
+  const endpointRingAtOffset = new Map();
+  endpointRings.forEach((ring) => endpointRingAtOffset.set(ring.offset, ring));
+
+  // For chained rings, find host ring
+  const chainedRingInfo = new Map();
+  chainedRings.forEach((ring) => {
+    const ringIndex = sortedRings.indexOf(ring);
+    const fusionPartners = fusionGraph.get(ringIndex);
+
+    let hostRing = null;
+    fusionPartners.forEach((partnerIndex) => {
+      if (partnerIndex !== 0) {
+        const partner = sortedRings[partnerIndex];
+        if (!hostRing || partner.offset > hostRing.offset) {
+          hostRing = partner;
+        }
+      }
+    });
+
+    if (hostRing) {
+      // Chained ring fuses at a specific point in host ring's inner atoms
+      // The chained ring takes 2 consecutive fusion points in the host's inner section
+      // After the second fusion point, host has 1 closing atom
+      // Before the first fusion point, host has (hostInnerAtoms - 3) atoms
+      // So fusion starts at inner index = hostInnerAtoms - 3
+      // Example: 7-ring host (5 inner atoms) with 6-ring chained:
+      //   - hostOffset = 5 - 3 = 2
+      //   - Fusion at inner indices 2 and 3
+      const hostInnerAtoms = hostRing.size - 2;
+      const hostOffset = hostInnerAtoms - 3;
+      chainedRingInfo.set(ring, { hostRing, hostOffset });
+    }
+  });
+
+  let currentPos = 0;
+  let basePos = 0;
+  let currentDepth = 0;
+
+  while (basePos < baseRing.size) {
+    const insideRing = insideRingAtOffset.get(basePos);
+    const extendingRing = extendingRingAtOffset.get(basePos);
+    const endpointRing = endpointRingAtOffset.get(basePos);
+
+    if (insideRing) {
+      // Inside fusion: base ring skips inner ring's middle atoms
+      const data = innerRingData.get(insideRing);
+
+      // First fusion point
+      allPositions.push(currentPos);
+      baseRingPositions.push(currentPos);
+      data.positions.push(currentPos);
+      data.start = currentPos;
+      branchDepthMap.set(currentPos, currentDepth);
+      currentPos += 1;
+
+      // Inner ring's non-shared atoms
+      for (let i = 1; i < insideRing.size - 1; i += 1) {
+        allPositions.push(currentPos);
+        data.positions.push(currentPos);
+        branchDepthMap.set(currentPos, currentDepth);
+        currentPos += 1;
+
+        // Check for chained rings
+        for (let cr = 0; cr < chainedRings.length; cr += 1) {
+          const chainedRing = chainedRings[cr];
+          const info = chainedRingInfo.get(chainedRing);
+          if (info && info.hostRing === insideRing && i === info.hostOffset) {
+            const chainedData = innerRingData.get(chainedRing);
+            chainedData.start = currentPos - 1;
+            chainedData.positions.push(currentPos - 1);
+
+            for (let j = 1; j < chainedRing.size - 1; j += 1) {
+              allPositions.push(currentPos);
+              chainedData.positions.push(currentPos);
+              branchDepthMap.set(currentPos, currentDepth);
+              currentPos += 1;
+            }
+
+            chainedData.end = currentPos;
+            chainedData.positions.push(currentPos);
+          }
+        }
+      }
+
+      // Second fusion point
+      allPositions.push(currentPos);
+      baseRingPositions.push(currentPos);
+      data.positions.push(currentPos);
+      data.end = currentPos;
+      branchDepthMap.set(currentPos, currentDepth);
+      currentPos += 1;
+
+      basePos += 2;
+    } else if (extendingRing) {
+      // Extending fusion: inner ring extends beyond base ring's end
+      // Fusion is at inner ring's first (atom 0) and last (atom size-1) atoms
+      // These share positions with base ring atoms at offset and offset+1
+      //
+      // For benzimidazole (5-ring fused with 6-ring at offset 2):
+      //   Base ring: atoms 0,1,2,3,4 at positions 0,1,2,7,8
+      //   Inner ring: atoms 0,1,2,3,4,5 at positions 2,3,4,5,6,7
+      //   Shared: position 2 (base atom 2, inner atom 0) and position 7 (base atom 3, inner atom 5)
+      //
+      // For Carbamazepine (6-ring fused with 7-ring at offset 3, plus chained 6-ring):
+      //   Base ring atoms after fusion go in a BRANCH because chained ring needs to fit
+      const data = innerRingData.get(extendingRing);
+
+      // Check if any chained ring fuses with this extending ring
+      let hasChainedRings = false;
+      chainedRings.forEach((chainedRing) => {
+        const info = chainedRingInfo.get(chainedRing);
+        if (info && info.hostRing === extendingRing) {
+          hasChainedRings = true;
+        }
+      });
+
+      // First fusion point: base atom at offset / inner atom 0
+      allPositions.push(currentPos);
+      baseRingPositions.push(currentPos);
+      data.positions.push(currentPos);
+      data.start = currentPos;
+      branchDepthMap.set(currentPos, currentDepth);
+      currentPos += 1;
+
+      if (hasChainedRings) {
+        // Carbamazepine case: base ring's second fusion point comes immediately after first
+        // Then base ring's remaining atoms go in a BRANCH
+        // Then extending ring's middle atoms
+        // Then chained ring
+        // Then extending ring's closing atom (shared with chained ring)
+
+        // Second fusion point of base ring with extending ring
+        allPositions.push(currentPos);
+        baseRingPositions.push(currentPos);
+        data.positions.push(currentPos);
+        branchDepthMap.set(currentPos, currentDepth);
+        currentPos += 1;
+
+        // Base ring's remaining atoms go in a BRANCH
+        const remainingBaseAtoms = baseRing.size - (extendingRing.offset + 2);
+        if (remainingBaseAtoms > 0) {
+          currentDepth += 1;
+          for (let i = 0; i < remainingBaseAtoms; i += 1) {
+            allPositions.push(currentPos);
+            baseRingPositions.push(currentPos);
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+          }
+          currentDepth -= 1;
+        }
+
+        // Extending ring's middle atoms (atoms 2 through size-2)
+        const extendingInnerAtoms = extendingRing.size - 3;
+        let innerIdx = 0;
+        while (innerIdx < extendingInnerAtoms) {
+          // Check if a chained ring starts at this inner index
+          let chainedRingHere = null;
+          for (let cr = 0; cr < chainedRings.length; cr += 1) {
+            const chainedRing = chainedRings[cr];
+            const info = chainedRingInfo.get(chainedRing);
+            if (info && info.hostRing === extendingRing && innerIdx === info.hostOffset) {
+              chainedRingHere = chainedRing;
+            }
+          }
+
+          if (chainedRingHere) {
+            // First fusion: shared between extending and chained ring
+            allPositions.push(currentPos);
+            data.positions.push(currentPos);
+            const chainedData = innerRingData.get(chainedRingHere);
+            chainedData.start = currentPos;
+            chainedData.positions.push(currentPos);
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+            innerIdx += 1;
+
+            // Chained ring's inner atoms
+            for (let j = 1; j < chainedRingHere.size - 1; j += 1) {
+              allPositions.push(currentPos);
+              chainedData.positions.push(currentPos);
+              branchDepthMap.set(currentPos, currentDepth);
+              currentPos += 1;
+            }
+
+            // Second fusion: shared between extending and chained ring
+            allPositions.push(currentPos);
+            data.positions.push(currentPos);
+            chainedData.positions.push(currentPos);
+            chainedData.end = currentPos;
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+            innerIdx += 1;
+          } else {
+            // Regular extending ring inner atom
+            allPositions.push(currentPos);
+            data.positions.push(currentPos);
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+            innerIdx += 1;
+          }
+        }
+
+        // Extending ring's closing atom
+        allPositions.push(currentPos);
+        data.positions.push(currentPos);
+        data.end = currentPos;
+        branchDepthMap.set(currentPos, currentDepth);
+        currentPos += 1;
+      } else {
+        // Benzimidazole case: inner ring's middle atoms come between fusion points
+        // No branch needed
+
+        // Inner ring's middle atoms (atoms 1 through size-2)
+        for (let i = 1; i < extendingRing.size - 1; i += 1) {
+          allPositions.push(currentPos);
+          data.positions.push(currentPos);
+          branchDepthMap.set(currentPos, currentDepth);
+          currentPos += 1;
+        }
+
+        // Second fusion point: base atom at offset+1 / inner atom size-1
+        // This is the inner ring's closing atom
+        allPositions.push(currentPos);
+        baseRingPositions.push(currentPos);
+        data.positions.push(currentPos);
+        data.end = currentPos;
+        branchDepthMap.set(currentPos, currentDepth);
+        currentPos += 1;
+
+        // Base ring's remaining atoms (atoms offset+2 through size-1)
+        const remainingBaseAtoms = baseRing.size - (extendingRing.offset + 2);
+        for (let i = 0; i < remainingBaseAtoms; i += 1) {
+          allPositions.push(currentPos);
+          baseRingPositions.push(currentPos);
+          branchDepthMap.set(currentPos, currentDepth);
+          currentPos += 1;
+        }
+      }
+
+      // Skip past all of base ring (it's been fully processed)
+      basePos = baseRing.size;
+    } else if (endpointRing) {
+      // Endpoint fusion: base and inner ring share all remaining positions
+      const data = innerRingData.get(endpointRing);
+      data.start = currentPos;
+
+      for (let i = 0; i < endpointRing.size; i += 1) {
+        allPositions.push(currentPos);
+        baseRingPositions.push(currentPos);
+        data.positions.push(currentPos);
+        branchDepthMap.set(currentPos, currentDepth);
+        currentPos += 1;
+      }
+
+      data.end = currentPos - 1;
+      basePos += endpointRing.size;
+    } else {
+      // Regular base ring atom
+      allPositions.push(currentPos);
+      baseRingPositions.push(currentPos);
+      branchDepthMap.set(currentPos, currentDepth);
+      currentPos += 1;
+      basePos += 1;
+    }
+  }
+
+  const totalAtoms = currentPos;
+
+  // Store position metadata
+  /* eslint-disable no-underscore-dangle, no-param-reassign */
+  baseRing._positions = baseRingPositions;
+  baseRing._start = 0;
+  baseRing._end = baseRingPositions[baseRingPositions.length - 1];
+
+  innerRings.forEach((ring) => {
+    const data = innerRingData.get(ring);
+    if (data && data.positions.length > 0) {
+      ring._positions = data.positions;
+      ring._start = data.start;
+      ring._end = data.end;
+    }
+  });
+
+  fusedRingNode._allPositions = allPositions;
+  fusedRingNode._totalAtoms = totalAtoms;
+  fusedRingNode._branchDepthMap = branchDepthMap;
+
+  // Build ring order map
+  const ringOrderMap = new Map();
+  const closePositions = new Map();
+
+  [baseRing, ...innerRings].forEach((ring) => {
+    const data = innerRingData.get(ring);
+    const endPos = data ? data.end : (totalAtoms - 1);
+    if (endPos >= 0) {
+      if (!closePositions.has(endPos)) {
+        closePositions.set(endPos, []);
+      }
+      closePositions.get(endPos).push(ring.ringNumber);
+    }
+  });
+
+  closePositions.forEach((ringNumbers, pos) => {
+    if (ringNumbers.length > 1) {
+      const chainedRingNumbers = chainedRings.map((r) => r.ringNumber);
+      const endpointRingNumbers = endpointRings.map((r) => r.ringNumber);
+      const sorted = [...ringNumbers].sort((a, b) => {
+        const aIsChained = chainedRingNumbers.includes(a);
+        const bIsChained = chainedRingNumbers.includes(b);
+        const aIsEndpoint = endpointRingNumbers.includes(a);
+        const bIsEndpoint = endpointRingNumbers.includes(b);
+
+        if (aIsChained && !bIsChained) return -1;
+        if (!aIsChained && bIsChained) return 1;
+        if (aIsEndpoint && !bIsEndpoint) return -1;
+        if (!aIsEndpoint && bIsEndpoint) return 1;
+        return b - a;
+      });
+      ringOrderMap.set(pos, sorted);
+    }
+  });
+
+  fusedRingNode._ringOrderMap = ringOrderMap;
+  /* eslint-enable no-underscore-dangle, no-param-reassign */
 }
 
-export function createFusedRingNode(rings) {
+export function createFusedRingNode(rings, options = {}) {
   // Create base node
   const node = {
     type: ASTNodeType.FUSED_RING,
     rings: rings.map((r) => ({ ...r })),
   };
+
+  // Store leading bond if provided (for connecting to previous component in molecule)
+  if (options.leadingBond) {
+    // eslint-disable-next-line no-underscore-dangle
+    node._leadingBond = options.leadingBond;
+  }
 
   // Only compute position metadata if not already present from parser
   // Parser-generated rings have _positions, API-created rings don't
@@ -433,12 +823,22 @@ export function Ring(options) {
     substitutions = {},
     attachments = {},
     bonds = [],
+    branchDepths = null,
   } = options;
 
   validateAtoms(atoms);
   validateSize(size);
 
-  return createRingNode(atoms, size, ringNumber, offset, substitutions, attachments, bonds);
+  return createRingNode(
+    atoms,
+    size,
+    ringNumber,
+    offset,
+    substitutions,
+    attachments,
+    bonds,
+    branchDepths,
+  );
 }
 
 /**
@@ -462,7 +862,7 @@ export function Linear(atoms, bonds = [], attachments = {}) {
  * @param {Array<Object>} rings - Array of Ring nodes
  * @returns {Object} FusedRing AST node
  */
-export function FusedRing(rings) {
+export function FusedRing(rings, options = {}) {
   if (!Array.isArray(rings)) {
     throw new Error('FusedRing requires an array of rings');
   }
@@ -473,7 +873,7 @@ export function FusedRing(rings) {
     throw new Error('All elements must be Ring nodes');
   }
 
-  return createFusedRingNode(rings);
+  return createFusedRingNode(rings, options);
 }
 
 /**
@@ -490,10 +890,20 @@ export function Molecule(components = []) {
 }
 
 /**
- * Create a RawFragment node that stores and echoes back raw SMILES
- * Useful for visual comparison with RDKit output
+ * Create a RawFragment node that stores and echoes back raw SMILES.
+ *
+ * WARNING: This is for DEBUGGING and TESTING purposes ONLY.
+ * DO NOT use RawFragment in production code or generated code.
+ * Instead, use the proper Ring, Linear, FusedRing, and Molecule constructors
+ * with the appropriate options (e.g., { sibling: true } for attach()).
+ *
+ * RawFragment bypasses the SMILES generation logic and simply returns
+ * the stored string, which means it won't benefit from any future
+ * improvements to the codegen.
+ *
  * @param {string} smilesString - Raw SMILES string to store
  * @returns {Object} RawFragment node
+ * @deprecated Use proper constructors instead
  */
 export function RawFragment(smilesString) {
   if (typeof smilesString !== 'string') {
