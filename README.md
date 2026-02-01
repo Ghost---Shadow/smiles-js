@@ -27,6 +27,8 @@ Build complex molecules programmatically with an intuitive, composable API. Pars
 
 ![Testimony](testimony.png)
 
+Claude [link](https://claude.ai/share/542ad854-a26b-4cb8-af31-3b7aa58e6559)
+
 ---
 
 ## 📦 Installation
