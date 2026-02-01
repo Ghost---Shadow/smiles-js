@@ -305,16 +305,22 @@
         window.addEventListener('load', initSmilesDrawer);
 
         const editor = CodeMirror(document.getElementById('editor'), {
-            value: `// Build molecules with composable fragments
-const { Fragment, Ring, benzene, methyl, ethyl, hydroxyl } = SMILES;
+            value: `// SMILES-JS: Build molecules with composable fragments
+const { Fragment, Ring, FusedRing, Linear } = SMILES;
 
-// Create a simple molecule
-const toluene = benzene(methyl);
-console.log(toluene);
 
-// Compose multiple fragments
-const ethanol = ethyl(hydroxyl);
-console.log(ethanol);`,
+// Create benzene ring
+const benzene = Ring({ atoms: 'c', size: 6 });
+console.log(benzene);  // c1ccccc1
+
+// Add methyl group to make toluene
+const methyl = Linear(['C']);
+const toluene = benzene.attach(methyl, 1);
+console.log(toluene);  // c1(C)ccccc1
+
+// Create pyridine via substitution
+const pyridine = benzene.substitute(5, 'n');
+console.log(pyridine);`,
             mode: 'javascript',
             theme: 'monokai',
             lineNumbers: true,
