@@ -218,7 +218,7 @@ export const v25 = v23.attach(v24, 1);
 export const v26 = Molecule([v1, v22, v25]);`;
 
 const BUDESONIDE_CODE = `export const v1 = Linear(['C', 'C', 'C']);
-export const v2 = Ring({ atoms: 'C', size: 5 });
+export const v2 = Ring({ atoms: 'C', size: 5, branchDepths: [0, 0, 0, 0, 1] });
 export const v3 = v2.substitute(2, 'O');
 export const v4 = v3.substitute(5, 'O');
 export const v5 = Ring({ atoms: 'C', size: 5, ringNumber: 2, offset: 2 });

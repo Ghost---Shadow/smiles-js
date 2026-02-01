@@ -956,6 +956,10 @@ function buildAST(atoms, ringBoundaries) {
   const processedGroups = new Set();
   let currentLinear = [];
 
+  // Track component position ranges for inter-component connection detection
+  // Each entry: { componentIndex, positions: Set of atom indices }
+  const componentPositions = [];
+
   // Filter out atoms that are branches (will be attached to parents)
   const mainChainAtoms = atoms.filter((atom) => atom.branchDepth === 0);
 
@@ -967,7 +971,10 @@ function buildAST(atoms, ringBoundaries) {
     if (atomToGroup.has(globalIdx)) {
       // Flush any pending linear chain
       if (currentLinear.length > 0) {
-        components.push(buildLinearNodeSimple(currentLinear, atoms, ringBoundaries, false));
+        const linearNode = buildLinearNodeSimple(currentLinear, atoms, ringBoundaries, false);
+        const linearPositions = new Set(currentLinear.map((a) => a.index));
+        componentPositions.push({ componentIndex: components.length, positions: linearPositions });
+        components.push(linearNode);
         currentLinear = [];
       }
 
@@ -978,6 +985,12 @@ function buildAST(atoms, ringBoundaries) {
         const group = fusedGroups[groupIdx];
         const ringNode = buildRingGroupNodeWithContext(group, atoms, ringBoundaries);
 
+        // Collect all positions in this ring group
+        const groupPositions = new Set();
+        group.forEach((ring) => {
+          ring.positions.forEach((pos) => groupPositions.add(pos));
+        });
+
         // Store leading bond (the bond on the first atom of this ring component)
         // This is the bond connecting this component to the previous component
         const firstAtomOfGroup = atom; // This is the first atom we encounter for this group
@@ -985,8 +998,28 @@ function buildAST(atoms, ringBoundaries) {
         if (firstAtomOfGroup.bond && components.length > 0) {
           ringNode._leadingBond = firstAtomOfGroup.bond;
         }
+
+        // Check if this ring connects to a previous component
+        // Look at the first atom's prevAtomIndex - if it points to a position
+        // in a previous component, store the connection info
+        const firstRingAtomIdx = Math.min(...groupPositions);
+        const firstRingAtom = atoms[firstRingAtomIdx];
+        if (firstRingAtom && firstRingAtom.prevAtomIndex !== null) {
+          const prevIdx = firstRingAtom.prevAtomIndex;
+          // Find which previous component contains this prevAtomIndex
+          for (let ci = componentPositions.length - 1; ci >= 0; ci -= 1) {
+            const compInfo = componentPositions[ci];
+            if (compInfo.positions.has(prevIdx)) {
+              // Found the component this ring connects to
+              ringNode._connectsToComponent = compInfo.componentIndex;
+              ringNode._connectsAtPosition = prevIdx;
+              break;
+            }
+          }
+        }
         /* eslint-enable no-underscore-dangle */
 
+        componentPositions.push({ componentIndex: components.length, positions: groupPositions });
         components.push(ringNode);
         processedGroups.add(groupIdx);
       }

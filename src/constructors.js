@@ -435,6 +435,20 @@ function computeFusedRingPositions(fusedRingNode) {
   const endpointRingAtOffset = new Map();
   endpointRings.forEach((ring) => endpointRingAtOffset.set(ring.offset, ring));
 
+  // Detect spiro rings - rings where branchDepths indicate only the first atom is shared
+  // (branchDepths[0] = 0 and all others > 0)
+  const spiroRingAtOffset = new Map();
+  innerRings.forEach((ring) => {
+    /* eslint-disable no-underscore-dangle */
+    const bd = ring._branchDepths;
+    /* eslint-enable no-underscore-dangle */
+    if (bd && bd.length >= 2 && bd[0] === 0 && bd.slice(1).every((d) => d > 0)) {
+      // This is a spiro ring - remove from insideRings and add to spiro
+      insideRingAtOffset.delete(ring.offset);
+      spiroRingAtOffset.set(ring.offset, ring);
+    }
+  });
+
   // For chained rings, find host ring
   const chainedRingInfo = new Map();
   chainedRings.forEach((ring) => {
@@ -474,8 +488,39 @@ function computeFusedRingPositions(fusedRingNode) {
     const insideRing = insideRingAtOffset.get(basePos);
     const extendingRing = extendingRingAtOffset.get(basePos);
     const endpointRing = endpointRingAtOffset.get(basePos);
+    const spiroRing = spiroRingAtOffset.get(basePos);
 
-    if (insideRing) {
+    if (spiroRing) {
+      // Spiro junction: only ONE atom is shared between the rings
+      // The rest of the spiro ring goes into a branch
+      const data = innerRingData.get(spiroRing);
+      /* eslint-disable no-underscore-dangle */
+      const spiroBranchDepths = spiroRing._branchDepths || [];
+      /* eslint-enable no-underscore-dangle */
+
+      // Shared atom (spiro center)
+      allPositions.push(currentPos);
+      baseRingPositions.push(currentPos);
+      data.positions.push(currentPos);
+      data.start = currentPos;
+      branchDepthMap.set(currentPos, currentDepth);
+      currentPos += 1;
+
+      // Spiro ring's remaining atoms (atoms 2 through size) go in a branch
+      // Use the ring's branchDepths to determine depths
+      for (let i = 1; i < spiroRing.size; i += 1) {
+        allPositions.push(currentPos);
+        data.positions.push(currentPos);
+        const ringDepth = spiroBranchDepths[i] || 0;
+        branchDepthMap.set(currentPos, currentDepth + ringDepth);
+        currentPos += 1;
+      }
+
+      data.end = data.positions[data.positions.length - 1];
+
+      // Only advance basePos by 1 (only 1 shared atom in spiro)
+      basePos += 1;
+    } else if (insideRing) {
       // Inside fusion: base ring skips inner ring's middle atoms
       const data = innerRingData.get(insideRing);
 
@@ -717,6 +762,7 @@ function computeFusedRingPositions(fusedRingNode) {
 
   fusedRingNode._allPositions = allPositions;
   fusedRingNode._totalAtoms = totalAtoms;
+
   fusedRingNode._branchDepthMap = branchDepthMap;
 
   // Build ring order map

@@ -50,16 +50,15 @@ function decompileRing(ring, indent, nextVar) {
     options.bonds = `[${bondsStr}]`;
   }
 
-  // Include branchDepths for branch-crossing rings WITH attachments
-  // e.g., Gabapentin C1CCC(CC1)(CC(=O)O)CN has branchDepths [0, 0, 0, 0, 1, 1]
-  // meaning the ring path crosses from depth 0 to depth 1 (enters a branch)
-  // Only needed when there are attachments that need to be placed correctly
+  // Include branchDepths for branch-crossing rings
+  // e.g., Ring with branchDepths [0, 0, 0, 0, 1, 1] means the ring path
+  // crosses from depth 0 to depth 1 (enters a branch for closing atoms)
+  // This is needed to correctly serialize rings like CC2=CC=C(C=C2)
   /* eslint-disable no-underscore-dangle */
   if (ring._branchDepths && ring._branchDepths.length > 0) {
     const firstDepth = ring._branchDepths[0];
     const hasVaryingDepths = ring._branchDepths.some((d) => d !== firstDepth);
-    const hasAttachments = Object.keys(ring.attachments || {}).length > 0;
-    if (hasVaryingDepths && hasAttachments) {
+    if (hasVaryingDepths) {
       options.branchDepths = `[${ring._branchDepths.join(', ')}]`;
     }
   }

@@ -19,9 +19,9 @@ export const v3 = v2.substitute(1, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
 export const v5 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
 export const v6 = v5.substitute(6, 'O');
-export const v7 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null] });
+export const v7 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
 export const v8 = v7.substitute(5, 'O');
-export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null] });
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
 export const v10 = FusedRing([v3, v4, v6, v8, v9]);
 export const v11 = Linear(['O']);
 export const v12 = Molecule([v1, v10, v11]);`;
@@ -32,15 +32,15 @@ export const v3 = v2.substitute(1, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
 export const v5 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
 export const v6 = v5.substitute(6, 'O');
-export const v7 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null] });
+export const v7 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
 export const v8 = v7.substitute(5, 'O');
-export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null] });
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
 export const v10 = FusedRing([v3, v4, v6, v8, v9]);
 export const v11 = Linear(['O']);
 export const v12 = Molecule([v1, v10, v11]);`;
 
 const OXYCODONE_CODE = `export const v1 = Linear(['C']);
-export const v2 = Ring({ atoms: 'C', size: 6 });
+export const v2 = Ring({ atoms: 'C', size: 6, branchDepths: [0, 0, 0, 0, 0, 1] });
 export const v3 = v2.substitute(1, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
 export const v5 = Linear(['O'], ['=']);
@@ -52,7 +52,7 @@ export const v10 = Ring({ atoms: 'C', size: 11, ringNumber: 4, offset: 4, bonds:
 export const v11 = v10.substitute(11, 'O');
 export const v12 = Linear(['O'], ['=']);
 export const v13 = v11.attach(v12, 2);
-export const v14 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null] });
+export const v14 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [1, 1, 1, 2, 3, 3] });
 export const v15 = FusedRing([v3, v6, v9, v13, v14]);
 export const v16 = Linear(['O']);
 export const v17 = Molecule([v1, v15, v16]);`;
@@ -67,14 +67,14 @@ export const v7 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4 });
 export const v8 = v7.substitute(5, 'O');
 export const v9 = Linear(['O'], ['=']);
 export const v10 = v8.attach(v9, 7);
-export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null] });
+export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
 export const v12 = FusedRing([v3, v4, v6, v10, v11]);
 export const v13 = Molecule([v1, v12]);`;
 
 const FENTANYL_CODE = `export const v1 = Linear(['C', 'C', 'C', 'N']);
 export const v2 = Linear(['O'], ['=']);
 export const v3 = v1.attach(v2, 3);
-export const v4 = Ring({ atoms: 'C', size: 6 });
+export const v4 = Ring({ atoms: 'C', size: 6, branchDepths: [1, 1, 1, 1, 2, 2] });
 export const v5 = v4.substitute(4, 'N');
 export const v6 = Linear(['C', 'C']);
 export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
@@ -87,7 +87,7 @@ const TRAMADOL_CODE = `export const v1 = Linear(['C', 'N', 'C']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(v2, 2);
 export const v4 = Ring({ atoms: 'C', size: 6 });
-export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null], branchDepths: [1, 1, 1, 2, 2, 2] });
 export const v6 = Linear(['O', 'C']);
 export const v7 = Molecule([v5, v6]);
 export const v8 = v4.attach(v7, 6);
@@ -760,8 +760,8 @@ describe('Tramadol Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces slightly different structure
-    expect(reconstructed.smiles).toBe('CN(C)CC1CCCCC1(C2=CC=CC=C2OC)O');
+    // Note: round-trip produces slightly different structure with branch notation
+    expect(reconstructed.smiles).toBe('CN(C)CC1CCCCC1(C2=CC(=CC=C2)OC)O');
   });
 });
 

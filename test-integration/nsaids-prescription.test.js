@@ -47,7 +47,7 @@ export const v10 = v9.substitute(6, 'N');
 export const v11 = Molecule([v1, v5, v8, v10]);`;
 
 const ETODOLAC_CODE = `export const v1 = Linear(['C', 'C']);
-export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 0, 1, 1] });
 export const v3 = Ring({ atoms: 'C', size: 5, ringNumber: 2, offset: 2, bonds: ['=', null, null, '=', null] });
 export const v4 = v3.substitute(3, 'N');
 export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, null, null, null, null] });
@@ -98,8 +98,8 @@ export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null,
 export const v11 = Molecule([v1, v3, v4, v9, v10]);`;
 
 const NABUMETONE_CODE = `export const v1 = Linear(['C', 'O']);
-export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
-export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, null, null, '=', null] });
+export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 1, 1] });
+export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, null, null, '=', null], branchDepths: [0, 0, 0, 1, 1, 1] });
 export const v4 = v2.fuse(v3, 2);
 export const v5 = Linear(['C', 'C', 'C', 'C']);
 export const v6 = Linear(['O'], ['=']);

@@ -74,6 +74,7 @@ export function ringSubstituteMultiple(ring, substitutionMap) {
 }
 
 export function ringFuse(ring, otherRing, offset, options = {}) {
+  /* eslint-disable no-underscore-dangle */
   const ring1 = createRingNode(
     ring.atoms,
     ring.size,
@@ -82,6 +83,7 @@ export function ringFuse(ring, otherRing, offset, options = {}) {
     ring.substitutions,
     ring.attachments,
     ring.bonds || [],
+    ring._branchDepths || null,
   );
 
   const ring2 = createRingNode(
@@ -92,7 +94,9 @@ export function ringFuse(ring, otherRing, offset, options = {}) {
     otherRing.substitutions,
     otherRing.attachments,
     otherRing.bonds || [],
+    otherRing._branchDepths || null,
   );
+  /* eslint-enable no-underscore-dangle */
 
   return createFusedRingNode([ring1, ring2], options);
 }

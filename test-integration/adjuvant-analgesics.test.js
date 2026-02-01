@@ -51,7 +51,7 @@ export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 4, bonds: [
 export const v7 = v5.fuse(v6, 4);
 export const v8 = Molecule([v4, v7]);`;
 
-const CARBAMAZEPINE_CODE = `export const v1 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+const CARBAMAZEPINE_CODE = `export const v1 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 0, 0, 1] });
 export const v2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 3, bonds: [null, null, '=', null, '=', null, null] });
 export const v3 = v2.substitute(7, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });

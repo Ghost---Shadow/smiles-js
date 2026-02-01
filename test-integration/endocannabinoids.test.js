@@ -31,7 +31,7 @@ export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, branchDe
 export const v7 = v6.substitute(5, 'O');
 export const v8 = Linear(['C']);
 export const v9 = v7.attach(v8, 4);
-export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 4, bonds: [null, '=', null, null, null, null] });
+export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 4, bonds: [null, '=', null, null, null, null], branchDepths: [1, 1, 1, 2, 2, 2] });
 export const v11 = FusedRing([v5, v9, v10]);
 export const v12 = Linear(['O']);
 export const v13 = Molecule([v1, v11, v12]);`;

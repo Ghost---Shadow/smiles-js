@@ -32,8 +32,8 @@ export const v9 = v7.attach(v8, 2);
 export const v10 = Molecule([v3, v4, v9]);`;
 
 const NAPROXEN_CODE = `export const v1 = Linear(['C', 'O']);
-export const v2 = Ring({ atoms: 'c', size: 6 });
-export const v3 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 3 });
+export const v2 = Ring({ atoms: 'c', size: 6, branchDepths: [0, 0, 0, 0, 1, 1] });
+export const v3 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 3, branchDepths: [0, 0, 0, 1, 1, 1] });
 export const v4 = v2.fuse(v3, 3);
 export const v5 = Linear(['C', 'C', 'O']);
 export const v6 = Linear(['C']);
