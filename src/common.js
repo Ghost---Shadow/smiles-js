@@ -11,7 +11,7 @@ export const ethyl = Fragment('CC');
 export const propyl = Fragment('CCC');
 export const isopropyl = Fragment('C(C)C');
 export const butyl = Fragment('CCCC');
-export const tert_butyl = Fragment('C(C)(C)C');
+export const tertButyl = Fragment('C(C)(C)C');
 
 export const hydroxyl = Fragment('O');
 export const amino = Fragment('N');
@@ -26,13 +26,13 @@ export const phenyl = Fragment('c1ccccc1');
 export const benzyl = Fragment('Cc1ccccc1');
 
 // Common rings
-export const benzene = Ring('c', 6);
-export const cyclohexane = Ring('C', 6);
-export const cyclopentane = Ring('C', 5);
-export const pyridine = Ring({ atoms: 'ccncc', bonds: '=::=:' });
-export const furan = Ring({ atoms: 'ccoc', bonds: '=::=' });
-export const pyrrole = Ring({ atoms: 'ccnc', bonds: '=::=' });
-export const imidazole = Ring({ atoms: 'cncc', bonds: ':=::' });
+export const benzene = Ring({ atoms: 'c', size: 6 });
+export const cyclohexane = Ring({ atoms: 'C', size: 6 });
+export const cyclopentane = Ring({ atoms: 'C', size: 5 });
+export const pyridine = Ring({ atoms: 'c', size: 6, substitutions: { 3: 'n' } });
+export const furan = Ring({ atoms: 'c', size: 5, substitutions: { 3: 'o' } });
+export const pyrrole = Ring({ atoms: 'c', size: 5, substitutions: { 3: '[nH]' } });
+export const imidazole = Ring({ atoms: 'c', size: 5, substitutions: { 2: 'n', 4: '[nH]' } });
 
 // Halides
 export const fluoro = Fragment('F');
