@@ -5,6 +5,7 @@ import {
 } from '../src/constructors.js';
 import { stripExports } from './utils.js';
 
+const TELMISARTAN_SMILES = 'CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C';
 const LOSARTAN_SMILES = 'CCCCC1=NC(Cl)=C(CO)N1CC2=CC=CC=C2C3=CC=CC=C3C4=NNN=N4';
 const LOSARTAN_AROMATIC_SMILES = 'CCCCc1nc(Cl)c(n1Cc2ccc(cc2)c3ccccc3c4n[nH]nn4)CO';
 const VALSARTAN_SMILES = 'CCCCC(=O)N(CC1=CC=CC=C1C2=CC=CC=C2C3=NNN=N3)C(C(C)C)C(=O)O';
@@ -59,6 +60,34 @@ export const v14 = v10.attach(v13, 7);
 export const v15 = Linear(['O'], ['=']);
 export const v16 = v14.attach(v15, 8);`;
 
+const TELMISARTAN_CODE = `export const v1 = Linear(['C', 'C', 'C']);
+export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null] });
+export const v3 = v2.substitute(2, 'N');
+export const v4 = v3.substitute(5, 'N');
+export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v6 = Linear(['C', 'C'], ['=']);
+export const v7 = Linear(['C', 'C', 'N', 'C'], ['=']);
+export const v8 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 4, bonds: ['=', null, '=', null, '=', null] });
+export const v10 = Linear(['C', 'O']);
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(v11, 1);
+export const v13 = v8.attach(v9, 4);
+export const v14 = v13.attach(v12, 6);
+export const v15 = Molecule([v7, v14]);
+export const v16 = v6.attach(v15, 2);
+export const v17 = Ring({ atoms: 'C', size: 5, ringNumber: 5, bonds: ['=', null, '=', null, null] });
+export const v18 = v17.substitute(2, 'N');
+export const v19 = v18.substitute(5, 'N');
+export const v20 = Ring({ atoms: 'C', size: 6, ringNumber: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v21 = v19.fuse(v20, 2);
+export const v22 = Linear(['C']);
+export const v23 = Molecule([v16, v21, v22]);
+export const v24 = v5.attach(v23, 2);
+export const v25 = v4.fuse(v24, 2);
+export const v26 = Linear(['C']);
+export const v27 = Molecule([v1, v25, v26]);`;
+
 const IRBESARTAN_CODE = `export const v1 = Linear(['C', 'C', 'C', 'C']);
 export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, null, null, null] });
 export const v3 = v2.substitute(2, 'N');
@@ -73,6 +102,90 @@ export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 4, bonds: ['=', null,
 export const v12 = Ring({ atoms: 'N', size: 5, ringNumber: 5, bonds: ['=', null, null, '=', null] });
 export const v13 = v12.substitute(1, 'C');
 export const v14 = Molecule([v1, v8, v9, v10, v11, v13]);`;
+
+describe('Telmisartan Integration Test', () => {
+  test('parses telmisartan', () => {
+    const ast = parse(TELMISARTAN_SMILES);
+    const obj = ast.toObject();
+    expect(obj).toEqual({
+      type: 'molecule',
+      components: [
+        {
+          type: 'linear',
+          atoms: ['C', 'C', 'C'],
+          bonds: [null, null],
+          attachments: {},
+        },
+        {
+          type: 'fused_ring',
+          rings: [
+            {
+              type: 'ring',
+              atoms: 'C',
+              size: 5,
+              ringNumber: 1,
+              offset: 0,
+              substitutions: { 2: 'N', 5: 'N' },
+              attachments: {},
+              bonds: ['=', null, '=', null, null],
+            },
+            {
+              type: 'ring',
+              atoms: 'C',
+              size: 6,
+              ringNumber: 2,
+              offset: 2,
+              substitutions: {},
+              attachments: {},
+              bonds: ['=', null, '=', null, '=', null],
+            },
+          ],
+        },
+        {
+          type: 'linear',
+          atoms: ['C'],
+          bonds: [],
+          attachments: {},
+        },
+      ],
+    });
+    expect(ast.smiles).toBe(TELMISARTAN_SMILES);
+  });
+
+  test('generates valid code via toCode()', () => {
+    const ast = parse(TELMISARTAN_SMILES);
+    const code = ast.toCode('v');
+    expect(code).toBe(TELMISARTAN_CODE);
+  });
+
+  test('generated code is valid JavaScript', () => {
+    const ast = parse(TELMISARTAN_SMILES);
+    const code = ast.toCode('v');
+    const executableCode = stripExports(code);
+
+    let factory;
+    expect(() => {
+      // eslint-disable-next-line no-new-func
+      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+    }).not.toThrow();
+    expect(typeof factory).toBe('function');
+  });
+
+  test('codegen round-trip: generated code produces valid SMILES', () => {
+    const ast = parse(TELMISARTAN_SMILES);
+    const code = ast.toCode('v');
+    const executableCode = stripExports(code);
+
+    const varMatch = code.match(/export const (v\d+) = /g);
+    const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
+
+    // eslint-disable-next-line no-new-func
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
+    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+
+    expect(reconstructed.smiles).toBe('CCCC1=NC2=C(C=C(C=CNCC3=CC=C(C4=CC=CC=C4)C=C3(C(=O)O))C5=NC6=CC=CC=C6N5C)C=CC=C2N1C');
+  });
+});
 
 describe('Losartan Integration Test', () => {
   test('parses losartan', () => {

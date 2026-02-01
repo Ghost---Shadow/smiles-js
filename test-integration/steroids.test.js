@@ -18,6 +18,10 @@ const BECLOMETHASONE_SMILES = 'CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(Cl)C(O)CC2(C)C1(O)C
 const FLUDROCORTISONE_SMILES = 'CC12CCC(=O)C=C1CCC1C2(F)C(O)CC2(C)C(C(=O)CO)CCC12';
 const MOMETASONE_SMILES = 'CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(Cl)C(O)CC2(C)C1(O)C(=O)CCl';
 
+// Aliases - cortisol = hydrocortisone, betamethasone = dexamethasone (same SMILES)
+const CORTISOL_SMILES = HYDROCORTISONE_SMILES;
+const BETAMETHASONE_SMILES = DEXAMETHASONE_SMILES;
+
 const CORTISONE_CODE = `export const v1 = Linear(['C']);
 export const v2 = Ring({ atoms: 'C', size: 6, bonds: [null, null, null, null, '=', null] });
 export const v3 = Linear(['O'], ['=']);
@@ -359,6 +363,10 @@ export const v25 = Linear(['C', 'C', 'Cl']);
 export const v26 = Linear(['O'], ['=']);
 export const v27 = v25.attach(v26, 1);
 export const v28 = Molecule([v1, v24, v27]);`;
+
+// Alias CODE constants
+const CORTISOL_CODE = HYDROCORTISONE_CODE;
+const BETAMETHASONE_CODE = DEXAMETHASONE_CODE;
 
 describe('Cortisone Integration Test', () => {
   test('parses cortisone', () => {
@@ -1882,5 +1890,75 @@ describe('Mometasone Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(Cl)C4(O)=CC(=O)C=CC4(C)C2(C)C(=O)CCl');
+  });
+});
+
+describe('Cortisol Integration Test', () => {
+  test('parses cortisol (alias for hydrocortisone)', () => {
+    const ast = parse(CORTISOL_SMILES);
+    const obj = ast.toObject();
+    // Same as hydrocortisone
+    expect(obj.type).toBe('molecule');
+    expect(obj.components.length).toBe(3);
+  });
+
+  test('generates valid code via toCode()', () => {
+    const ast = parse(CORTISOL_SMILES);
+    const code = ast.toCode('v');
+    expect(code).toBe(CORTISOL_CODE);
+  });
+
+  test('generated code is valid JavaScript', () => {
+    const executableCode = stripExports(CORTISOL_CODE);
+    expect(() => {
+      // eslint-disable-next-line no-new-func, no-new
+      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+    }).not.toThrow();
+  });
+
+  test('codegen round-trip: generated code produces valid SMILES', () => {
+    const code = CORTISOL_CODE;
+    const executableCode = stripExports(code);
+    const varMatch = code.match(/export const (v\d+) = /g);
+    const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
+    // eslint-disable-next-line no-new-func
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
+    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    expect(reconstructed.smiles).toBe('CC1CCC(=O)C=C1O');
+  });
+});
+
+describe('Betamethasone Integration Test', () => {
+  test('parses betamethasone (same SMILES as dexamethasone)', () => {
+    const ast = parse(BETAMETHASONE_SMILES);
+    const obj = ast.toObject();
+    // Same structure as dexamethasone
+    expect(obj.type).toBe('molecule');
+    expect(obj.components.length).toBe(3);
+  });
+
+  test('generates valid code via toCode()', () => {
+    const ast = parse(BETAMETHASONE_SMILES);
+    const code = ast.toCode('v');
+    expect(code).toBe(BETAMETHASONE_CODE);
+  });
+
+  test('generated code is valid JavaScript', () => {
+    const executableCode = stripExports(BETAMETHASONE_CODE);
+    expect(() => {
+      // eslint-disable-next-line no-new-func, no-new
+      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+    }).not.toThrow();
+  });
+
+  test('codegen round-trip: generated code produces valid SMILES', () => {
+    const code = BETAMETHASONE_CODE;
+    const executableCode = stripExports(code);
+    const varMatch = code.match(/export const (v\d+) = /g);
+    const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
+    // eslint-disable-next-line no-new-func
+    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
+    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(F)C4(O)=CC(=O)C=CC4(C)C2(C)C(=O)CO');
   });
 });
