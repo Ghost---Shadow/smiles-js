@@ -278,10 +278,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
     <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
     <script type="module">
-        import { Fragment, Ring, FusedRings, Repeat } from 'https://cdn.jsdelivr.net/gh/Ghost---Shadow/smiles-js@main/src/index.js';
-        import { benzene, methyl, ethyl, hydroxyl, carboxyl, naphthalene } from 'https://cdn.jsdelivr.net/gh/Ghost---Shadow/smiles-js@main/src/common.js';
+        import { Fragment, Ring, FusedRing, Linear } from 'https://cdn.jsdelivr.net/gh/Ghost---Shadow/smiles-js@main/src/index.js';
+        import { benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane } from 'https://cdn.jsdelivr.net/gh/Ghost---Shadow/smiles-js@main/src/common.js';
 
-        window.SMILES = { Fragment, Ring, FusedRings, Repeat, benzene, methyl, ethyl, hydroxyl, carboxyl, naphthalene };
+        window.SMILES = { Fragment, Ring, FusedRing, Linear, benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane };
 
         let smilesDrawer;
 
@@ -407,21 +407,17 @@ console.log(ethanol);`,
                                     <span class="output-value">${result.smiles}</span>
                                 </div>
                                 <div class="output-row">
+                                    <span class="output-label">Type:</span>
+                                    <span class="output-value">${result.type}</span>
+                                </div>
+                                ${result.size ? `<div class="output-row">
+                                    <span class="output-label">Size:</span>
+                                    <span class="output-value">${result.size}</span>
+                                </div>` : ''}
+                                ${result.atoms && Array.isArray(result.atoms) ? `<div class="output-row">
                                     <span class="output-label">Atoms:</span>
-                                    <span class="output-value">${result.atoms}</span>
-                                </div>
-                                <div class="output-row">
-                                    <span class="output-label">Rings:</span>
-                                    <span class="output-value">${result.rings}</span>
-                                </div>
-                                <div class="output-row">
-                                    <span class="output-label">Formula:</span>
-                                    <span class="output-value">${result.formula}</span>
-                                </div>
-                                <div class="output-row">
-                                    <span class="output-label">Molecular Weight:</span>
-                                    <span class="output-value">${result.molecularWeight} g/mol</span>
-                                </div>
+                                    <span class="output-value">${result.atoms.join(', ')}</span>
+                                </div>` : ''}
                                 <div style="margin-top: 1rem;">
                                     <h4 style="color: #4ec9b0; font-size: 0.85rem; margin-bottom: 0.5rem;">2D STRUCTURE</h4>
                                     <div class="molecule-viewer">${moleculeViewer}</div>
@@ -456,7 +452,7 @@ console.log(ethanol);`,
 
         function loadExample() {
             editor.setValue(`// SMILES-JS: Build molecules with composable fragments
-const { Fragment, Ring, FusedRings, Repeat, benzene, methyl, ethyl, hydroxyl, carboxyl, naphthalene } = SMILES;
+const { Fragment, Ring, FusedRing, Linear, benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane } = SMILES;
 
 // Simple molecules
 const toluene = benzene(methyl);
@@ -477,15 +473,15 @@ console.log(ibuprofen);
 const biphenyl = benzene(benzene);
 console.log(biphenyl);
 
-// Fused rings
-console.log(naphthalene);
-
-// Custom ring
-const cyclohexane = Ring('C', 6);
+// Pre-built cyclohexane from common.js
 console.log(cyclohexane);
 
-// Repeat units
-const hexane = Repeat('C', 6);
+// Custom ring with Ring constructor
+const cyclopentane = Ring({ atoms: 'C', size: 5 });
+console.log(cyclopentane);
+
+// Linear chain
+const hexane = Linear(['C', 'C', 'C', 'C', 'C', 'C']);
 console.log(hexane);`);
             runCode();
         }
