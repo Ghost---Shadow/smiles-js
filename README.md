@@ -23,6 +23,12 @@ Build complex molecules programmatically with an intuitive, composable API. Pars
 
 ---
 
+## 🤖 Testimony
+
+![Testimony](testimony.png)
+
+---
+
 ## 📦 Installation
 
 ```bash
