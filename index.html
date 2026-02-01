@@ -452,37 +452,21 @@ console.log(ethanol);`,
 
         function loadExample() {
             editor.setValue(`// SMILES-JS: Build molecules with composable fragments
-const { Fragment, Ring, FusedRing, Linear, benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane } = SMILES;
+const { Fragment, Ring, FusedRing, Linear } = SMILES;
 
-// Simple molecules
-const toluene = benzene(methyl);
-console.log(toluene);
 
-const ethanol = ethyl(hydroxyl);
-console.log(ethanol);
+// Create benzene ring
+const benzene = Ring({ atoms: 'c', size: 6 });
+console.log(benzene);  // c1ccccc1
 
-// Multiple branches
-const xylene = benzene(methyl)(methyl);
-console.log(xylene);
+// Add methyl group to make toluene
+const methyl = Linear(['C']);
+const toluene = benzene.attach(methyl, 1);
+console.log(toluene);  // c1(C)ccccc1
 
-// Nested branching
-const ibuprofen = benzene(Fragment('CC(C)C'))(Fragment('CC(C)C(=O)O'));
-console.log(ibuprofen);
-
-// Ring composition
-const biphenyl = benzene(benzene);
-console.log(biphenyl);
-
-// Pre-built cyclohexane from common.js
-console.log(cyclohexane);
-
-// Custom ring with Ring constructor
-const cyclopentane = Ring({ atoms: 'C', size: 5 });
-console.log(cyclopentane);
-
-// Linear chain
-const hexane = Linear(['C', 'C', 'C', 'C', 'C', 'C']);
-console.log(hexane);`);
+// Create pyridine via substitution
+const pyridine = benzene.substitute(5, 'n');
+console.log(pyridine);`);
             runCode();
         }
 
