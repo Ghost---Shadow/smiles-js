@@ -78,7 +78,7 @@ console.log('   AST smiles:', ast1.smiles);
 console.log();
 
 console.log('Parsing omeprazole in silent mode...');
-const ast2 = parseWithValidation(omeprazole, { silent: true });
+parseWithValidation(omeprazole, { silent: true });
 console.log('✅ Parsed successfully (warnings suppressed)');
 console.log();
 

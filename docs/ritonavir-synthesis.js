@@ -9,7 +9,9 @@
  * complex pharmaceutical molecules with chemically meaningful variable names.
  */
 
-import { Ring, Linear, Molecule, parse } from './src/index.js';
+import {
+  Ring, Linear, parse,
+} from './src/index.js';
 
 console.log('🧬 Ritonavir (Norvir) - HIV Protease Inhibitor');
 console.log('='.repeat(80));

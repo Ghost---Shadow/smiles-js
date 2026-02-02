@@ -31,6 +31,7 @@ export function ringAttach(ring, attachment, position) {
 
   updatedAttachments[position] = [...updatedAttachments[position], attachment];
 
+  /* eslint-disable no-underscore-dangle */
   return createRingNode(
     ring.atoms,
     ring.size,
@@ -41,6 +42,7 @@ export function ringAttach(ring, attachment, position) {
     ring.bonds || [],
     ring._branchDepths || null,
   );
+  /* eslint-enable no-underscore-dangle */
 }
 
 export function ringSubstitute(ring, position, newAtom) {

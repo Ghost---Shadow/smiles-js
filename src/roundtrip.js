@@ -127,7 +127,7 @@ export function parseWithValidation(smiles, options = {}) {
       console.warn('⚠️  SMILES Round-Trip Notice:');
       console.warn(`   Input:      ${result.original}`);
       console.warn(`   Normalized: ${result.firstRoundTrip}`);
-      console.warn(`   Recommendation: Use the normalized form for consistent results.`);
+      console.warn('   Recommendation: Use the normalized form for consistent results.');
     }
 
     if (strict) {

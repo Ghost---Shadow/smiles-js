@@ -14,11 +14,11 @@ if (omeprazoleSmiles !== omeprazole.smiles) {
   console.log('\nFinding difference:');
   const input = omeprazoleSmiles;
   const output = omeprazole.smiles;
-  for (let i = 0; i < Math.max(input.length, output.length); i++) {
+  for (let i = 0; i < Math.max(input.length, output.length); i += 1) {
     if (input[i] !== output[i]) {
       console.log('Position:', i);
-      console.log('Input char:', input[i], '(code:', input.charCodeAt(i) + ')');
-      console.log('Output char:', output[i], '(code:', output.charCodeAt(i) + ')');
+      console.log('Input char:', input[i], '(code:', `${input.charCodeAt(i)})`);
+      console.log('Output char:', output[i], '(code:', `${output.charCodeAt(i)})`);
       console.log('Context input: ', input.substring(Math.max(0, i - 10), i + 10));
       console.log('Context output:', output.substring(Math.max(0, i - 10), i + 10));
       break;
@@ -26,7 +26,7 @@ if (omeprazoleSmiles !== omeprazole.smiles) {
   }
 }
 
-console.log('\n' + '='.repeat(60));
+console.log(`\n${'='.repeat(60)}`);
 console.log('\nGenerating code:');
 console.log('='.repeat(60));
 console.log(omeprazole.toCode());

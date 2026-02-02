@@ -19,6 +19,7 @@ const PERFECT_MOLECULES = [
 ];
 
 // Stabilizing molecules (imperfect first, stable second)
+// eslint-disable-next-line no-unused-vars
 const STABILIZING_MOLECULES = [
   {
     input: 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1',
@@ -28,7 +29,7 @@ const STABILIZING_MOLECULES = [
 ];
 
 test('validateRoundTrip - perfect molecules', () => {
-  for (const smiles of PERFECT_MOLECULES) {
+  PERFECT_MOLECULES.forEach((smiles) => {
     const result = validateRoundTrip(smiles);
 
     expect(result.perfect).toBe(true);
@@ -38,7 +39,7 @@ test('validateRoundTrip - perfect molecules', () => {
     expect(result.firstRoundTrip).toBe(smiles);
     expect(result.secondRoundTrip).toBe(smiles);
     expect(result.recommendation).toContain('perfect');
-  }
+  });
 });
 
 test('validateRoundTrip - returns AST', () => {

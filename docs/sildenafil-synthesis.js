@@ -6,7 +6,9 @@
  * SMILES: CCCc1nn(C)c2c1nc(nc2NC3CCN(CC3)CC)C(=O)OCC
  */
 
-import { Ring, Linear, Molecule, parse } from './src/index.js';
+import {
+  Ring, Linear, parse,
+} from './src/index.js';
 
 // First, let's parse and verify the structure
 const sildenafilSmiles = 'CCCc1nn(C)c2c1nc(nc2NC3CCN(CC3)CC)C(=O)OCC';

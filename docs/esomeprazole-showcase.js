@@ -13,7 +13,9 @@
  * ✓ Round-trip validation
  */
 
-import { Ring, Linear, Molecule, parse } from './src/index.js';
+import {
+  Ring, Linear, parse,
+} from './src/index.js';
 
 console.log('╔════════════════════════════════════════════════════════════════════╗');
 console.log('║  Esomeprazole (Nexium) - Proton Pump Inhibitor Synthesis Demo    ║');
@@ -72,7 +74,6 @@ console.log('2️⃣  Imidazole ring:         ', imidazole.smiles);
 
 // Methoxy groups
 const methoxyGroup1 = Linear(['C', 'O']);
-const methoxyGroup2 = Linear(['C', 'O']);
 console.log('3️⃣  Methoxy groups:          2x', methoxyGroup1.smiles);
 
 // Sulfoxide linker
@@ -85,7 +86,6 @@ console.log('4️⃣  Sulfoxide linker:       ', sulfoxide.smiles);
 const pyridineRing = Ring({ atoms: 'c', size: 6, ringNumber: 3 });
 const pyridine = pyridineRing.substitute(2, 'n');
 const methylGroup1 = Linear(['C']);
-const methylGroup2 = Linear(['C']);
 console.log('5️⃣  Pyridine ring:          ', pyridine.smiles);
 console.log('6️⃣  Methyl substituents:     2x', methylGroup1.smiles);
 
