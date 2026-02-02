@@ -1,9 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser.js';
-import {
-  Ring, Linear, FusedRing, Molecule,
-} from '../src/constructors.js';
-import { stripExports } from './utils.js';
+import { stripExports, createFunction, executeCode } from './utils.js';
 
 const ASPIRIN_SMILES = 'CC(=O)Oc1ccccc1C(=O)O';
 const IBUPROFEN_SMILES = 'CC(C)Cc1ccccc1C(C)C(=O)O';
@@ -126,7 +123,7 @@ describe('Aspirin Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -139,8 +136,7 @@ describe('Aspirin Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(ASPIRIN_SMILES);
   });
@@ -219,7 +215,7 @@ describe('Ibuprofen Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -232,8 +228,7 @@ describe('Ibuprofen Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(IBUPROFEN_SMILES);
   });
@@ -318,7 +313,7 @@ describe('Naproxen Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -331,8 +326,7 @@ describe('Naproxen Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(NAPROXEN_SMILES);
   });
@@ -400,7 +394,7 @@ describe('Ketoprofen Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -413,8 +407,7 @@ describe('Ketoprofen Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(KETOPROFEN_SMILES);
   });
@@ -501,7 +494,7 @@ describe('Diclofenac Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -514,8 +507,7 @@ describe('Diclofenac Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(DICLOFENAC_SMILES);
   });

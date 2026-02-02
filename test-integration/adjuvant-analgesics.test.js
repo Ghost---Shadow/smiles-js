@@ -1,9 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser.js';
-import {
-  Ring, Linear, FusedRing, Molecule,
-} from '../src/constructors.js';
-import { stripExports } from './utils.js';
+import { stripExports, createFunction, executeCode } from './utils.js';
 
 // TODO: the bonds parameter for rings is missing in codegen
 
@@ -126,7 +123,7 @@ describe('Gabapentin Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -139,8 +136,7 @@ describe('Gabapentin Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // branchDepths preserves the exact SMILES for branch-crossing rings
     expect(reconstructed.smiles).toBe(GABAPENTIN_SMILES);
@@ -200,8 +196,7 @@ describe('Pregabalin Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(PREGABALIN_SMILES);
   });
@@ -283,8 +278,7 @@ describe('Amitriptyline Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Round-trips to original SMILES
     expect(reconstructed.smiles).toBe(AMITRIPTYLINE_SMILES);
@@ -363,8 +357,7 @@ describe('Duloxetine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Round-trips to original SMILES
     expect(reconstructed.smiles).toBe(DULOXETINE_SMILES);
@@ -449,8 +442,7 @@ describe('Carbamazepine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Round-trip produces the same SMILES as input
     expect(reconstructed.smiles).toBe(CARBAMAZEPINE_SMILES);
@@ -501,8 +493,7 @@ describe('Valproic Acid Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(VALPROIC_ACID_SMILES);
   });

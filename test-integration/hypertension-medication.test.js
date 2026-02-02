@@ -1,9 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser.js';
-import {
-  Ring, Linear, FusedRing, Molecule,
-} from '../src/constructors.js';
-import { stripExports } from './utils.js';
+import { stripExports, createFunction, executeCode } from './utils.js';
 import {
   telmisartan,
   losartan,
@@ -153,7 +150,7 @@ describe('Telmisartan Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -170,8 +167,7 @@ describe('Telmisartan Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(TELMISARTAN_SMILES);
   });
@@ -271,7 +267,7 @@ describe('Losartan Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -284,8 +280,7 @@ describe('Losartan Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(LOSARTAN_SMILES);
   });
@@ -394,7 +389,7 @@ describe('Valsartan Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -407,8 +402,7 @@ describe('Valsartan Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(VALSARTAN_SMILES);
   });
@@ -515,7 +509,7 @@ describe('Irbesartan Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -528,8 +522,7 @@ describe('Irbesartan Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Note: round-trip produces slightly different spiro notation
     expect(reconstructed.smiles).toBe(IRBESARTAN_SMILES);

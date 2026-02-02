@@ -1,9 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser.js';
-import {
-  Ring, Linear, FusedRing, Molecule,
-} from '../src/constructors.js';
-import { stripExports } from './utils.js';
+import { stripExports, createFunction, executeCode } from './utils.js';
 
 const ACETAMINOPHEN_SMILES = 'CC(=O)Nc1ccc(O)cc1';
 const PHENACETIN_SMILES = 'CC(=O)Nc1ccc(OCC)cc1';
@@ -83,7 +80,7 @@ describe('Acetaminophen Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -96,8 +93,7 @@ describe('Acetaminophen Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(ACETAMINOPHEN_SMILES);
   });
@@ -163,8 +159,7 @@ describe('Phenacetin Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(PHENACETIN_SMILES);
   });

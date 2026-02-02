@@ -10,25 +10,16 @@ import {
   isLinearNode,
 } from './ast.js';
 
+// Forward declaration to allow mutual recursion without violating no-use-before-define
+let buildSMILESInternal;
+
 /**
  * Main entry point: Convert any AST node to SMILES string
  * @param {Object} ast - AST node
  * @returns {string} SMILES string
  */
 export function buildSMILES(ast) {
-  if (isMoleculeNode(ast)) {
-    return buildMoleculeSMILES(ast);
-  }
-  if (isFusedRingNode(ast)) {
-    return buildFusedRingSMILES(ast);
-  }
-  if (isRingNode(ast)) {
-    return buildRingSMILES(ast);
-  }
-  if (isLinearNode(ast)) {
-    return buildLinearSMILES(ast);
-  }
-  throw new Error(`Unknown AST node type: ${ast?.type}`);
+  return buildSMILESInternal(ast);
 }
 
 /**
@@ -40,7 +31,7 @@ export function buildMoleculeSMILES(molecule) {
   const parts = molecule.components.map((component, idx) => {
     const smiles = buildSMILES(component);
     // Check if component has a leading bond (connecting to previous component)
-    const leadingBond = idx > 0 && component._leadingBond ? component._leadingBond : '';
+    const leadingBond = idx > 0 && component.metaLeadingBond ? component.metaLeadingBond : '';
 
     return leadingBond + smiles;
   });
@@ -88,76 +79,6 @@ export function buildLinearSMILES(linear) {
 }
 
 /**
- * Build SMILES for a Ring node
- * @param {Object} ring - Ring AST node
- * @returns {string} SMILES string
- */
-export function buildRingSMILES(ring) {
-  const {
-    atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
-  } = ring;
-
-  // Check if this ring crosses branch boundaries (ring closure inside a branch)
-  const branchDepths = ring._branchDepths || [];
-  const hasBranchCrossing = branchDepths.length > 0
-    && branchDepths.some((d) => d !== branchDepths[0]);
-
-  if (hasBranchCrossing) {
-    // Use the branch-aware codegen for rings that cross branch boundaries
-    return buildBranchCrossingRingSMILES(ring);
-  }
-
-  const parts = [];
-
-  // Build ring with standard SMILES notation
-  // Ring marker appears AFTER the first atom (standard notation)
-  // Bonds array: bonds[i-1] is the bond BEFORE atom i (for i=2..size)
-  // bonds[size-1] is the ring closure bond (if any)
-  Array.from({ length: size }, (_, idx) => idx + 1).forEach((i) => {
-    // Add bond before atom (for atoms 2 through size)
-    // bonds[0] is the bond between atom 1 and atom 2
-    // bonds[i-2] is the bond before atom i (for i >= 2)
-    if (i > 1 && bonds[i - 2]) {
-      parts.push(bonds[i - 2]);
-    }
-
-    // Get the atom at this position (base atom or substitution)
-    const atom = substitutions[i] || atoms;
-
-    // Add the atom first
-    parts.push(atom);
-
-    // Add ring opening marker after position 1 (standard SMILES)
-    // Include the ring closure bond if present
-    if (i === 1) {
-      // Ring closure bond (bonds[size-1]) should be added before the ring marker
-      const closureBond = bonds[size - 1];
-      if (closureBond) {
-        parts.push(closureBond);
-      }
-      parts.push(ringNumber.toString());
-    }
-
-    // Add ring closing marker at the last position
-    if (i === size) {
-      parts.push(ringNumber.toString());
-    }
-
-    // Then add attachments if any (AFTER ring markers)
-    if (attachments[i]) {
-      const attachmentList = attachments[i];
-      attachmentList.forEach((attachment) => {
-        parts.push('(');
-        parts.push(buildSMILES(attachment));
-        parts.push(')');
-      });
-    }
-  });
-
-  return parts.join('');
-}
-
-/**
  * Build SMILES for a ring that crosses branch boundaries
  * (ring closure happens inside a branch)
  */
@@ -165,7 +86,7 @@ function buildBranchCrossingRingSMILES(ring) {
   const {
     atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
   } = ring;
-  const branchDepths = ring._branchDepths || [];
+  const branchDepths = ring.metaBranchDepths || [];
 
   // Normalize branch depths to start from 0
   const minDepth = Math.min(...branchDepths);
@@ -199,15 +120,17 @@ function buildBranchCrossingRingSMILES(ring) {
 
       pendingAttachments.forEach((data, attachPos) => {
         if (data.depth === targetDepthNonSibling) {
-          const nonSiblings = data.attachments.filter((a) => a._isSibling === false);
+          const nonSiblings = data.attachments.filter((a) => a.metaIsSibling === false);
 
           nonSiblings.forEach((attachment) => {
             parts.push(buildSMILES(attachment));
           });
-          // Keep only siblings for later
-          data.attachments = data.attachments.filter((a) => a._isSibling !== false);
+          // Keep only siblings for later - replace the entry instead of mutating
+          const keepAttachments = data.attachments.filter((a) => a.metaIsSibling !== false);
+          const newEntry = { depth: data.depth, attachments: keepAttachments };
+          pendingAttachments.set(attachPos, newEntry);
 
-          if (data.attachments.length === 0) {
+          if (keepAttachments.length === 0) {
             toDeleteNonSibling.push(attachPos);
           }
         }
@@ -225,7 +148,7 @@ function buildBranchCrossingRingSMILES(ring) {
       pendingAttachments.forEach((data, attachPos) => {
         if (data.depth === targetDepthSibling) {
           data.attachments.forEach((attachment) => {
-            const isSibling = attachment._isSibling !== false;
+            const isSibling = attachment.metaIsSibling !== false;
 
             if (isSibling) {
               parts.push('(');
@@ -292,14 +215,16 @@ function buildBranchCrossingRingSMILES(ring) {
 
     pendingAttachments.forEach((data, attachPos) => {
       if (data.depth === targetDepthNonSibling) {
-        const nonSiblings = data.attachments.filter((a) => a._isSibling === false);
+        const nonSiblings = data.attachments.filter((a) => a.metaIsSibling === false);
 
         nonSiblings.forEach((attachment) => {
           parts.push(buildSMILES(attachment));
         });
-        data.attachments = data.attachments.filter((a) => a._isSibling !== false);
+        // Keep only siblings for later - replace the entry instead of mutating
+        const remainingAttachments = data.attachments.filter((a) => a.metaIsSibling !== false);
+        pendingAttachments.set(attachPos, { depth: data.depth, attachments: remainingAttachments });
 
-        if (data.attachments.length === 0) {
+        if (remainingAttachments.length === 0) {
           toDeleteNonSibling.push(attachPos);
         }
       }
@@ -317,7 +242,7 @@ function buildBranchCrossingRingSMILES(ring) {
     pendingAttachments.forEach((data, attachPos) => {
       if (data.depth === targetDepthSibling) {
         data.attachments.forEach((attachment) => {
-          const isSibling = attachment._isSibling !== false;
+          const isSibling = attachment.metaIsSibling !== false;
 
           if (isSibling) {
             parts.push('(');
@@ -337,7 +262,7 @@ function buildBranchCrossingRingSMILES(ring) {
   pendingAttachments.forEach((data) => {
     if (data.depth === 0) {
       data.attachments.forEach((attachment) => {
-        const isSibling = attachment._isSibling !== false; // default to true for safety
+        const isSibling = attachment.metaIsSibling !== false; // default to true for safety
 
         if (isSibling) {
           parts.push('(');
@@ -354,12 +279,82 @@ function buildBranchCrossingRingSMILES(ring) {
 }
 
 /**
+ * Build SMILES for a Ring node
+ * @param {Object} ring - Ring AST node
+ * @returns {string} SMILES string
+ */
+export function buildRingSMILES(ring) {
+  const {
+    atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
+  } = ring;
+
+  // Check if this ring crosses branch boundaries (ring closure inside a branch)
+  const branchDepths = ring.metaBranchDepths || [];
+  const hasBranchCrossing = branchDepths.length > 0
+    && branchDepths.some((d) => d !== branchDepths[0]);
+
+  if (hasBranchCrossing) {
+    // Use the branch-aware codegen for rings that cross branch boundaries
+    return buildBranchCrossingRingSMILES(ring);
+  }
+
+  const parts = [];
+
+  // Build ring with standard SMILES notation
+  // Ring marker appears AFTER the first atom (standard notation)
+  // Bonds array: bonds[i-1] is the bond BEFORE atom i (for i=2..size)
+  // bonds[size-1] is the ring closure bond (if any)
+  Array.from({ length: size }, (_, idx) => idx + 1).forEach((i) => {
+    // Add bond before atom (for atoms 2 through size)
+    // bonds[0] is the bond between atom 1 and atom 2
+    // bonds[i-2] is the bond before atom i (for i >= 2)
+    if (i > 1 && bonds[i - 2]) {
+      parts.push(bonds[i - 2]);
+    }
+
+    // Get the atom at this position (base atom or substitution)
+    const atom = substitutions[i] || atoms;
+
+    // Add the atom first
+    parts.push(atom);
+
+    // Add ring opening marker after position 1 (standard SMILES)
+    // Include the ring closure bond if present
+    if (i === 1) {
+      // Ring closure bond (bonds[size-1]) should be added before the ring marker
+      const closureBond = bonds[size - 1];
+      if (closureBond) {
+        parts.push(closureBond);
+      }
+      parts.push(ringNumber.toString());
+    }
+
+    // Add ring closing marker at the last position
+    if (i === size) {
+      parts.push(ringNumber.toString());
+    }
+
+    // Then add attachments if any (AFTER ring markers)
+    if (attachments[i]) {
+      const attachmentList = attachments[i];
+      attachmentList.forEach((attachment) => {
+        parts.push('(');
+        parts.push(buildSMILES(attachment));
+        parts.push(')');
+      });
+    }
+  });
+
+  return parts.join('');
+}
+
+/**
  * Build SMILES for interleaved fused rings using stored position data
  */
 function buildInterleavedFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
-  const allPositions = fusedRing._allPositions;
-  const rawBranchDepthMap = fusedRing._branchDepthMap || new Map();
+  const allPositions = fusedRing.metaAllPositions;
+  const rawBranchDepthMap = fusedRing.metaBranchDepthMap || new Map();
 
   // Normalize branch depths - the fused ring may be inside a branch (as an attachment),
   // so we need relative depths starting from 0, not absolute depths from parsing
@@ -378,7 +373,7 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   const bondsBefore = new Map(); // position -> bond (bond to add before atom at this position)
 
   // Include sequential continuation rings in addition to fused group rings
-  const sequentialRings = fusedRing._sequentialRings || [];
+  const sequentialRings = fusedRing.metaSequentialRings || [];
   const allRings = [...rings, ...sequentialRings];
 
   // Track which positions have already had attachments added (to avoid duplicates)
@@ -388,9 +383,9 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
   // Collect all ring markers, atom sequence, and bonds
   allRings.forEach((ring) => {
-    const positions = ring._positions || [];
-    const start = ring._start;
-    const end = ring._end;
+    const positions = ring.metaPositions || [];
+    const start = ring.metaStart;
+    const end = ring.metaEnd;
     const {
       ringNumber, atoms, substitutions = {}, attachments = {}, bonds = [],
     } = ring;
@@ -436,10 +431,10 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   // For positions that aren't in any ring (sequential continuations), we need to
   // create atomSequence entries. These are atoms that follow ring-closing atoms
   // but aren't part of the ring structure.
-  const allRingPositions = new Set(allRings.flatMap((r) => r._positions || []));
-  const atomValueMap = fusedRing._atomValueMap || new Map();
-  const seqAtomAttachments = fusedRing._seqAtomAttachments || new Map();
-  const bondMap = fusedRing._bondMap || new Map();
+  const allRingPositions = new Set(allRings.flatMap((r) => r.metaPositions || []));
+  const atomValueMap = fusedRing.metaAtomValueMap || new Map();
+  const seqAtomAttachments = fusedRing.metaSeqAtomAttachments || new Map();
+  const bondMap = fusedRing.metaBondMap || new Map();
   allPositions.forEach((pos) => {
     if (!atomSequence[pos] && !allRingPositions.has(pos)) {
       // This is a sequential continuation atom - use stored atom value and attachments
@@ -504,7 +499,7 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
     // Sort markers: opens first, then by original order from SMILES
     // The ringOrderMap stores the order of ring markers as they appeared in the original
-    const ringOrderMap = fusedRing._ringOrderMap || new Map();
+    const ringOrderMap = fusedRing.metaRingOrderMap || new Map();
     const originalOrder = ringOrderMap.get(pos) || [];
 
     markers.sort((a, b) => {
@@ -687,12 +682,29 @@ export function buildFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
 
   // Check if we have position data for interleaved fused ring handling
-  const hasPositionData = rings.some((r) => r._positions);
+  const hasPositionData = rings.some((r) => r.metaPositions);
 
-  if (hasPositionData && fusedRing._allPositions) {
+  if (hasPositionData && fusedRing.metaAllPositions) {
     return buildInterleavedFusedRingSMILES(fusedRing);
   }
 
   // Fall back to offset-based approach for simple fused rings
   return buildSimpleFusedRingSMILES(fusedRing);
 }
+
+// Initialize the internal dispatcher after all functions are defined
+buildSMILESInternal = function buildSMILESInternalImpl(ast) {
+  if (isMoleculeNode(ast)) {
+    return buildMoleculeSMILES(ast);
+  }
+  if (isFusedRingNode(ast)) {
+    return buildFusedRingSMILES(ast);
+  }
+  if (isRingNode(ast)) {
+    return buildRingSMILES(ast);
+  }
+  if (isLinearNode(ast)) {
+    return buildLinearSMILES(ast);
+  }
+  throw new Error(`Unknown AST node type: ${ast?.type}`);
+};

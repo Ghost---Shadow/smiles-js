@@ -1,9 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser.js';
-import {
-  Ring, Linear, FusedRing, Molecule,
-} from '../src/constructors.js';
-import { stripExports } from './utils.js';
+import { stripExports, createFunction, executeCode } from './utils.js';
 
 const LIDOCAINE_SMILES = 'CCN(CC)CC(=O)NC1=C(C)C=CC=C1C';
 const BUPIVACAINE_SMILES = 'CCCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C';
@@ -168,7 +165,7 @@ describe('Lidocaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -181,8 +178,7 @@ describe('Lidocaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(LIDOCAINE_SMILES);
   });
@@ -269,7 +265,7 @@ describe('Bupivacaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -282,8 +278,7 @@ describe('Bupivacaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(BUPIVACAINE_SMILES);
   });
@@ -370,7 +365,7 @@ describe('Ropivacaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -383,8 +378,7 @@ describe('Ropivacaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(ROPIVACAINE_SMILES);
   });
@@ -471,7 +465,7 @@ describe('Mepivacaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -484,8 +478,7 @@ describe('Mepivacaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(MEPIVACAINE_SMILES);
   });
@@ -555,7 +548,7 @@ describe('Prilocaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -568,8 +561,7 @@ describe('Prilocaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(PRILOCAINE_SMILES);
   });
@@ -631,7 +623,7 @@ describe('Benzocaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -644,8 +636,7 @@ describe('Benzocaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(BENZOCAINE_SMILES);
   });
@@ -715,7 +706,7 @@ describe('Tetracaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -728,8 +719,7 @@ describe('Tetracaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(TETRACAINE_SMILES);
   });
@@ -799,7 +789,7 @@ describe('Procaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
@@ -812,8 +802,7 @@ describe('Procaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(PROCAINE_SMILES);
   });

@@ -10,6 +10,12 @@
 
 import { parse } from './parser.js';
 
+// Default logger uses console, can be overridden for testing or custom logging
+const defaultLogger = {
+  warn: (...args) => { process.stderr.write(`${args.join(' ')}\n`); },
+  error: (...args) => { process.stderr.write(`${args.join(' ')}\n`); },
+};
+
 /**
  * Round-trip validation result
  * @typedef {Object} RoundTripResult
@@ -112,7 +118,7 @@ export function validateRoundTrip(smiles) {
  * const mol = parseWithValidation('c1ccccc1', { strict: true });
  */
 export function parseWithValidation(smiles, options = {}) {
-  const { silent = false, strict = false } = options;
+  const { silent = false, strict = false, logger = defaultLogger } = options;
 
   const result = validateRoundTrip(smiles);
 
@@ -124,10 +130,10 @@ export function parseWithValidation(smiles, options = {}) {
   // Stabilizes - warn user
   if (result.stabilizes) {
     if (!silent) {
-      console.warn('⚠️  SMILES Round-Trip Notice:');
-      console.warn(`   Input:      ${result.original}`);
-      console.warn(`   Normalized: ${result.firstRoundTrip}`);
-      console.warn('   Recommendation: Use the normalized form for consistent results.');
+      logger.warn('⚠️  SMILES Round-Trip Notice:');
+      logger.warn(`   Input:      ${result.original}`);
+      logger.warn(`   Normalized: ${result.firstRoundTrip}`);
+      logger.warn('   Recommendation: Use the normalized form for consistent results.');
     }
 
     if (strict) {
@@ -139,11 +145,11 @@ export function parseWithValidation(smiles, options = {}) {
 
   // Does not stabilize - critical warning
   if (!silent) {
-    console.error('❌ SMILES Round-Trip Error:');
-    console.error(`   Input:  ${result.original}`);
-    console.error(`   1st RT: ${result.firstRoundTrip}`);
-    console.error(`   2nd RT: ${result.secondRoundTrip}`);
-    console.error(`   ${result.recommendation}`);
+    logger.error('❌ SMILES Round-Trip Error:');
+    logger.error(`   Input:  ${result.original}`);
+    logger.error(`   1st RT: ${result.firstRoundTrip}`);
+    logger.error(`   2nd RT: ${result.secondRoundTrip}`);
+    logger.error(`   ${result.recommendation}`);
   }
 
   if (strict) {

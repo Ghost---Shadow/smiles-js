@@ -18,15 +18,6 @@ const PERFECT_MOLECULES = [
   'C1CCC1', // Cyclobutane
 ];
 
-// Stabilizing molecules (imperfect first, stable second)
-const STABILIZING_MOLECULES = [
-  {
-    input: 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1',
-    expected: 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3)[nH]c2c1', // Missing final C
-  },
-  // Add more as discovered
-];
-
 test('validateRoundTrip - perfect molecules', () => {
   PERFECT_MOLECULES.forEach((smiles) => {
     const result = validateRoundTrip(smiles);

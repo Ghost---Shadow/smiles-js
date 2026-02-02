@@ -1,9 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser.js';
-import {
-  Ring, Linear, FusedRing, Molecule,
-} from '../src/constructors.js';
-import { stripExports } from './utils.js';
+import { stripExports, createFunction, executeCode } from './utils.js';
 
 const MORPHINE_SMILES = 'CN1CCC23C4C1CC5=C2C(=C(C=C5)O)OC3C(C=C4)O';
 const CODEINE_SMILES = 'CN1CCC23C4C1CC5=C2C(=C(C=C5)OC)OC3C(C=C4)O';
@@ -195,7 +192,7 @@ describe('Morphine Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(MORPHINE_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -206,8 +203,7 @@ describe('Morphine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Note: round-trip produces simplified structure
     expect(reconstructed.smiles).toBe(MORPHINE_SMILES);
@@ -301,7 +297,7 @@ describe('Codeine Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(CODEINE_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -312,8 +308,7 @@ describe('Codeine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(CODEINE_SMILES);
   });
@@ -433,7 +428,7 @@ describe('Oxycodone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(OXYCODONE_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -444,8 +439,7 @@ describe('Oxycodone Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(OXYCODONE_SMILES);
   });
@@ -541,7 +535,7 @@ describe('Hydrocodone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(HYDROCODONE_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -552,8 +546,7 @@ describe('Hydrocodone Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Note: round-trip produces simplified structure
     expect(reconstructed.smiles).toBe(HYDROCODONE_SMILES);
@@ -638,7 +631,7 @@ describe('Fentanyl Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(FENTANYL_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -649,8 +642,7 @@ describe('Fentanyl Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Note: round-trip produces slightly different ring numbering
     expect(reconstructed.smiles).toBe(FENTANYL_SMILES);
@@ -732,7 +724,7 @@ describe('Tramadol Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(TRAMADOL_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -743,8 +735,7 @@ describe('Tramadol Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     // Note: round-trip produces slightly different structure with branch notation
     expect(reconstructed.smiles).toBe(TRAMADOL_SMILES);
@@ -831,7 +822,7 @@ describe('Methadone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(METHADONE_CODE);
     expect(() => {
-      new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
 
@@ -842,8 +833,7 @@ describe('Methadone Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
-    const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
+    const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(METHADONE_SMILES);
   });

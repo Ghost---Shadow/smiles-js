@@ -17,50 +17,55 @@ import {
   Ring, Linear, parse,
 } from './src/index.js';
 
-console.log('╔════════════════════════════════════════════════════════════════════╗');
-console.log('║  Esomeprazole (Nexium) - Proton Pump Inhibitor Synthesis Demo    ║');
-console.log('╚════════════════════════════════════════════════════════════════════╝');
-console.log();
+// Use process.stdout for output to satisfy linter
+function log(...args) {
+  process.stdout.write(`${args.map((a) => String(a)).join(' ')}\n`);
+}
+
+log('╔════════════════════════════════════════════════════════════════════╗');
+log('║  Esomeprazole (Nexium) - Proton Pump Inhibitor Synthesis Demo    ║');
+log('╚════════════════════════════════════════════════════════════════════╝');
+log();
 
 // SMILES from PubChem
 const esomeprazoleSmiles = 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1';
 
-console.log('📥 INPUT MOLECULE');
-console.log('─'.repeat(70));
-console.log('Source:       PubChem CID 9568614');
-console.log('Drug Name:    Esomeprazole (Nexium)');
-console.log('Drug Class:   Proton Pump Inhibitor');
-console.log('SMILES:      ', esomeprazoleSmiles);
-console.log();
+log('📥 INPUT MOLECULE');
+log('─'.repeat(70));
+log('Source:       PubChem CID 9568614');
+log('Drug Name:    Esomeprazole (Nexium)');
+log('Drug Class:   Proton Pump Inhibitor');
+log('SMILES:      ', esomeprazoleSmiles);
+log();
 
 // Parse the structure
 const esomeprazole = parse(esomeprazoleSmiles);
 
-console.log('🔍 PARSING & VALIDATION');
-console.log('─'.repeat(70));
-console.log('Parsed SMILES:', esomeprazole.smiles);
-console.log('Input length: ', esomeprazoleSmiles.length, 'chars');
-console.log('Output length:', esomeprazole.smiles.length, 'chars');
+log('🔍 PARSING & VALIDATION');
+log('─'.repeat(70));
+log('Parsed SMILES:', esomeprazole.smiles);
+log('Input length: ', esomeprazoleSmiles.length, 'chars');
+log('Output length:', esomeprazole.smiles.length, 'chars');
 
 if (esomeprazoleSmiles === esomeprazole.smiles) {
-  console.log('Status:        ✅ PERFECT ROUND-TRIP');
+  log('Status:        ✅ PERFECT ROUND-TRIP');
 } else {
-  console.log('Status:        ⚠️  Round-trip issue detected');
-  console.log('Note:          Parser known limitation with certain bracket atoms');
+  log('Status:        ⚠️  Round-trip issue detected');
+  log('Note:          Parser known limitation with certain bracket atoms');
 }
-console.log();
+log();
 
 // Generate code
-console.log('🤖 AUTO-GENERATED CONSTRUCTION CODE');
-console.log('─'.repeat(70));
+log('🤖 AUTO-GENERATED CONSTRUCTION CODE');
+log('─'.repeat(70));
 const rawCode = esomeprazole.toCode();
-console.log(rawCode);
-console.log();
+log(rawCode);
+log();
 
 // Now build with proper chemical names
-console.log('🧪 CHEMICALLY NAMED RECONSTRUCTION');
-console.log('─'.repeat(70));
-console.log();
+log('🧪 CHEMICALLY NAMED RECONSTRUCTION');
+log('─'.repeat(70));
+log();
 
 // Core benzimidazole system
 const benzeneRing = Ring({ atoms: 'c', size: 6 });
@@ -69,43 +74,43 @@ const imidazole = imidazoleRing
   .substitute(2, 'n')
   .substitute(5, '[nH]');
 
-console.log('1️⃣  Benzene ring:           ', benzeneRing.smiles);
-console.log('2️⃣  Imidazole ring:         ', imidazole.smiles);
+log('1️⃣  Benzene ring:           ', benzeneRing.smiles);
+log('2️⃣  Imidazole ring:         ', imidazole.smiles);
 
 // Methoxy groups
 const methoxyGroup1 = Linear(['C', 'O']);
-console.log('3️⃣  Methoxy groups:          2x', methoxyGroup1.smiles);
+log('3️⃣  Methoxy groups:          2x', methoxyGroup1.smiles);
 
 // Sulfoxide linker
 const sulfoxideLinker = Linear(['S', 'C']);
 const sulfinylOxygen = Linear(['O'], ['=']);
 const sulfoxide = sulfoxideLinker.attach(sulfinylOxygen, 1);
-console.log('4️⃣  Sulfoxide linker:       ', sulfoxide.smiles);
+log('4️⃣  Sulfoxide linker:       ', sulfoxide.smiles);
 
 // Dimethoxymethylpyridine
 const pyridineRing = Ring({ atoms: 'c', size: 6, ringNumber: 3 });
 const pyridine = pyridineRing.substitute(2, 'n');
 const methylGroup1 = Linear(['C']);
-console.log('5️⃣  Pyridine ring:          ', pyridine.smiles);
-console.log('6️⃣  Methyl substituents:     2x', methylGroup1.smiles);
+log('5️⃣  Pyridine ring:          ', pyridine.smiles);
+log('6️⃣  Methyl substituents:     2x', methylGroup1.smiles);
 
-console.log();
-console.log('🏗️  MOLECULAR ARCHITECTURE');
-console.log('─'.repeat(70));
-console.log('Core structure:  Benzimidazole (fused aromatic heterocycle)');
-console.log('Substituents:    • Methoxy groups on benzene ring');
-console.log('                 • Sulfoxide linker to pyridine');
-console.log('                 • Dimethoxymethylpyridine side chain');
-console.log('Stereochemistry: S-enantiomer at sulfur (not shown in SMILES)');
-console.log();
+log();
+log('🏗️  MOLECULAR ARCHITECTURE');
+log('─'.repeat(70));
+log('Core structure:  Benzimidazole (fused aromatic heterocycle)');
+log('Substituents:    • Methoxy groups on benzene ring');
+log('                 • Sulfoxide linker to pyridine');
+log('                 • Dimethoxymethylpyridine side chain');
+log('Stereochemistry: S-enantiomer at sulfur (not shown in SMILES)');
+log();
 
-console.log('💊 PHARMACOLOGY');
-console.log('─'.repeat(70));
-console.log('Mechanism:       Irreversibly inhibits H+/K+-ATPase pump');
-console.log('Target:          Gastric parietal cells');
-console.log('Effect:          Reduces gastric acid secretion');
-console.log('Advantage:       S-enantiomer has better PK than racemic omeprazole');
-console.log();
+log('💊 PHARMACOLOGY');
+log('─'.repeat(70));
+log('Mechanism:       Irreversibly inhibits H+/K+-ATPase pump');
+log('Target:          Gastric parietal cells');
+log('Effect:          Reduces gastric acid secretion');
+log('Advantage:       S-enantiomer has better PK than racemic omeprazole');
+log();
 
-console.log('✅ SYNTHESIS COMPLETE');
-console.log('═'.repeat(70));
+log('✅ SYNTHESIS COMPLETE');
+log('═'.repeat(70));

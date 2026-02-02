@@ -39,7 +39,7 @@ export function ringAttach(ring, attachment, position) {
     ring.substitutions,
     updatedAttachments,
     ring.bonds || [],
-    ring._branchDepths || null,
+    ring.metaBranchDepths || null,
   );
 }
 
@@ -82,7 +82,7 @@ export function ringFuse(ring, otherRing, offset, options = {}) {
     ring.substitutions,
     ring.attachments,
     ring.bonds || [],
-    ring._branchDepths || null,
+    ring.metaBranchDepths || null,
   );
 
   const ring2 = createRingNode(
@@ -93,7 +93,7 @@ export function ringFuse(ring, otherRing, offset, options = {}) {
     otherRing.substitutions,
     otherRing.attachments,
     otherRing.bonds || [],
-    otherRing._branchDepths || null,
+    otherRing.metaBranchDepths || null,
   );
 
   return createFusedRingNode([ring1, ring2], options);

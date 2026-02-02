@@ -100,54 +100,40 @@ export function tokenize(smiles) {
     // Skip whitespace
     if (/\s/.test(char)) {
       position += 1;
-      continue;
-    }
-
-    // Branch symbols
-    if (char === '(') {
+    } else if (char === '(') {
+      // Branch open
       tokens.push({
         type: TokenType.BRANCH_OPEN,
         value: '(',
         position,
       });
       position += 1;
-      continue;
-    }
-
-    if (char === ')') {
+    } else if (char === ')') {
+      // Branch close
       tokens.push({
         type: TokenType.BRANCH_CLOSE,
         value: ')',
         position,
       });
       position += 1;
-      continue;
-    }
-
-    // Dot (disconnected fragments)
-    if (char === '.') {
+    } else if (char === '.') {
+      // Dot (disconnected fragments)
       tokens.push({
         type: TokenType.DOT,
         value: '.',
         position,
       });
       position += 1;
-      continue;
-    }
-
-    // Bond symbols
-    if (isBondSymbol(char)) {
+    } else if (isBondSymbol(char)) {
+      // Bond symbols
       tokens.push({
         type: TokenType.BOND,
         value: char,
         position,
       });
       position += 1;
-      continue;
-    }
-
-    // Ring markers (% followed by two digits, or single digit)
-    if (char === '%') {
+    } else if (char === '%') {
+      // Ring markers (% followed by two digits)
       const marker = smiles.slice(position, position + 3);
       if (marker.length === 3 && /^%\d\d$/.test(marker)) {
         tokens.push({
@@ -157,13 +143,11 @@ export function tokenize(smiles) {
           position,
         });
         position += 3;
-        continue;
+      } else {
+        throw new Error(`Invalid ring marker at position ${position}: ${marker}`);
       }
-      throw new Error(`Invalid ring marker at position ${position}: ${marker}`);
-    }
-
-    // Ring markers (single digit)
-    if (/\d/.test(char)) {
+    } else if (/\d/.test(char)) {
+      // Ring markers (single digit)
       tokens.push({
         type: TokenType.RING_MARKER,
         value: char,
@@ -171,11 +155,8 @@ export function tokenize(smiles) {
         position,
       });
       position += 1;
-      continue;
-    }
-
-    // Bracketed atoms [...]
-    if (char === '[') {
+    } else if (char === '[') {
+      // Bracketed atoms [...]
       const result = parseBracketedAtom(smiles, position);
       tokens.push({
         type: TokenType.ATOM,
@@ -184,11 +165,8 @@ export function tokenize(smiles) {
         position,
       });
       position = result.endPosition;
-      continue;
-    }
-
-    // Simple atoms (organic subset and aromatic)
-    if (isAtomStart(char)) {
+    } else if (isAtomStart(char)) {
+      // Simple atoms (organic subset and aromatic)
       const result = parseSimpleAtom(smiles, position);
       tokens.push({
         type: TokenType.ATOM,
@@ -197,10 +175,9 @@ export function tokenize(smiles) {
         position,
       });
       position = result.endPosition;
-      continue;
+    } else {
+      throw new Error(`Unexpected character at position ${position}: '${char}'`);
     }
-
-    throw new Error(`Unexpected character at position ${position}: '${char}'`);
   }
 
   return tokens;

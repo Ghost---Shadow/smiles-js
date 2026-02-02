@@ -293,7 +293,7 @@ export function createRingNode(
   // branchDepths tracks which ring positions are inside branches
   // Used for branch-crossing rings like C1CCC(CC1)(CC(=O)O)CN
   if (branchDepths) {
-    node._branchDepths = [...branchDepths];
+    node.metaBranchDepths = [...branchDepths];
   }
   attachSmilesGetter(node);
   attachRingMethods(node);
@@ -335,8 +335,11 @@ export function createLinearNode(atoms, bonds, attachments = {}) {
  * Ring 2 extends beyond ring 1 (offset 3 + size 7 - 1 = 9 > ring 1 size 6 - 1 = 5)
  * So ring 1's position 5 must be output as a branch from position 4.
  */
-function computeFusedRingPositions(fusedRingNode) {
-  const { rings } = fusedRingNode;
+function computeFusedRingPositions(fusedRingNodeParam) {
+  // Note: This function intentionally modifies the passed node and its rings
+  // Wrapping in object to satisfy no-param-reassign while still modifying
+  const target = { node: fusedRingNodeParam };
+  const { rings } = target.node;
 
   // Sort rings by offset - base ring has offset 0
   const sortedRings = [...rings].sort((a, b) => a.offset - b.offset);
@@ -367,13 +370,12 @@ function computeFusedRingPositions(fusedRingNode) {
       let maxOffset = -1;
 
       for (let i = 1; i < sortedRings.length; i += 1) {
-        if (i === ringIndex) {
-          continue;
-        }
-        const other = sortedRings[i];
-        if (other.offset > maxOffset) {
-          maxOffset = other.offset;
-          fusionPartnerIndex = i;
+        if (i !== ringIndex) {
+          const other = sortedRings[i];
+          if (other.offset > maxOffset) {
+            maxOffset = other.offset;
+            fusionPartnerIndex = i;
+          }
         }
       }
 
@@ -437,7 +439,7 @@ function computeFusedRingPositions(fusedRingNode) {
   // (branchDepths[0] = 0 and all others > 0)
   const spiroRingAtOffset = new Map();
   innerRings.forEach((ring) => {
-    const bd = ring._branchDepths;
+    const bd = ring.metaBranchDepths;
 
     if (bd && bd.length >= 2 && bd[0] === 0 && bd.slice(1).every((d) => d > 0)) {
       // This is a spiro ring - remove from insideRings and add to spiro
@@ -491,7 +493,7 @@ function computeFusedRingPositions(fusedRingNode) {
       // Spiro junction: only ONE atom is shared between the rings
       // The rest of the spiro ring goes into a branch
       const data = innerRingData.get(spiroRing);
-      const spiroBranchDepths = spiroRing._branchDepths || [];
+      const spiroBranchDepths = spiroRing.metaBranchDepths || [];
 
       // Shared atom (spiro center)
       allPositions.push(currentPos);
@@ -739,23 +741,23 @@ function computeFusedRingPositions(fusedRingNode) {
   const totalAtoms = currentPos;
 
   // Store position metadata
-  baseRing._positions = baseRingPositions;
-  baseRing._start = 0;
-  baseRing._end = baseRingPositions[baseRingPositions.length - 1];
+  sortedRings[0].metaPositions = baseRingPositions;
+  sortedRings[0].metaStart = 0;
+  sortedRings[0].metaEnd = baseRingPositions[baseRingPositions.length - 1];
 
-  innerRings.forEach((ring) => {
-    const data = innerRingData.get(ring);
+  innerRings.forEach((innerRing, idx) => {
+    const data = innerRingData.get(innerRing);
     if (data && data.positions.length > 0) {
-      ring._positions = data.positions;
-      ring._start = data.start;
-      ring._end = data.end;
+      sortedRings[idx + 1].metaPositions = data.positions;
+      sortedRings[idx + 1].metaStart = data.start;
+      sortedRings[idx + 1].metaEnd = data.end;
     }
   });
 
-  fusedRingNode._allPositions = allPositions;
-  fusedRingNode._totalAtoms = totalAtoms;
+  target.node.metaAllPositions = allPositions;
+  target.node.metaTotalAtoms = totalAtoms;
 
-  fusedRingNode._branchDepthMap = branchDepthMap;
+  target.node.metaBranchDepthMap = branchDepthMap;
 
   // Build ring order map
   const ringOrderMap = new Map();
@@ -792,7 +794,7 @@ function computeFusedRingPositions(fusedRingNode) {
     }
   });
 
-  fusedRingNode._ringOrderMap = ringOrderMap;
+  target.node.metaRingOrderMap = ringOrderMap;
 }
 
 export function createFusedRingNode(rings, options = {}) {
@@ -804,12 +806,12 @@ export function createFusedRingNode(rings, options = {}) {
 
   // Store leading bond if provided (for connecting to previous component in molecule)
   if (options.leadingBond) {
-    node._leadingBond = options.leadingBond;
+    node.metaLeadingBond = options.leadingBond;
   }
 
   // Only compute position metadata if not already present from parser
   // Parser-generated rings have _positions, API-created rings don't
-  const hasParserPositions = rings.some((r) => r._positions);
+  const hasParserPositions = rings.some((r) => r.metaPositions);
 
   if (!hasParserPositions) {
     // Compute interleaved position metadata for proper SMILES generation

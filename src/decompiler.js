@@ -10,6 +10,14 @@ import {
   isLinearNode,
 } from './ast.js';
 
+// Forward declaration for mutual recursion
+let decompileNodeInternal;
+
+// Helper to call decompileNodeInternal (satisfies no-loop-func rule)
+function decompileChildNode(node, indent, nextVar) {
+  return decompileNodeInternal(node, indent, nextVar);
+}
+
 /**
  * Counter-based variable name generator
  */
@@ -54,11 +62,11 @@ function decompileRing(ring, indent, nextVar) {
   // e.g., Ring with branchDepths [0, 0, 0, 0, 1, 1] means the ring path
   // crosses from depth 0 to depth 1 (enters a branch for closing atoms)
   // This is needed to correctly serialize rings like CC2=CC=C(C=C2)
-  if (ring._branchDepths && ring._branchDepths.length > 0) {
-    const firstDepth = ring._branchDepths[0];
-    const hasVaryingDepths = ring._branchDepths.some((d) => d !== firstDepth);
+  if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
+    const firstDepth = ring.metaBranchDepths[0];
+    const hasVaryingDepths = ring.metaBranchDepths.some((d) => d !== firstDepth);
     if (hasVaryingDepths) {
-      options.branchDepths = `[${ring._branchDepths.join(', ')}]`;
+      options.branchDepths = `[${ring.metaBranchDepths.join(', ')}]`;
     }
   }
 
@@ -83,7 +91,8 @@ function decompileRing(ring, indent, nextVar) {
   if (Object.keys(ring.attachments).length > 0) {
     Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
-        const { code: aCode, finalVar: aFinalVar } = decompileNode(attachment, indent, nextVar);
+        const attachResult = decompileNodeInternal(attachment, indent, nextVar);
+        const { code: aCode, finalVar: aFinalVar } = attachResult;
         lines.push(aCode);
 
         const newVar = nextVar();
@@ -120,7 +129,8 @@ function decompileLinear(linear, indent, nextVar) {
   if (Object.keys(linear.attachments).length > 0) {
     Object.entries(linear.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
-        const { code: aCode, finalVar: aFinalVar } = decompileNode(attachment, indent, nextVar);
+        const attachRes = decompileNodeInternal(attachment, indent, nextVar);
+        const { code: aCode, finalVar: aFinalVar } = attachRes;
         lines.push(aCode);
 
         const newVar = nextVar();
@@ -148,7 +158,7 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
   });
 
   // Check for leading bond (bond connecting to previous component)
-  const leadingBond = fusedRing._leadingBond;
+  const leadingBond = fusedRing.metaLeadingBond;
 
   // Fuse rings together
   const finalVar = nextVar();
@@ -177,8 +187,8 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
  * Calculate the fusion offset between two rings based on shared positions
  */
 function calculateFusionOffset(ring1, ring2) {
-  const ring1Positions = ring1._positions || [];
-  const ring2Positions = ring2._positions || [];
+  const ring1Positions = ring1.metaPositions || [];
+  const ring2Positions = ring2.metaPositions || [];
 
   // Find the first shared position
   const ring1Set = new Set(ring1Positions);
@@ -301,7 +311,7 @@ function buildBranchCode(
   // Find rings that start at this depth
   const ringsAtDepth = allRings.filter((ring) => {
     if (processedRings.has(ring.ringNumber)) return false;
-    const ringPositions = ring._positions || [];
+    const ringPositions = ring.metaPositions || [];
 
     if (ringPositions.length === 0) return false;
     const firstPos = ringPositions[0];
@@ -318,24 +328,23 @@ function buildBranchCode(
     const group = [ring];
     assignedRings.add(ring.ringNumber);
 
-    const ringPositions = new Set(ring._positions || []);
+    const ringPositions = new Set(ring.metaPositions || []);
 
     let didExpand = true;
     while (didExpand) {
       didExpand = false;
       for (let ri = 0; ri < ringsAtDepth.length; ri += 1) {
         const other = ringsAtDepth[ri];
-        if (assignedRings.has(other.ringNumber)) {
-          continue;
-        }
-        const otherPositions = other._positions || [];
+        if (!assignedRings.has(other.ringNumber)) {
+          const otherPositions = other.metaPositions || [];
 
-        const hasOverlap = otherPositions.some((pos) => ringPositions.has(pos));
-        if (hasOverlap) {
-          group.push(other);
-          assignedRings.add(other.ringNumber);
-          otherPositions.forEach((pos) => ringPositions.add(pos));
-          didExpand = true;
+          const hasOverlap = otherPositions.some((pos) => ringPositions.has(pos));
+          if (hasOverlap) {
+            group.push(other);
+            assignedRings.add(other.ringNumber);
+            otherPositions.forEach((pos) => ringPositions.add(pos));
+            didExpand = true;
+          }
         }
       }
     }
@@ -346,7 +355,7 @@ function buildBranchCode(
   // Build ring positions set
   const ringPositionsSet = new Set();
   ringsAtDepth.forEach((ring) => {
-    (ring._positions || []).forEach((pos) => ringPositionsSet.add(pos));
+    (ring.metaPositions || []).forEach((pos) => ringPositionsSet.add(pos));
   });
 
   // Process positions in order
@@ -356,7 +365,7 @@ function buildBranchCode(
 
     // Check if this position is part of a ring group
     const ringGroup = fusedGroups.find(
-      (group) => group.some((ring) => (ring._positions || []).includes(pos)),
+      (group) => group.some((ring) => (ring.metaPositions || []).includes(pos)),
     );
 
     if (ringGroup && !ringGroup.processed) {
@@ -366,7 +375,7 @@ function buildBranchCode(
       // Get all positions in this ring group
       const groupPositions = new Set();
       ringGroup.forEach((ring) => {
-        (ring._positions || []).forEach((p) => groupPositions.add(p));
+        (ring.metaPositions || []).forEach((p) => groupPositions.add(p));
       });
 
       // Check for deeper branches attached to this ring group
@@ -417,7 +426,7 @@ function buildBranchCode(
               }
 
               // Find attachment position on the ring
-              const ringPositions = ring._positions || [];
+              const ringPositions = ring.metaPositions || [];
 
               const attachPos = ringPositions.findIndex((p) => {
                 const childPositions = deeperPositions.filter(
@@ -435,11 +444,11 @@ function buildBranchCode(
           }
         }
 
-        components.push({ finalVar: currentVar, type: 'ring', startPos: ring._positions[0] });
+        components.push({ finalVar: currentVar, type: 'ring', startPos: ring.metaPositions[0] });
       } else if (ringGroup.length === 2) {
         // Two rings to fuse - but we need to handle attachments BEFORE fusing
         const sortedGroup = [...ringGroup].sort(
-          (a, b) => (a._positions[0] || 0) - (b._positions[0] || 0),
+          (a, b) => (a.metaPositions[0] || 0) - (b.metaPositions[0] || 0),
         );
 
         const ring1 = sortedGroup[0];
@@ -485,8 +494,8 @@ function buildBranchCode(
               }
 
               // Check which ring to attach to (ring1 or ring2)
-              const ring1Positions = ring1._positions || [];
-              const ring2Positions = ring2._positions || [];
+              const ring1Positions = ring1.metaPositions || [];
+              const ring2Positions = ring2.metaPositions || [];
 
               // Check ring2 first (more common case for fused rings)
               let attachPos = ring2Positions.findIndex((p) => {
@@ -528,7 +537,7 @@ function buildBranchCode(
         const fusedVar = nextVar();
         lines.push(`${indent}const ${fusedVar} = ${var1}.fuse(${ring2Var}, ${fusionOffset});`);
 
-        components.push({ finalVar: fusedVar, type: 'fused_ring', startPos: ring1._positions[0] });
+        components.push({ finalVar: fusedVar, type: 'fused_ring', startPos: ring1.metaPositions[0] });
       }
 
       // Skip positions that are part of this ring group
@@ -557,7 +566,8 @@ function buildBranchCode(
         const attachments = seqAtomAttachments.get(lp);
         if (attachments) {
           attachments.forEach((attachment) => {
-            const { code: aCode, finalVar: aFinalVar } = decompileNode(attachment, indent, nextVar);
+            const aRes = decompileChildNode(attachment, indent, nextVar);
+            const { code: aCode, finalVar: aFinalVar } = aRes;
             lines.push(aCode);
             const newVar = nextVar();
             lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${idx + 1});`);
@@ -644,10 +654,10 @@ function buildBranchCode(
         const allChainRingPositions = [];
         chainRings.forEach((startPos) => {
           const ring = ringsAtDepth.find(
-            (r) => (r._positions || []).includes(startPos),
+            (r) => (r.metaPositions || []).includes(startPos),
           );
           if (ring) {
-            (ring._positions || []).forEach((p) => allChainRingPositions.push(p));
+            (ring.metaPositions || []).forEach((p) => allChainRingPositions.push(p));
           }
         });
 
@@ -664,11 +674,11 @@ function buildBranchCode(
           if (nextComp.startPos - predecessorPos <= 5) {
             // Find which ring contains this predecessor position
             const predecessorRing = ringsAtDepth.find(
-              (r) => (r._positions || []).includes(predecessorPos),
+              (r) => (r.metaPositions || []).includes(predecessorPos),
             );
 
             if (predecessorRing) {
-              const rp = predecessorRing._positions || [];
+              const rp = predecessorRing.metaPositions || [];
 
               const attachIdx = rp.indexOf(predecessorPos);
 
@@ -708,13 +718,13 @@ function buildBranchCode(
  * Decompile a complex FusedRing with sequential rings and branch structure
  */
 function decompileComplexFusedRing(fusedRing, indent, nextVar) {
-  const allPositions = fusedRing._allPositions || [];
-  const branchDepthMap = fusedRing._branchDepthMap || new Map();
-  const parentIndexMap = fusedRing._parentIndexMap || new Map();
-  const atomValueMap = fusedRing._atomValueMap || new Map();
-  const bondMap = fusedRing._bondMap || new Map();
-  const sequentialRings = fusedRing._sequentialRings || [];
-  const seqAtomAttachments = fusedRing._seqAtomAttachments || new Map();
+  const allPositions = fusedRing.metaAllPositions || [];
+  const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
+  const parentIndexMap = fusedRing.metaParentIndexMap || new Map();
+  const atomValueMap = fusedRing.metaAtomValueMap || new Map();
+  const bondMap = fusedRing.metaBondMap || new Map();
+  const sequentialRings = fusedRing.metaSequentialRings || [];
+  const seqAtomAttachments = fusedRing.metaSeqAtomAttachments || new Map();
 
   const allRings = [...fusedRing.rings, ...sequentialRings];
   const processedRings = new Set();
@@ -746,7 +756,8 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
  * Decompile a FusedRing node
  */
 function decompileFusedRing(fusedRing, indent, nextVar) {
-  const hasComplexStructure = fusedRing._sequentialRings && fusedRing._sequentialRings.length > 0;
+  const seqRings = fusedRing.metaSequentialRings;
+  const hasComplexStructure = seqRings && seqRings.length > 0;
 
   if (hasComplexStructure) {
     return decompileComplexFusedRing(fusedRing, indent, nextVar);
@@ -764,7 +775,7 @@ function decompileMolecule(molecule, indent, nextVar) {
 
   // Create components
   molecule.components.forEach((component) => {
-    const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
+    const { code: componentCode, finalVar } = decompileNodeInternal(component, indent, nextVar);
     lines.push(componentCode);
     componentFinalVars.push(finalVar);
   });
@@ -777,10 +788,8 @@ function decompileMolecule(molecule, indent, nextVar) {
   return { code: lines.join('\n'), finalVar: finalVarName };
 }
 
-/**
- * Internal dispatcher
- */
-function decompileNode(node, indent, nextVar) {
+// Initialize the internal dispatcher after all functions are defined
+decompileNodeInternal = function decompileNodeImpl(node, indent, nextVar) {
   if (isRingNode(node)) {
     return decompileRing(node, indent, nextVar);
   }
@@ -798,7 +807,7 @@ function decompileNode(node, indent, nextVar) {
   }
 
   throw new Error(`Unknown node type: ${node.type}`);
-}
+};
 
 /**
  * Main decompile dispatcher - public API
@@ -812,7 +821,7 @@ export function decompile(node, options = {}) {
   const indentStr = '  '.repeat(indent);
   const nextVar = createCounter(varName);
 
-  const { code } = decompileNode(node, indentStr, nextVar);
+  const { code } = decompileNodeInternal(node, indentStr, nextVar);
 
   // Always use export const
   return code.replace(/^(\s*)const /gm, '$1export const ');

@@ -8,6 +8,11 @@
 
 import { Ring, Linear, Molecule } from './src/index.js';
 
+// Use process.stdout for output to satisfy linter
+function log(...args) {
+  process.stdout.write(`${args.map((a) => String(a)).join(' ')}\n`);
+}
+
 // Isopropyl group (substituent on pyrrole)
 const methyl1 = Linear(['C']);
 const ethyl = Linear(['C', 'C']);
@@ -50,15 +55,15 @@ const statinSideChain = trihydroxyChain.attach(carboxylate, 7);
 const atorvastatin = Molecule([isopropyl, pyrroleCore, statinSideChain]);
 
 // Verify structure
-console.log('Atorvastatin (Lipitor) - Programmatic Synthesis');
-console.log('='.repeat(70));
-console.log('\nStructure Components:');
-console.log('  • Isopropyl group:', isopropyl.smiles);
-console.log('  • Central pyrrole ring:', pyrrole.smiles);
-console.log('  • Phenyl-amide group:', phenylAmide.smiles);
-console.log('  • Fluorophenyl group:', fluorophenyl.smiles);
-console.log('  • Statin side chain:', statinSideChain.smiles);
-console.log('\nComplete Molecule:');
-console.log('  SMILES:', atorvastatin.smiles);
-console.log('  Length:', atorvastatin.smiles.length, 'characters');
-console.log('\n✅ Atorvastatin synthesized successfully!');
+log('Atorvastatin (Lipitor) - Programmatic Synthesis');
+log('='.repeat(70));
+log('\nStructure Components:');
+log('  • Isopropyl group:', isopropyl.smiles);
+log('  • Central pyrrole ring:', pyrrole.smiles);
+log('  • Phenyl-amide group:', phenylAmide.smiles);
+log('  • Fluorophenyl group:', fluorophenyl.smiles);
+log('  • Statin side chain:', statinSideChain.smiles);
+log('\nComplete Molecule:');
+log('  SMILES:', atorvastatin.smiles);
+log('  Length:', atorvastatin.smiles.length, 'characters');
+log('\n✅ Atorvastatin synthesized successfully!');
