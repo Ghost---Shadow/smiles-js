@@ -15,11 +15,14 @@ export const TokenType = {
   DOT: 'dot', // . (disconnected fragments)
 };
 
+// Bond symbols: single (-), double (=), triple (#), aromatic (:), cis/trans (/ \)
+const BOND_SYMBOLS = new Set(['-', '=', '#', ':', '/', '\\']);
+
 /**
  * Check if character is a bond symbol
  */
 function isBondSymbol(char) {
-  return char === '-' || char === '=' || char === '#' || char === ':' || char === '/' || char === '\\';
+  return BOND_SYMBOLS.has(char);
 }
 
 /**

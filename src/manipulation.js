@@ -13,8 +13,7 @@ import {
   cloneComponents,
   deepCloneRing,
 } from './constructors.js';
-import { validatePosition } from './ast.js';
-import { isLinearNode, isMoleculeNode } from './ast.js';
+import { validatePosition, isLinearNode, isMoleculeNode } from './ast.js';
 
 /**
  * Ring manipulation methods
@@ -178,38 +177,41 @@ export function fusedRingGetRing(fusedRing, ringNumber) {
   return fusedRing.rings.find((r) => r.ringNumber === ringNumber);
 }
 
-export function fusedRingSubstituteInRing(fusedRing, ringNumber, position, newAtom) {
+/**
+ * Helper to update a specific ring in a fused ring system
+ * @param {Object} fusedRing - FusedRing node
+ * @param {number} ringNumber - Ring number to update
+ * @param {Function} updateFn - Function that takes the ring and returns updated ring
+ * @returns {Object} New FusedRing node
+ */
+function updateRingInFused(fusedRing, ringNumber, updateFn) {
   const targetRing = fusedRingGetRing(fusedRing, ringNumber);
   if (!targetRing) {
     throw new Error(`Ring ${ringNumber} not found in fused ring system`);
   }
 
-  const updatedRing = ringSubstitute(targetRing, position, newAtom);
-  const newRings = fusedRing.rings.map((r) => {
-    if (r.ringNumber === ringNumber) {
-      return updatedRing;
-    }
-    return { ...r };
-  });
+  const updatedRing = updateFn(targetRing);
+  const newRings = fusedRing.rings.map(
+    (r) => (r.ringNumber === ringNumber ? updatedRing : { ...r }),
+  );
 
   return createFusedRingNode(newRings);
 }
 
+export function fusedRingSubstituteInRing(fusedRing, ringNumber, position, newAtom) {
+  return updateRingInFused(
+    fusedRing,
+    ringNumber,
+    (ring) => ringSubstitute(ring, position, newAtom),
+  );
+}
+
 export function fusedRingAttachToRing(fusedRing, ringNumber, attachment, position) {
-  const targetRing = fusedRingGetRing(fusedRing, ringNumber);
-  if (!targetRing) {
-    throw new Error(`Ring ${ringNumber} not found in fused ring system`);
-  }
-
-  const updatedRing = ringAttach(targetRing, attachment, position);
-  const newRings = fusedRing.rings.map((r) => {
-    if (r.ringNumber === ringNumber) {
-      return updatedRing;
-    }
-    return { ...r };
-  });
-
-  return createFusedRingNode(newRings);
+  return updateRingInFused(
+    fusedRing,
+    ringNumber,
+    (ring) => ringAttach(ring, attachment, position),
+  );
 }
 
 export function fusedRingRenumber(fusedRing, startNumber = 1) {

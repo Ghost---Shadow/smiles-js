@@ -5,7 +5,13 @@
 
 import { parse } from './parser.js';
 
-function createFragment(smiles) {
+/**
+ * Validate and parse a SMILES string into an AST
+ * @param {string} smiles - SMILES notation string
+ * @returns {Object} AST node with all manipulation methods attached
+ * @throws {Error} If smiles is not a non-empty string
+ */
+function validateAndParse(smiles) {
   if (typeof smiles !== 'string') {
     throw new Error('Fragment requires a SMILES string');
   }
@@ -21,7 +27,7 @@ function createFragment(smiles) {
  * @returns {Object} AST node with all manipulation methods attached
  */
 export function Fragment(smiles) {
-  return createFragment(smiles);
+  return validateAndParse(smiles);
 }
 
 /**
@@ -30,5 +36,5 @@ export function Fragment(smiles) {
  * @returns {Object} AST node with all manipulation methods attached
  */
 Fragment.smiles = function smiles(smilesStr) {
-  return createFragment(smilesStr);
+  return validateAndParse(smilesStr);
 };

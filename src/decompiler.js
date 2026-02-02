@@ -30,13 +30,21 @@ function createCounter(prefix) {
 }
 
 /**
- * Decompile a Ring node
+ * Format a bonds array as a string for code generation
  */
-function decompileRing(ring, indent, nextVar) {
-  const lines = [];
-  const varName = nextVar();
+function formatBondsArray(bonds) {
+  return bonds.map((b) => (b === null ? 'null' : `'${b}'`)).join(', ');
+}
 
-  // Build options object
+/**
+ * Build the Ring constructor options object as a code string
+ * @param {Object} ring - Ring node
+ * @param {Object} opts - Options
+ * @param {boolean} opts.includeBranchDepths - Whether to include branchDepths
+ * @returns {Object} { options, optionsStr } - Options object and formatted string
+ */
+function buildRingOptions(ring, opts = {}) {
+  const { includeBranchDepths = false } = opts;
   const options = {
     atoms: `'${ring.atoms}'`,
     size: ring.size,
@@ -54,15 +62,14 @@ function decompileRing(ring, indent, nextVar) {
   const bonds = ring.bonds || [];
   const hasNonNullBonds = bonds.some((b) => b !== null);
   if (hasNonNullBonds) {
-    const bondsStr = bonds.map((b) => (b === null ? 'null' : `'${b}'`)).join(', ');
-    options.bonds = `[${bondsStr}]`;
+    options.bonds = `[${formatBondsArray(bonds)}]`;
   }
 
   // Include branchDepths for branch-crossing rings
   // e.g., Ring with branchDepths [0, 0, 0, 0, 1, 1] means the ring path
   // crosses from depth 0 to depth 1 (enters a branch for closing atoms)
   // This is needed to correctly serialize rings like CC2=CC=C(C=C2)
-  if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
+  if (includeBranchDepths && ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
     const firstDepth = ring.metaBranchDepths[0];
     const hasVaryingDepths = ring.metaBranchDepths.some((d) => d !== firstDepth);
     if (hasVaryingDepths) {
@@ -74,11 +81,17 @@ function decompileRing(ring, indent, nextVar) {
     .map(([key, value]) => `${key}: ${value}`)
     .join(', ');
 
-  lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+  return { options, optionsStr };
+}
 
-  let currentVar = varName;
+/**
+ * Generate code for ring substitutions
+ * @returns {{ lines: string[], currentVar: string }}
+ */
+function generateSubstitutionCode(ring, indent, nextVar, initialVar) {
+  const lines = [];
+  let currentVar = initialVar;
 
-  // Add substitutions
   if (Object.keys(ring.substitutions).length > 0) {
     Object.entries(ring.substitutions).forEach(([pos, atom]) => {
       const newVar = nextVar();
@@ -86,6 +99,30 @@ function decompileRing(ring, indent, nextVar) {
       currentVar = newVar;
     });
   }
+
+  return { lines, currentVar };
+}
+
+/**
+ * Decompile a Ring node
+ */
+function decompileRing(ring, indent, nextVar) {
+  const lines = [];
+  const varName = nextVar();
+
+  // Build options object (include branchDepths for full decompilation)
+  const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
+  lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+
+  // Add substitutions
+  const { lines: subLines, currentVar: subVar } = generateSubstitutionCode(
+    ring,
+    indent,
+    nextVar,
+    varName,
+  );
+  lines.push(...subLines);
+  let currentVar = subVar;
 
   // Add attachments
   if (Object.keys(ring.attachments).length > 0) {
@@ -117,8 +154,7 @@ function decompileLinear(linear, indent, nextVar) {
   // Only include bonds array if there are non-null bonds
   const hasNonNullBonds = linear.bonds.some((b) => b !== null);
   if (hasNonNullBonds) {
-    const bondsStr = linear.bonds.map((b) => (b === null ? 'null' : `'${b}'`)).join(', ');
-    lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${bondsStr}]);`);
+    lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${formatBondsArray(linear.bonds)}]);`);
   } else {
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}]);`);
   }
@@ -209,45 +245,15 @@ function buildBasicRingCode(ring, indent, nextVar) {
   const lines = [];
   const varName = nextVar();
 
-  const options = {
-    atoms: `'${ring.atoms}'`,
-    size: ring.size,
-  };
-
-  if (ring.ringNumber !== 1) {
-    options.ringNumber = ring.ringNumber;
-  }
-
-  if (ring.offset !== 0) {
-    options.offset = ring.offset;
-  }
-
-  // Include bonds if present and not all null
-  const bonds = ring.bonds || [];
-  const hasNonNullBonds = bonds.some((b) => b !== null);
-  if (hasNonNullBonds) {
-    const bondsStr = bonds.map((b) => (b === null ? 'null' : `'${b}'`)).join(', ');
-    options.bonds = `[${bondsStr}]`;
-  }
-
-  const optionsStr = Object.entries(options)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join(', ');
-
+  // Build options object (no branchDepths for basic ring code)
+  const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: false });
   lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
 
-  let currentVar = varName;
-
   // Add substitutions
-  if (Object.keys(ring.substitutions).length > 0) {
-    Object.entries(ring.substitutions).forEach(([pos, atom]) => {
-      const newVar = nextVar();
-      lines.push(`${indent}const ${newVar} = ${currentVar}.substitute(${pos}, '${atom}');`);
-      currentVar = newVar;
-    });
-  }
+  const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
+  lines.push(...subResult.lines);
 
-  return { code: lines.join('\n'), finalVar: currentVar };
+  return { code: lines.join('\n'), finalVar: subResult.currentVar };
 }
 
 /**

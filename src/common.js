@@ -1,11 +1,17 @@
 /**
  * Common molecular fragments and functional groups
  * Pre-built fragments for frequently used chemical structures
+ *
+ * Note: Some fragments have identical SMILES but represent different chemical contexts:
+ * - hydroxyl/ether: Both 'O', but hydroxyl is typically -OH while ether is R-O-R
+ * - carbonyl/aldehyde: Both 'C=O', but aldehyde is terminal (R-CHO)
+ * - carboxyl/ester: Both 'C(=O)O', carboxylic acid vs ester linkage
+ * These aliases are provided for semantic clarity in different contexts.
  */
 
 import { Fragment, Ring } from './index.js';
 
-// Common functional groups
+// Alkyl groups
 export const methyl = Fragment('C');
 export const ethyl = Fragment('CC');
 export const propyl = Fragment('CCC');
@@ -13,15 +19,21 @@ export const isopropyl = Fragment('C(C)C');
 export const butyl = Fragment('CCCC');
 export const tertButyl = Fragment('C(C)(C)C');
 
-export const hydroxyl = Fragment('O');
-export const amino = Fragment('N');
-export const carboxyl = Fragment('C(=O)O');
-export const carbonyl = Fragment('C=O');
-export const ester = Fragment('C(=O)O');
-export const ether = Fragment('O');
-export const aldehyde = Fragment('C=O');
-export const ketone = Fragment('C(=O)C');
+// Oxygen-containing groups
+export const hydroxyl = Fragment('O'); // -OH (alcohol)
+export const ether = hydroxyl; // R-O-R (same SMILES, different context)
+export const carbonyl = Fragment('C=O'); // >C=O
+export const aldehyde = carbonyl; // -CHO (terminal carbonyl)
+export const ketone = Fragment('C(=O)C'); // R-CO-R
+export const carboxyl = Fragment('C(=O)O'); // -COOH
+export const ester = carboxyl; // -COO- (same SMILES, different context)
 
+// Nitrogen-containing groups
+export const amino = Fragment('N');
+export const nitro = Fragment('N(=O)=O');
+export const cyano = Fragment('C#N');
+
+// Aromatic rings
 export const phenyl = Fragment('c1ccccc1');
 export const benzyl = Fragment('Cc1ccccc1');
 
@@ -40,9 +52,7 @@ export const chloro = Fragment('Cl');
 export const bromo = Fragment('Br');
 export const iodo = Fragment('I');
 
-// Other common groups
-export const nitro = Fragment('N(=O)=O');
-export const cyano = Fragment('C#N');
+// Sulfur and phosphorus groups
 export const sulfhydryl = Fragment('S');
 export const sulfonyl = Fragment('S(=O)(=O)');
 export const phosphate = Fragment('P(=O)(O)O');
