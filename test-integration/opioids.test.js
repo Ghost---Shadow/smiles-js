@@ -212,7 +212,7 @@ describe('Morphine Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // Note: round-trip produces simplified structure
-    expect(reconstructed.smiles).toBe('CN1CCC3CCCCOC3C1O');
+    expect(reconstructed.smiles).toBe(MORPHINE_SMILES);
   });
 });
 
@@ -319,8 +319,7 @@ describe('Codeine Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces simplified structure
-    expect(reconstructed.smiles).toBe('CN1CCC3CCCCOC3C1O');
+    expect(reconstructed.smiles).toBe(CODEINE_SMILES);
   });
 });
 
@@ -454,8 +453,7 @@ describe('Oxycodone Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces simplified structure
-    expect(reconstructed.smiles).toBe('CN1CCC3CC(=O)CCCCCC=C3C1O');
+    expect(reconstructed.smiles).toBe(OXYCODONE_SMILES);
   });
 });
 
@@ -566,7 +564,7 @@ describe('Hydrocodone Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // Note: round-trip produces simplified structure
-    expect(reconstructed.smiles).toBe('CN1CCC3CCCCOC3C1');
+    expect(reconstructed.smiles).toBe(HYDROCODONE_SMILES);
   });
 });
 
@@ -665,7 +663,7 @@ describe('Fentanyl Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // Note: round-trip produces slightly different ring numbering
-    expect(reconstructed.smiles).toBe('CCC(=O)N(C1CCNCC1CCC2=CC=CC=C2)C3=CC=CC=C3');
+    expect(reconstructed.smiles).toBe(FENTANYL_SMILES);
   });
 });
 
@@ -761,7 +759,7 @@ describe('Tramadol Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // Note: round-trip produces slightly different structure with branch notation
-    expect(reconstructed.smiles).toBe('CN(C)CC1CCCCC1(C2=CC(=CC=C2)OC)O');
+    expect(reconstructed.smiles).toBe(TRAMADOL_SMILES);
   });
 });
 

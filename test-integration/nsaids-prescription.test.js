@@ -465,8 +465,7 @@ describe('Etodolac Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces different ordering
-    expect(reconstructed.smiles).toBe('CCC1=CC2=C(C=C1)N3=CCCOC3(CC)=C2CC');
+    expect(reconstructed.smiles).toBe(ETODOLAC_SMILES);
   });
 });
 
@@ -579,7 +578,7 @@ describe('Ketorolac Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // Note: round-trip produces different ordering
-    expect(reconstructed.smiles).toBe('OC(=O)C1CCN2C=CC=C21C(=O)C3=CC=CC=C3');
+    expect(reconstructed.smiles).toBe(KETOROLAC_SMILES);
   });
 });
 
@@ -884,7 +883,7 @@ describe('Nabumetone Integration Test', () => {
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
     // Note: round-trip produces different ordering
-    expect(reconstructed.smiles).toBe('COC1=CC2=CCCC=C2C=C1CCC(=O)C');
+    expect(reconstructed.smiles).toBe(NABUMETONE_SMILES);
   });
 });
 

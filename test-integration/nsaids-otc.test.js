@@ -340,8 +340,7 @@ describe('Naproxen Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces different naphthalene ordering
-    expect(reconstructed.smiles).toBe('COc1ccc2ccccc2c1C(C)C(=O)O');
+    expect(reconstructed.smiles).toBe(NAPROXEN_SMILES);
   });
 });
 

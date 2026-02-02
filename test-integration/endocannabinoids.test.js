@@ -307,8 +307,7 @@ describe('THC Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces different but chemically equivalent SMILES
-    expect(reconstructed.smiles).toBe('CCCCCC1=CC=C2CCC(C)OC2C=CCCCC(C)OC=C1O');
+    expect(reconstructed.smiles).toBe(THC_SMILES);
   });
 });
 
@@ -427,8 +426,7 @@ describe('CBD Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces different but chemically equivalent SMILES
-    expect(reconstructed.smiles).toBe('CCCCCC1=CC(=C(C(=C1))(O))(C2C=C(CCC2)(C(=C)C)C)O');
+    expect(reconstructed.smiles).toBe(CBD_SMILES);
   });
 });
 
@@ -572,8 +570,7 @@ describe('Nabilone Integration Test', () => {
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
-    // Note: round-trip produces different but chemically equivalent SMILES
-    expect(reconstructed.smiles).toBe('CCCCCCC(C)(C)C1=CC=C2CCC(C)OC2CC(=O)CCCC(C)OC=C1O');
+    expect(reconstructed.smiles).toBe(NABILONE_SMILES);
   });
 });
 

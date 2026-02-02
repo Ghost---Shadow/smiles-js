@@ -488,7 +488,7 @@ describe('Cortisone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CCC(=O)C=C1');
+    expect(reconstructed.smiles).toBe(CORTISONE_SMILES);
   });
 });
 
@@ -615,7 +615,7 @@ describe('Hydrocortisone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CCC(=O)C=C1O');
+    expect(reconstructed.smiles).toBe(HYDROCORTISONE_SMILES);
   });
 });
 
@@ -739,7 +739,7 @@ describe('Prednisone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC(=O)C=CC1');
+    expect(reconstructed.smiles).toBe(PREDNISONE_SMILES);
   });
 });
 
@@ -866,7 +866,7 @@ describe('Prednisolone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC(=O)C=CC1');
+    expect(reconstructed.smiles).toBe(PREDNISOLONE_SMILES);
   });
 });
 
@@ -999,7 +999,7 @@ describe('Methylprednisolone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC(=O)C(C)=CC1');
+    expect(reconstructed.smiles).toBe(METHYLPREDNISOLONE_SMILES);
   });
 });
 
@@ -1125,7 +1125,7 @@ describe('Dexamethasone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(F)C4(O)=CC(=O)C=CC4(C)C2(C)C(=O)CO');
+    expect(reconstructed.smiles).toBe(DEXAMETHASONE_SMILES);
   });
 });
 
@@ -1248,7 +1248,7 @@ describe('Triamcinolone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC(O)C3C1(F)CCC=CC(=O)C4=CC(=O)C=C=C4C3C(=O)CO');
+    expect(reconstructed.smiles).toBe(TRIAMCINOLONE_SMILES);
   });
 });
 
@@ -1381,7 +1381,7 @@ describe('Budesonide Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CCCC1OC2C(O1)C5=CC(=O)C=CC5(C)C2C(=O)CO');
+    expect(reconstructed.smiles).toBe(BUDESONIDE_SMILES);
   });
 });
 
@@ -1507,7 +1507,7 @@ describe('Fluticasone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(F)C4(O)=CC(=O)C=CC4(C)C2(C)C(=S)OCF');
+    expect(reconstructed.smiles).toBe(FLUTICASONE_SMILES);
   });
 });
 
@@ -1633,7 +1633,7 @@ describe('Beclomethasone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(Cl)C4(O)=CC(=O)C=CC4(C)C2(C)C(=O)CO');
+    expect(reconstructed.smiles).toBe(BECLOMETHASONE_SMILES);
   });
 });
 
@@ -1763,7 +1763,7 @@ describe('Fludrocortisone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CCC(=O)C=C1');
+    expect(reconstructed.smiles).toBe(FLUDROCORTISONE_SMILES);
   });
 });
 
@@ -1889,7 +1889,7 @@ describe('Mometasone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(Cl)C4(O)=CC(=O)C=CC4(C)C2(C)C(=O)CCl');
+    expect(reconstructed.smiles).toBe(MOMETASONE_SMILES);
   });
 });
 
@@ -1924,7 +1924,7 @@ describe('Cortisol Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CCC(=O)C=C1O');
+    expect(reconstructed.smiles).toBe(CORTISOL_SMILES);
   });
 });
 
@@ -1959,6 +1959,6 @@ describe('Betamethasone Integration Test', () => {
     // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
-    expect(reconstructed.smiles).toBe('CC1CC2C(C1(O))(C)C(F)C4(O)=CC(=O)C=CC4(C)C2(C)C(=O)CO');
+    expect(reconstructed.smiles).toBe(BETAMETHASONE_SMILES);
   });
 });
