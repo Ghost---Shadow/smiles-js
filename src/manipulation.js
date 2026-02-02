@@ -31,7 +31,6 @@ export function ringAttach(ring, attachment, position) {
 
   updatedAttachments[position] = [...updatedAttachments[position], attachment];
 
-  /* eslint-disable no-underscore-dangle */
   return createRingNode(
     ring.atoms,
     ring.size,
@@ -42,7 +41,6 @@ export function ringAttach(ring, attachment, position) {
     ring.bonds || [],
     ring._branchDepths || null,
   );
-  /* eslint-enable no-underscore-dangle */
 }
 
 export function ringSubstitute(ring, position, newAtom) {
@@ -76,7 +74,6 @@ export function ringSubstituteMultiple(ring, substitutionMap) {
 }
 
 export function ringFuse(ring, otherRing, offset, options = {}) {
-  /* eslint-disable no-underscore-dangle */
   const ring1 = createRingNode(
     ring.atoms,
     ring.size,
@@ -98,7 +95,6 @@ export function ringFuse(ring, otherRing, offset, options = {}) {
     otherRing.bonds || [],
     otherRing._branchDepths || null,
   );
-  /* eslint-enable no-underscore-dangle */
 
   return createFusedRingNode([ring1, ring2], options);
 }

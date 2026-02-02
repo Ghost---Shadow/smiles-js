@@ -475,7 +475,6 @@ describe('Cortisone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(CORTISONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -485,7 +484,6 @@ describe('Cortisone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(CORTISONE_SMILES);
@@ -602,7 +600,6 @@ describe('Hydrocortisone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(HYDROCORTISONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -612,7 +609,6 @@ describe('Hydrocortisone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(HYDROCORTISONE_SMILES);
@@ -726,7 +722,6 @@ describe('Prednisone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(PREDNISONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -736,7 +731,6 @@ describe('Prednisone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(PREDNISONE_SMILES);
@@ -853,7 +847,6 @@ describe('Prednisolone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(PREDNISOLONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -863,7 +856,6 @@ describe('Prednisolone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(PREDNISOLONE_SMILES);
@@ -986,7 +978,6 @@ describe('Methylprednisolone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(METHYLPREDNISOLONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -996,7 +987,6 @@ describe('Methylprednisolone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(METHYLPREDNISOLONE_SMILES);
@@ -1112,7 +1102,6 @@ describe('Dexamethasone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(DEXAMETHASONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1122,7 +1111,6 @@ describe('Dexamethasone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(DEXAMETHASONE_SMILES);
@@ -1235,7 +1223,6 @@ describe('Triamcinolone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(TRIAMCINOLONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1245,7 +1232,6 @@ describe('Triamcinolone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(TRIAMCINOLONE_SMILES);
@@ -1368,7 +1354,6 @@ describe('Budesonide Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(BUDESONIDE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1378,7 +1363,6 @@ describe('Budesonide Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(BUDESONIDE_SMILES);
@@ -1494,7 +1478,6 @@ describe('Fluticasone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(FLUTICASONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1504,7 +1487,6 @@ describe('Fluticasone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(FLUTICASONE_SMILES);
@@ -1620,7 +1602,6 @@ describe('Beclomethasone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(BECLOMETHASONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1630,7 +1611,6 @@ describe('Beclomethasone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(BECLOMETHASONE_SMILES);
@@ -1750,7 +1730,6 @@ describe('Fludrocortisone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(FLUDROCORTISONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1760,7 +1739,6 @@ describe('Fludrocortisone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(FLUDROCORTISONE_SMILES);
@@ -1876,7 +1854,6 @@ describe('Mometasone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(MOMETASONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1886,7 +1863,6 @@ describe('Mometasone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(MOMETASONE_SMILES);
@@ -1911,7 +1887,6 @@ describe('Cortisol Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(CORTISOL_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1921,7 +1896,6 @@ describe('Cortisol Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(CORTISOL_SMILES);
@@ -1946,7 +1920,6 @@ describe('Betamethasone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(BETAMETHASONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -1956,7 +1929,6 @@ describe('Betamethasone Integration Test', () => {
     const executableCode = stripExports(code);
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
     expect(reconstructed.smiles).toBe(BETAMETHASONE_SMILES);

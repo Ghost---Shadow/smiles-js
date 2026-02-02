@@ -104,7 +104,6 @@ function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedR
     const atom = atoms[idx];
     if (!atom) {
       idx += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -116,7 +115,6 @@ function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedR
       positions.push(idx);
       // Jump to the end of the inner ring (which is also a shared fusion point)
       idx = innerRing.end;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -209,7 +207,6 @@ function groupFusedRings(ringBoundaries) {
         const otherRing = ringBoundaries[j];
 
         if (assigned.has(j)) {
-          // eslint-disable-next-line no-continue
           continue;
         }
 
@@ -258,12 +255,10 @@ function buildNodeFromAtoms(atomList, allAtoms, ringBoundaries, isBranch = false
 
   if (containedRings.length > 0) {
     // This branch contains ring(s) - build ring node(s)
-    // eslint-disable-next-line no-use-before-define
     return buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries, isBranch);
   }
 
   // No rings in this branch - build linear node
-  // eslint-disable-next-line no-use-before-define
   return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
 }
 
@@ -439,7 +434,6 @@ function buildSingleRingNodeWithContext(
     // Note: Sequential continuation atoms (like "N1C" where C follows N after ring closure)
     // are NOT attachments - they're handled by including them in _allPositions and outputting
     // them inline in the codegen. Only true branch attachments (depth + 1) are added here.
-    //
     // Atoms that continue AFTER a branch closes (like "N(...)C") are also NOT attachments
     // in the ring sense - they're continuations of the main chain and should be handled
     // by buildAST as part of the main chain, output after the ring component.
@@ -479,11 +473,10 @@ function buildSingleRingNodeWithContext(
           // 1. Ring has varying branchDepths (ring crosses branches)
           // 2. Attachment is in a different branch than the ring path continues in
           // For simple rings (all same depth), attachments are not siblings
-          /* eslint-disable no-underscore-dangle */
           if (hasVaryingDepths) {
             node._isSibling = !ringPathBranchIdsAfter.has(group.branchId);
           }
-          /* eslint-enable no-underscore-dangle */
+
           return node;
         },
       );
@@ -502,14 +495,13 @@ function buildSingleRingNodeWithContext(
 
   // Store the original positions for fused ring codegen
   // This is needed to properly reconstruct interleaved fused rings
-  /* eslint-disable no-underscore-dangle */
   ringNode._positions = ring.positions;
   ringNode._start = ring.start;
   ringNode._end = ring.end;
   // Store branch depth for each position - needed for codegen to reconstruct branches
   ringNode._branchDepths = ringAtoms.map((a) => a.branchDepth);
   ringNode._parentIndices = ringAtoms.map((a) => a.parentIndex);
-  /* eslint-enable no-underscore-dangle */
+
   return ringNode;
 }
 
@@ -602,7 +594,6 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
       const pos = currentPositions[pi];
       const posAtom = atoms[pos];
       if (posAtom.branchId === null) {
-        // eslint-disable-next-line no-continue
         continue; // Skip main chain atoms
       }
 
@@ -613,15 +604,12 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
       for (let ai = 0; ai < atoms.length; ai += 1) {
         const a = atoms[ai];
         if (a.prevAtomIndex !== pos) {
-          // eslint-disable-next-line no-continue
           continue;
         }
         if (a.branchDepth !== posAtom.branchDepth || a.branchId !== posAtom.branchId) {
-          // eslint-disable-next-line no-continue
           continue;
         }
         if (allRingPositions.has(a.index) || allPositions.has(a.index)) {
-          // eslint-disable-next-line no-continue
           continue;
         }
 
@@ -634,7 +622,6 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
           const baseBranchDepth = group[0].branchDepth;
           if (otherRing.branchDepth === baseBranchDepth) {
             // Sibling ring at same depth - exclude
-            // eslint-disable-next-line no-continue
             continue;
           }
           // Ring at deeper depth - this is an attachment, include it
@@ -714,7 +701,6 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
 
   const fusedNode = FusedRing(rings);
   // Store total atoms and all positions for proper codegen
-  /* eslint-disable no-underscore-dangle */
   fusedNode._totalAtoms = totalAtoms;
   fusedNode._allPositions = [...allPositions].sort((a, b) => a - b);
   // Store sequential continuation rings for codegen to output their markers
@@ -785,7 +771,6 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
     }
   });
   fusedNode._seqAtomAttachments = seqAtomAttachments;
-  /* eslint-enable no-underscore-dangle */
 
   return fusedNode;
 }
@@ -854,7 +839,6 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
       // Flush pending linear chain
       if (currentLinear.length > 0) {
         const linearIsBranch = isBranch && components.length === 0;
-        // eslint-disable-next-line max-len
         const linearNode = buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, linearIsBranch);
         components.push(linearNode);
         currentLinear = [];
@@ -869,7 +853,6 @@ function buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries
 
         // Update atomToGroup with all positions from the built ring node
         // This includes sequential continuation atoms that were discovered during ring building
-        // eslint-disable-next-line no-underscore-dangle
         const ringAllPositions = ringNode._allPositions || new Set();
         ringAllPositions.forEach((pos) => {
           if (!atomToGroup.has(pos)) {
@@ -994,7 +977,6 @@ function buildAST(atoms, ringBoundaries) {
         // Store leading bond (the bond on the first atom of this ring component)
         // This is the bond connecting this component to the previous component
         const firstAtomOfGroup = atom; // This is the first atom we encounter for this group
-        /* eslint-disable no-underscore-dangle */
         if (firstAtomOfGroup.bond && components.length > 0) {
           ringNode._leadingBond = firstAtomOfGroup.bond;
         }
@@ -1017,7 +999,6 @@ function buildAST(atoms, ringBoundaries) {
             }
           }
         }
-        /* eslint-enable no-underscore-dangle */
 
         componentPositions.push({ componentIndex: components.length, positions: groupPositions });
         components.push(ringNode);
@@ -1122,14 +1103,12 @@ export function buildAtomList(tokens) {
       currentBond = null;
       i += 1;
 
-      // eslint-disable-next-line no-continue
       continue;
     }
 
     if (token.type === TokenType.BOND) {
       currentBond = token.value;
       i += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -1190,7 +1169,6 @@ export function buildAtomList(tokens) {
       }
 
       i += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -1211,7 +1189,6 @@ export function buildAtomList(tokens) {
       lastAtomAtDepth.delete(currentDepth + 1);
 
       i += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -1222,7 +1199,6 @@ export function buildAtomList(tokens) {
       // This helps distinguish "N1C" from "C(...)C"
       branchClosedSinceLastAtom.set(branchStack.length, true);
       i += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -1230,7 +1206,6 @@ export function buildAtomList(tokens) {
       // Disconnected fragment - for now, skip
       // TODO: Handle disconnected fragments
       i += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 

@@ -168,7 +168,6 @@ describe('Lidocaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -182,7 +181,6 @@ describe('Lidocaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -271,7 +269,6 @@ describe('Bupivacaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -285,7 +282,6 @@ describe('Bupivacaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -374,7 +370,6 @@ describe('Ropivacaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -388,7 +383,6 @@ describe('Ropivacaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -477,7 +471,6 @@ describe('Mepivacaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -491,7 +484,6 @@ describe('Mepivacaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -563,7 +555,6 @@ describe('Prilocaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -577,7 +568,6 @@ describe('Prilocaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -641,7 +631,6 @@ describe('Benzocaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -655,7 +644,6 @@ describe('Benzocaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -727,7 +715,6 @@ describe('Tetracaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -741,7 +728,6 @@ describe('Tetracaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -813,7 +799,6 @@ describe('Procaine Integration Test', () => {
 
     let factory;
     expect(() => {
-      // eslint-disable-next-line no-new-func
       factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
@@ -827,7 +812,6 @@ describe('Procaine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 

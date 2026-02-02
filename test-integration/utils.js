@@ -32,7 +32,6 @@ export function codegenRoundTrip(smiles) {
   const executableCode = code.replace(/^export /gm, '');
 
   // Execute the code to reconstruct the AST
-  // eslint-disable-next-line no-new-func
   const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
   return factory(Ring, Linear, FusedRing, Molecule);
 }

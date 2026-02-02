@@ -19,7 +19,6 @@ const PERFECT_MOLECULES = [
 ];
 
 // Stabilizing molecules (imperfect first, stable second)
-// eslint-disable-next-line no-unused-vars
 const STABILIZING_MOLECULES = [
   {
     input: 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1',

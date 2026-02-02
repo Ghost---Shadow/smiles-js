@@ -195,7 +195,6 @@ describe('Morphine Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(MORPHINE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -207,7 +206,6 @@ describe('Morphine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -303,7 +301,6 @@ describe('Codeine Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(CODEINE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -315,7 +312,6 @@ describe('Codeine Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -437,7 +433,6 @@ describe('Oxycodone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(OXYCODONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -449,7 +444,6 @@ describe('Oxycodone Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -547,7 +541,6 @@ describe('Hydrocodone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(HYDROCODONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -559,7 +552,6 @@ describe('Hydrocodone Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -646,7 +638,6 @@ describe('Fentanyl Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(FENTANYL_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -658,7 +649,6 @@ describe('Fentanyl Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -742,7 +732,6 @@ describe('Tramadol Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(TRAMADOL_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -754,7 +743,6 @@ describe('Tramadol Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 
@@ -843,7 +831,6 @@ describe('Methadone Integration Test', () => {
   test('generated code is valid JavaScript', () => {
     const executableCode = stripExports(METHADONE_CODE);
     expect(() => {
-      // eslint-disable-next-line no-new-func, no-new
       new Function('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
     }).not.toThrow();
   });
@@ -855,7 +842,6 @@ describe('Methadone Integration Test', () => {
     const varMatch = code.match(/export const (v\d+) = /g);
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function('Ring', 'Linear', 'FusedRing', 'Molecule', `${executableCode}\nreturn ${lastVar};`);
     const reconstructed = factory(Ring, Linear, FusedRing, Molecule);
 

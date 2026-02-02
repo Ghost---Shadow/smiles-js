@@ -100,7 +100,6 @@ export function tokenize(smiles) {
     // Skip whitespace
     if (/\s/.test(char)) {
       position += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -112,7 +111,6 @@ export function tokenize(smiles) {
         position,
       });
       position += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -123,7 +121,6 @@ export function tokenize(smiles) {
         position,
       });
       position += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -135,7 +132,6 @@ export function tokenize(smiles) {
         position,
       });
       position += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -147,7 +143,6 @@ export function tokenize(smiles) {
         position,
       });
       position += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -162,7 +157,6 @@ export function tokenize(smiles) {
           position,
         });
         position += 3;
-        // eslint-disable-next-line no-continue
         continue;
       }
       throw new Error(`Invalid ring marker at position ${position}: ${marker}`);
@@ -177,7 +171,6 @@ export function tokenize(smiles) {
         position,
       });
       position += 1;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -191,7 +184,6 @@ export function tokenize(smiles) {
         position,
       });
       position = result.endPosition;
-      // eslint-disable-next-line no-continue
       continue;
     }
 
@@ -205,7 +197,6 @@ export function tokenize(smiles) {
         position,
       });
       position = result.endPosition;
-      // eslint-disable-next-line no-continue
       continue;
     }
 

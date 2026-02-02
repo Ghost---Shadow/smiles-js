@@ -17,19 +17,15 @@ import {
  */
 export function buildSMILES(ast) {
   if (isMoleculeNode(ast)) {
-    // eslint-disable-next-line no-use-before-define
     return buildMoleculeSMILES(ast);
   }
   if (isFusedRingNode(ast)) {
-    // eslint-disable-next-line no-use-before-define
     return buildFusedRingSMILES(ast);
   }
   if (isRingNode(ast)) {
-    // eslint-disable-next-line no-use-before-define
     return buildRingSMILES(ast);
   }
   if (isLinearNode(ast)) {
-    // eslint-disable-next-line no-use-before-define
     return buildLinearSMILES(ast);
   }
   throw new Error(`Unknown AST node type: ${ast?.type}`);
@@ -44,9 +40,8 @@ export function buildMoleculeSMILES(molecule) {
   const parts = molecule.components.map((component, idx) => {
     const smiles = buildSMILES(component);
     // Check if component has a leading bond (connecting to previous component)
-    /* eslint-disable no-underscore-dangle */
     const leadingBond = idx > 0 && component._leadingBond ? component._leadingBond : '';
-    /* eslint-enable no-underscore-dangle */
+
     return leadingBond + smiles;
   });
   return parts.join('');
@@ -103,14 +98,12 @@ export function buildRingSMILES(ring) {
   } = ring;
 
   // Check if this ring crosses branch boundaries (ring closure inside a branch)
-  // eslint-disable-next-line no-underscore-dangle
   const branchDepths = ring._branchDepths || [];
   const hasBranchCrossing = branchDepths.length > 0
     && branchDepths.some((d) => d !== branchDepths[0]);
 
   if (hasBranchCrossing) {
     // Use the branch-aware codegen for rings that cross branch boundaries
-    // eslint-disable-next-line no-use-before-define
     return buildBranchCrossingRingSMILES(ring);
   }
 
@@ -172,7 +165,6 @@ function buildBranchCrossingRingSMILES(ring) {
   const {
     atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
   } = ring;
-  // eslint-disable-next-line no-underscore-dangle
   const branchDepths = ring._branchDepths || [];
 
   // Normalize branch depths to start from 0
@@ -207,16 +199,14 @@ function buildBranchCrossingRingSMILES(ring) {
 
       pendingAttachments.forEach((data, attachPos) => {
         if (data.depth === targetDepthNonSibling) {
-          /* eslint-disable no-underscore-dangle */
           const nonSiblings = data.attachments.filter((a) => a._isSibling === false);
-          /* eslint-enable no-underscore-dangle */
+
           nonSiblings.forEach((attachment) => {
             parts.push(buildSMILES(attachment));
           });
           // Keep only siblings for later
-          /* eslint-disable no-underscore-dangle, no-param-reassign */
           data.attachments = data.attachments.filter((a) => a._isSibling !== false);
-          /* eslint-enable no-underscore-dangle, no-param-reassign */
+
           if (data.attachments.length === 0) {
             toDeleteNonSibling.push(attachPos);
           }
@@ -235,9 +225,8 @@ function buildBranchCrossingRingSMILES(ring) {
       pendingAttachments.forEach((data, attachPos) => {
         if (data.depth === targetDepthSibling) {
           data.attachments.forEach((attachment) => {
-            /* eslint-disable no-underscore-dangle */
             const isSibling = attachment._isSibling !== false;
-            /* eslint-enable no-underscore-dangle */
+
             if (isSibling) {
               parts.push('(');
               parts.push(buildSMILES(attachment));
@@ -303,15 +292,13 @@ function buildBranchCrossingRingSMILES(ring) {
 
     pendingAttachments.forEach((data, attachPos) => {
       if (data.depth === targetDepthNonSibling) {
-        /* eslint-disable no-underscore-dangle */
         const nonSiblings = data.attachments.filter((a) => a._isSibling === false);
-        /* eslint-enable no-underscore-dangle */
+
         nonSiblings.forEach((attachment) => {
           parts.push(buildSMILES(attachment));
         });
-        /* eslint-disable no-underscore-dangle, no-param-reassign */
         data.attachments = data.attachments.filter((a) => a._isSibling !== false);
-        /* eslint-enable no-underscore-dangle, no-param-reassign */
+
         if (data.attachments.length === 0) {
           toDeleteNonSibling.push(attachPos);
         }
@@ -330,9 +317,8 @@ function buildBranchCrossingRingSMILES(ring) {
     pendingAttachments.forEach((data, attachPos) => {
       if (data.depth === targetDepthSibling) {
         data.attachments.forEach((attachment) => {
-          /* eslint-disable no-underscore-dangle */
           const isSibling = attachment._isSibling !== false;
-          /* eslint-enable no-underscore-dangle */
+
           if (isSibling) {
             parts.push('(');
             parts.push(buildSMILES(attachment));
@@ -351,9 +337,8 @@ function buildBranchCrossingRingSMILES(ring) {
   pendingAttachments.forEach((data) => {
     if (data.depth === 0) {
       data.attachments.forEach((attachment) => {
-        /* eslint-disable no-underscore-dangle */
         const isSibling = attachment._isSibling !== false; // default to true for safety
-        /* eslint-enable no-underscore-dangle */
+
         if (isSibling) {
           parts.push('(');
           parts.push(buildSMILES(attachment));
@@ -373,9 +358,7 @@ function buildBranchCrossingRingSMILES(ring) {
  */
 function buildInterleavedFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
-  // eslint-disable-next-line no-underscore-dangle
   const allPositions = fusedRing._allPositions;
-  // eslint-disable-next-line no-underscore-dangle
   const rawBranchDepthMap = fusedRing._branchDepthMap || new Map();
 
   // Normalize branch depths - the fused ring may be inside a branch (as an attachment),
@@ -395,7 +378,6 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   const bondsBefore = new Map(); // position -> bond (bond to add before atom at this position)
 
   // Include sequential continuation rings in addition to fused group rings
-  // eslint-disable-next-line no-underscore-dangle
   const sequentialRings = fusedRing._sequentialRings || [];
   const allRings = [...rings, ...sequentialRings];
 
@@ -406,11 +388,8 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
   // Collect all ring markers, atom sequence, and bonds
   allRings.forEach((ring) => {
-    // eslint-disable-next-line no-underscore-dangle
     const positions = ring._positions || [];
-    // eslint-disable-next-line no-underscore-dangle
     const start = ring._start;
-    // eslint-disable-next-line no-underscore-dangle
     const end = ring._end;
     const {
       ringNumber, atoms, substitutions = {}, attachments = {}, bonds = [],
@@ -457,13 +436,9 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   // For positions that aren't in any ring (sequential continuations), we need to
   // create atomSequence entries. These are atoms that follow ring-closing atoms
   // but aren't part of the ring structure.
-  // eslint-disable-next-line no-underscore-dangle
   const allRingPositions = new Set(allRings.flatMap((r) => r._positions || []));
-  // eslint-disable-next-line no-underscore-dangle
   const atomValueMap = fusedRing._atomValueMap || new Map();
-  // eslint-disable-next-line no-underscore-dangle
   const seqAtomAttachments = fusedRing._seqAtomAttachments || new Map();
-  // eslint-disable-next-line no-underscore-dangle
   const bondMap = fusedRing._bondMap || new Map();
   allPositions.forEach((pos) => {
     if (!atomSequence[pos] && !allRingPositions.has(pos)) {
@@ -529,7 +504,6 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
 
     // Sort markers: opens first, then by original order from SMILES
     // The ringOrderMap stores the order of ring markers as they appeared in the original
-    // eslint-disable-next-line no-underscore-dangle
     const ringOrderMap = fusedRing._ringOrderMap || new Map();
     const originalOrder = ringOrderMap.get(pos) || [];
 
@@ -713,10 +687,8 @@ export function buildFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
 
   // Check if we have position data for interleaved fused ring handling
-  // eslint-disable-next-line no-underscore-dangle
   const hasPositionData = rings.some((r) => r._positions);
 
-  // eslint-disable-next-line no-underscore-dangle
   if (hasPositionData && fusedRing._allPositions) {
     return buildInterleavedFusedRingSMILES(fusedRing);
   }

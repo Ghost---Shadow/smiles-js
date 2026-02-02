@@ -54,7 +54,6 @@ function decompileRing(ring, indent, nextVar) {
   // e.g., Ring with branchDepths [0, 0, 0, 0, 1, 1] means the ring path
   // crosses from depth 0 to depth 1 (enters a branch for closing atoms)
   // This is needed to correctly serialize rings like CC2=CC=C(C=C2)
-  /* eslint-disable no-underscore-dangle */
   if (ring._branchDepths && ring._branchDepths.length > 0) {
     const firstDepth = ring._branchDepths[0];
     const hasVaryingDepths = ring._branchDepths.some((d) => d !== firstDepth);
@@ -62,7 +61,6 @@ function decompileRing(ring, indent, nextVar) {
       options.branchDepths = `[${ring._branchDepths.join(', ')}]`;
     }
   }
-  /* eslint-enable no-underscore-dangle */
 
   const optionsStr = Object.entries(options)
     .map(([key, value]) => `${key}: ${value}`)
@@ -85,7 +83,6 @@ function decompileRing(ring, indent, nextVar) {
   if (Object.keys(ring.attachments).length > 0) {
     Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
-        // eslint-disable-next-line no-use-before-define
         const { code: aCode, finalVar: aFinalVar } = decompileNode(attachment, indent, nextVar);
         lines.push(aCode);
 
@@ -123,7 +120,6 @@ function decompileLinear(linear, indent, nextVar) {
   if (Object.keys(linear.attachments).length > 0) {
     Object.entries(linear.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
-        // eslint-disable-next-line no-use-before-define
         const { code: aCode, finalVar: aFinalVar } = decompileNode(attachment, indent, nextVar);
         lines.push(aCode);
 
@@ -152,9 +148,7 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
   });
 
   // Check for leading bond (bond connecting to previous component)
-  /* eslint-disable no-underscore-dangle */
   const leadingBond = fusedRing._leadingBond;
-  /* eslint-enable no-underscore-dangle */
 
   // Fuse rings together
   const finalVar = nextVar();
@@ -183,10 +177,8 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
  * Calculate the fusion offset between two rings based on shared positions
  */
 function calculateFusionOffset(ring1, ring2) {
-  /* eslint-disable no-underscore-dangle */
   const ring1Positions = ring1._positions || [];
   const ring2Positions = ring2._positions || [];
-  /* eslint-enable no-underscore-dangle */
 
   // Find the first shared position
   const ring1Set = new Set(ring1Positions);
@@ -309,9 +301,8 @@ function buildBranchCode(
   // Find rings that start at this depth
   const ringsAtDepth = allRings.filter((ring) => {
     if (processedRings.has(ring.ringNumber)) return false;
-    /* eslint-disable no-underscore-dangle */
     const ringPositions = ring._positions || [];
-    /* eslint-enable no-underscore-dangle */
+
     if (ringPositions.length === 0) return false;
     const firstPos = ringPositions[0];
     return positions.includes(firstPos) && (branchDepthMap.get(firstPos) || 0) === depth;
@@ -327,9 +318,7 @@ function buildBranchCode(
     const group = [ring];
     assignedRings.add(ring.ringNumber);
 
-    /* eslint-disable no-underscore-dangle */
     const ringPositions = new Set(ring._positions || []);
-    /* eslint-enable no-underscore-dangle */
 
     let didExpand = true;
     while (didExpand) {
@@ -337,12 +326,10 @@ function buildBranchCode(
       for (let ri = 0; ri < ringsAtDepth.length; ri += 1) {
         const other = ringsAtDepth[ri];
         if (assignedRings.has(other.ringNumber)) {
-          // eslint-disable-next-line no-continue
           continue;
         }
-        /* eslint-disable no-underscore-dangle */
         const otherPositions = other._positions || [];
-        /* eslint-enable no-underscore-dangle */
+
         const hasOverlap = otherPositions.some((pos) => ringPositions.has(pos));
         if (hasOverlap) {
           group.push(other);
@@ -359,9 +346,7 @@ function buildBranchCode(
   // Build ring positions set
   const ringPositionsSet = new Set();
   ringsAtDepth.forEach((ring) => {
-    /* eslint-disable no-underscore-dangle */
     (ring._positions || []).forEach((pos) => ringPositionsSet.add(pos));
-    /* eslint-enable no-underscore-dangle */
   });
 
   // Process positions in order
@@ -370,11 +355,9 @@ function buildBranchCode(
     const pos = positionsAtDepth[i];
 
     // Check if this position is part of a ring group
-    /* eslint-disable no-underscore-dangle */
     const ringGroup = fusedGroups.find(
       (group) => group.some((ring) => (ring._positions || []).includes(pos)),
     );
-    /* eslint-enable no-underscore-dangle */
 
     if (ringGroup && !ringGroup.processed) {
       ringGroup.processed = true;
@@ -383,9 +366,7 @@ function buildBranchCode(
       // Get all positions in this ring group
       const groupPositions = new Set();
       ringGroup.forEach((ring) => {
-        /* eslint-disable no-underscore-dangle */
         (ring._positions || []).forEach((p) => groupPositions.add(p));
-        /* eslint-enable no-underscore-dangle */
       });
 
       // Check for deeper branches attached to this ring group
@@ -436,9 +417,8 @@ function buildBranchCode(
               }
 
               // Find attachment position on the ring
-              /* eslint-disable no-underscore-dangle */
               const ringPositions = ring._positions || [];
-              /* eslint-enable no-underscore-dangle */
+
               const attachPos = ringPositions.findIndex((p) => {
                 const childPositions = deeperPositions.filter(
                   (dp) => parentIndexMap.get(dp) === p,
@@ -455,16 +435,12 @@ function buildBranchCode(
           }
         }
 
-        /* eslint-disable no-underscore-dangle */
         components.push({ finalVar: currentVar, type: 'ring', startPos: ring._positions[0] });
-        /* eslint-enable no-underscore-dangle */
       } else if (ringGroup.length === 2) {
         // Two rings to fuse - but we need to handle attachments BEFORE fusing
-        /* eslint-disable no-underscore-dangle */
         const sortedGroup = [...ringGroup].sort(
           (a, b) => (a._positions[0] || 0) - (b._positions[0] || 0),
         );
-        /* eslint-enable no-underscore-dangle */
 
         const ring1 = sortedGroup[0];
         const ring2 = sortedGroup[1];
@@ -509,10 +485,8 @@ function buildBranchCode(
               }
 
               // Check which ring to attach to (ring1 or ring2)
-              /* eslint-disable no-underscore-dangle */
               const ring1Positions = ring1._positions || [];
               const ring2Positions = ring2._positions || [];
-              /* eslint-enable no-underscore-dangle */
 
               // Check ring2 first (more common case for fused rings)
               let attachPos = ring2Positions.findIndex((p) => {
@@ -554,9 +528,7 @@ function buildBranchCode(
         const fusedVar = nextVar();
         lines.push(`${indent}const ${fusedVar} = ${var1}.fuse(${ring2Var}, ${fusionOffset});`);
 
-        /* eslint-disable no-underscore-dangle */
         components.push({ finalVar: fusedVar, type: 'fused_ring', startPos: ring1._positions[0] });
-        /* eslint-enable no-underscore-dangle */
       }
 
       // Skip positions that are part of this ring group
@@ -585,7 +557,6 @@ function buildBranchCode(
         const attachments = seqAtomAttachments.get(lp);
         if (attachments) {
           attachments.forEach((attachment) => {
-            // eslint-disable-next-line no-use-before-define
             const { code: aCode, finalVar: aFinalVar } = decompileNode(attachment, indent, nextVar);
             lines.push(aCode);
             const newVar = nextVar();
@@ -671,7 +642,6 @@ function buildBranchCode(
       if (chainRings.length > 0 || currentChain.type === 'ring') {
         // Find all rings that are part of the current chain
         const allChainRingPositions = [];
-        /* eslint-disable no-underscore-dangle */
         chainRings.forEach((startPos) => {
           const ring = ringsAtDepth.find(
             (r) => (r._positions || []).includes(startPos),
@@ -680,7 +650,6 @@ function buildBranchCode(
             (ring._positions || []).forEach((p) => allChainRingPositions.push(p));
           }
         });
-        /* eslint-enable no-underscore-dangle */
 
         // Find the ring/position that precedes nextComp.startPos
         const positionsBeforeNext = allChainRingPositions.filter((p) => {
@@ -694,16 +663,13 @@ function buildBranchCode(
           // Only chain if the gap is small
           if (nextComp.startPos - predecessorPos <= 5) {
             // Find which ring contains this predecessor position
-            /* eslint-disable no-underscore-dangle */
             const predecessorRing = ringsAtDepth.find(
               (r) => (r._positions || []).includes(predecessorPos),
             );
-            /* eslint-enable no-underscore-dangle */
 
             if (predecessorRing) {
-              /* eslint-disable no-underscore-dangle */
               const rp = predecessorRing._positions || [];
-              /* eslint-enable no-underscore-dangle */
+
               const attachIdx = rp.indexOf(predecessorPos);
 
               if (attachIdx >= 0) {
@@ -742,7 +708,6 @@ function buildBranchCode(
  * Decompile a complex FusedRing with sequential rings and branch structure
  */
 function decompileComplexFusedRing(fusedRing, indent, nextVar) {
-  /* eslint-disable no-underscore-dangle */
   const allPositions = fusedRing._allPositions || [];
   const branchDepthMap = fusedRing._branchDepthMap || new Map();
   const parentIndexMap = fusedRing._parentIndexMap || new Map();
@@ -750,7 +715,6 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
   const bondMap = fusedRing._bondMap || new Map();
   const sequentialRings = fusedRing._sequentialRings || [];
   const seqAtomAttachments = fusedRing._seqAtomAttachments || new Map();
-  /* eslint-enable no-underscore-dangle */
 
   const allRings = [...fusedRing.rings, ...sequentialRings];
   const processedRings = new Set();
@@ -782,9 +746,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
  * Decompile a FusedRing node
  */
 function decompileFusedRing(fusedRing, indent, nextVar) {
-  /* eslint-disable no-underscore-dangle */
   const hasComplexStructure = fusedRing._sequentialRings && fusedRing._sequentialRings.length > 0;
-  /* eslint-enable no-underscore-dangle */
 
   if (hasComplexStructure) {
     return decompileComplexFusedRing(fusedRing, indent, nextVar);
@@ -802,7 +764,6 @@ function decompileMolecule(molecule, indent, nextVar) {
 
   // Create components
   molecule.components.forEach((component) => {
-    // eslint-disable-next-line no-use-before-define
     const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
     lines.push(componentCode);
     componentFinalVars.push(finalVar);
