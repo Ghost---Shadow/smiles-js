@@ -1,0 +1,986 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Morphine Integration Test parses morphine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+    {
+      "rings": [
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 6,
+          "substitutions": {
+            "1": "N",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 3,
+          "size": 7,
+          "substitutions": {
+            "6": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+          ],
+          "offset": 4,
+          "ringNumber": 4,
+          "size": 9,
+          "substitutions": {
+            "5": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            "=",
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 5,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+    {
+      "atoms": [
+        "O",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Morphine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Linear(['O']);
+v2.metaIsSibling = false;
+export const v3 = Ring({ atoms: 'C', size: 6 });
+export const v4 = v3.substitute(1, 'N');
+export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
+export const v6 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
+export const v7 = v6.substitute(6, 'O');
+export const v8 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
+export const v9 = v8.substitute(5, 'O');
+export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+export const v11 = v10.attach(v2, 4);
+export const v12 = FusedRing([v4, v5, v7, v9, v11]);
+export const v13 = Linear(['O']);
+export const v14 = Molecule([v1, v12, v13]);"
+`;
+
+exports[`Codeine Integration Test parses codeine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+    {
+      "rings": [
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 6,
+          "substitutions": {
+            "1": "N",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 3,
+          "size": 7,
+          "substitutions": {
+            "6": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+          ],
+          "offset": 4,
+          "ringNumber": 4,
+          "size": 9,
+          "substitutions": {
+            "5": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            "=",
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 5,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+    {
+      "atoms": [
+        "O",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Codeine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Linear(['O']);
+v2.metaIsSibling = false;
+export const v3 = Linear(['C']);
+v3.metaIsSibling = false;
+export const v4 = Ring({ atoms: 'C', size: 6 });
+export const v5 = v4.substitute(1, 'N');
+export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
+export const v7 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
+export const v8 = v7.substitute(6, 'O');
+export const v9 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
+export const v10 = v9.substitute(5, 'O');
+export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+export const v12 = v11.attach(v3, 4);
+export const v13 = FusedRing([v5, v6, v8, v10, v12]);
+export const v14 = Linear(['O']);
+export const v15 = Molecule([v1, v13, v14]);"
+`;
+
+exports[`Oxycodone Integration Test parses oxycodone 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+    {
+      "rings": [
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 6,
+          "substitutions": {
+            "1": "N",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "3": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "3": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 3,
+          "size": 10,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "2": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+            null,
+            null,
+          ],
+          "offset": 4,
+          "ringNumber": 4,
+          "size": 11,
+          "substitutions": {
+            "11": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            "=",
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 5,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+    {
+      "atoms": [
+        "O",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Oxycodone Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Linear(['O']);
+v2.metaIsSibling = false;
+export const v3 = Linear(['C']);
+v3.metaIsSibling = false;
+export const v4 = Ring({ atoms: 'C', size: 6, branchDepths: [0, 0, 0, 0, 0, 1] });
+export const v5 = v4.substitute(1, 'N');
+export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(v7, 3);
+export const v9 = Ring({ atoms: 'C', size: 10, ringNumber: 3, offset: 3, bonds: [null, null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1] });
+export const v10 = Linear(['O'], ['=']);
+export const v11 = v9.attach(v10, 3);
+export const v12 = Ring({ atoms: 'C', size: 11, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null, null, null], branchDepths: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1] });
+export const v13 = v12.substitute(11, 'O');
+export const v14 = Linear(['O'], ['=']);
+export const v15 = v13.attach(v14, 2);
+export const v16 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [1, 1, 1, 2, 3, 3] });
+export const v17 = v16.attach(v3, 4);
+export const v18 = FusedRing([v5, v8, v11, v15, v17]);
+export const v19 = Linear(['O']);
+export const v20 = Molecule([v1, v18, v19]);"
+`;
+
+exports[`Hydrocodone Integration Test parses hydrocodone 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+    {
+      "rings": [
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 6,
+          "substitutions": {
+            "1": "N",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 3,
+          "size": 7,
+          "substitutions": {
+            "6": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "7": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 4,
+          "ringNumber": 4,
+          "size": 9,
+          "substitutions": {
+            "5": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            "=",
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 5,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Hydrocodone Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Linear(['O']);
+v2.metaIsSibling = false;
+export const v3 = Linear(['C']);
+v3.metaIsSibling = false;
+export const v4 = Ring({ atoms: 'C', size: 6 });
+export const v5 = v4.substitute(1, 'N');
+export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
+export const v7 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
+export const v8 = v7.substitute(6, 'O');
+export const v9 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4 });
+export const v10 = v9.substitute(5, 'O');
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(v11, 7);
+export const v13 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+export const v14 = v13.attach(v3, 4);
+export const v15 = FusedRing([v5, v6, v8, v12, v14]);
+export const v16 = Molecule([v1, v15]);"
+`;
+
+exports[`Fentanyl Integration Test parses fentanyl 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+        "N",
+      ],
+      "attachments": {
+        "3": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "4": [
+          {
+            "components": [
+              {
+                "atoms": "C",
+                "attachments": {},
+                "bonds": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 1,
+                "size": 6,
+                "substitutions": {
+                  "4": "N",
+                },
+                "type": "ring",
+              },
+              {
+                "atoms": [
+                  "C",
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+              {
+                "atoms": "C",
+                "attachments": {},
+                "bonds": [
+                  "=",
+                  null,
+                  "=",
+                  null,
+                  "=",
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 2,
+                "size": 6,
+                "substitutions": {},
+                "type": "ring",
+              },
+            ],
+            "type": "molecule",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 3,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Fentanyl Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'C', 'N']);
+export const v2 = Linear(['O'], ['=']);
+export const v3 = v1.attach(v2, 3);
+export const v4 = Ring({ atoms: 'C', size: 6, branchDepths: [1, 1, 1, 1, 2, 2] });
+export const v5 = v4.substitute(4, 'N');
+export const v6 = Linear(['C', 'C']);
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v8 = Molecule([v5, v6, v7]);
+export const v9 = v3.attach(v8, 4);
+export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
+export const v11 = Molecule([v9, v10]);"
+`;
+
+exports[`Tramadol Integration Test parses tramadol 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "N",
+        "C",
+      ],
+      "attachments": {
+        "2": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "6": [
+          {
+            "components": [
+              {
+                "atoms": "C",
+                "attachments": {},
+                "bonds": [
+                  "=",
+                  null,
+                  "=",
+                  null,
+                  "=",
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 2,
+                "size": 6,
+                "substitutions": {},
+                "type": "ring",
+              },
+              {
+                "atoms": [
+                  "O",
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "type": "molecule",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "O",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Tramadol Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'N', 'C']);
+export const v2 = Linear(['C']);
+export const v3 = v1.attach(v2, 2);
+export const v4 = Ring({ atoms: 'C', size: 6 });
+export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null], branchDepths: [1, 1, 1, 2, 2, 2] });
+export const v6 = Linear(['O', 'C']);
+export const v7 = Molecule([v5, v6]);
+export const v8 = v4.attach(v7, 6);
+export const v9 = Linear(['O']);
+export const v10 = Molecule([v3, v8, v9]);"
+`;
+
+exports[`Methadone Integration Test parses methadone 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+        "C",
+      ],
+      "attachments": {
+        "3": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "4": [
+          {
+            "atoms": [
+              "C",
+              "C",
+              "N",
+              "C",
+            ],
+            "attachments": {
+              "2": [
+                {
+                  "atoms": [
+                    "C",
+                  ],
+                  "attachments": {},
+                  "bonds": [
+                    null,
+                  ],
+                  "type": "linear",
+                },
+              ],
+              "3": [
+                {
+                  "atoms": [
+                    "C",
+                  ],
+                  "attachments": {},
+                  "bonds": [
+                    null,
+                  ],
+                  "type": "linear",
+                },
+              ],
+            },
+            "bonds": [
+              null,
+              null,
+              null,
+              null,
+            ],
+            "type": "linear",
+          },
+          {
+            "atoms": "C",
+            "attachments": {},
+            "bonds": [
+              "=",
+              null,
+              "=",
+              null,
+              "=",
+              null,
+            ],
+            "offset": 0,
+            "ringNumber": 1,
+            "size": 6,
+            "substitutions": {},
+            "type": "ring",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 2,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Methadone Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'C', 'C']);
+export const v2 = Linear(['O'], ['=']);
+export const v3 = v1.attach(v2, 3);
+export const v4 = Linear(['C', 'C', 'N', 'C']);
+export const v5 = Linear(['C']);
+export const v6 = v4.attach(v5, 2);
+export const v7 = Linear(['C']);
+export const v8 = v6.attach(v7, 3);
+export const v9 = v3.attach(v8, 4);
+export const v10 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v11 = v9.attach(v10, 4);
+export const v12 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v13 = Molecule([v11, v12]);"
+`;

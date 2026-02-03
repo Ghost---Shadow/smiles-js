@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from './parser.js';
-import { tokenize } from './tokenizer.js';
-import { codegenRoundTrip } from '../test-integration/utils.js';
+import { parse } from '../src/parser.js';
+import { tokenize } from '../src/tokenizer.js';
+import { codegenRoundTrip } from './utils.js';
 
 const TELMISARTAN_SMILES = 'CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C';
 // With bond preservation, double bonds in rings are now preserved
@@ -51,7 +51,11 @@ describe('Telmisartan - Real Structure', () => {
 
   test('round-trips correctly', () => {
     const ast = parse(TELMISARTAN_SMILES);
-    expect(ast.smiles).toBe(TELMISARTAN_OUTPUT);
+    expect(ast.smiles).toBe(TELMISARTAN_SMILES);
+  });
+  test('Codegen round-trips correctly', () => {
+    const reconstructed = codegenRoundTrip(TELMISARTAN_SMILES);
+    expect(reconstructed.smiles).toBe(TELMISARTAN_SMILES);
   });
 });
 

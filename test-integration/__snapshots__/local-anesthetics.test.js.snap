@@ -1,0 +1,800 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Lidocaine Integration Test parses lidocaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "N",
+        "C",
+        "C",
+        "N",
+      ],
+      "attachments": {
+        "3": [
+          {
+            "atoms": [
+              "C",
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "5": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "2": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Lidocaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'N', 'C', 'C', 'N']);
+export const v2 = Linear(['C', 'C']);
+export const v3 = v1.attach(v2, 3);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(v4, 5);
+export const v6 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v7 = Linear(['C']);
+export const v8 = v6.attach(v7, 2);
+export const v9 = Linear(['C']);
+export const v10 = Molecule([v5, v8, v9]);"
+`;
+
+exports[`Bupivacaine Integration Test parses bupivacaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {
+        "1": "N",
+      },
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "N",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "2": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 2,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Bupivacaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'C', 'C']);
+export const v2 = Ring({ atoms: 'C', size: 6 });
+export const v3 = v2.substitute(1, 'N');
+export const v4 = Linear(['C', 'N']);
+export const v5 = Linear(['O'], ['=']);
+export const v6 = v4.attach(v5, 1);
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v8 = Linear(['C']);
+export const v9 = v7.attach(v8, 2);
+export const v10 = Linear(['C']);
+export const v11 = Molecule([v1, v3, v6, v9, v10]);"
+`;
+
+exports[`Ropivacaine Integration Test parses ropivacaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {
+        "1": "N",
+      },
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "N",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "2": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 2,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Ropivacaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'C']);
+export const v2 = Ring({ atoms: 'C', size: 6 });
+export const v3 = v2.substitute(1, 'N');
+export const v4 = Linear(['C', 'N']);
+export const v5 = Linear(['O'], ['=']);
+export const v6 = v4.attach(v5, 1);
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v8 = Linear(['C']);
+export const v9 = v7.attach(v8, 2);
+export const v10 = Linear(['C']);
+export const v11 = Molecule([v1, v3, v6, v9, v10]);"
+`;
+
+exports[`Mepivacaine Integration Test parses mepivacaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {
+        "1": "N",
+      },
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "N",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "2": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 2,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Mepivacaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Ring({ atoms: 'C', size: 6 });
+export const v3 = v2.substitute(1, 'N');
+export const v4 = Linear(['C', 'N']);
+export const v5 = Linear(['O'], ['=']);
+export const v6 = v4.attach(v5, 1);
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
+export const v8 = Linear(['C']);
+export const v9 = v7.attach(v8, 2);
+export const v10 = Linear(['C']);
+export const v11 = Molecule([v1, v3, v6, v9, v10]);"
+`;
+
+exports[`Prilocaine Integration Test parses prilocaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+        "N",
+        "C",
+        "C",
+        "N",
+      ],
+      "attachments": {
+        "5": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "6": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Prilocaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'C', 'N', 'C', 'C', 'N']);
+export const v2 = Linear(['C']);
+export const v3 = v1.attach(v2, 5);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(v4, 6);
+export const v6 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v7 = Linear(['C']);
+export const v8 = Molecule([v5, v6, v7]);"
+`;
+
+exports[`Benzocaine Integration Test parses benzocaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "O",
+        "C",
+      ],
+      "attachments": {
+        "4": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "N",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Benzocaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'O', 'C']);
+export const v2 = Linear(['O'], ['=']);
+export const v3 = v1.attach(v2, 4);
+export const v4 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v5 = Linear(['N']);
+export const v6 = Molecule([v3, v4, v5]);"
+`;
+
+exports[`Tetracaine Integration Test parses tetracaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+        "C",
+        "N",
+      ],
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "O",
+        "C",
+        "C",
+        "N",
+        "C",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "5": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Tetracaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'C', 'C', 'N']);
+export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v3 = Linear(['C', 'O', 'C', 'C', 'N', 'C']);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(v4, 1);
+export const v6 = Linear(['C']);
+export const v7 = v5.attach(v6, 5);
+export const v8 = Molecule([v1, v2, v7]);"
+`;
+
+exports[`Procaine Integration Test parses procaine 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "N",
+        "C",
+        "C",
+        "O",
+        "C",
+      ],
+      "attachments": {
+        "3": [
+          {
+            "atoms": [
+              "C",
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "7": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {},
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "N",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Procaine Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'N', 'C', 'C', 'O', 'C']);
+export const v2 = Linear(['C', 'C']);
+export const v3 = v1.attach(v2, 3);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(v4, 7);
+export const v6 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
+export const v7 = Linear(['N']);
+export const v8 = Molecule([v5, v6, v7]);"
+`;

@@ -5,7 +5,7 @@ import {
   isValidRoundTrip,
   normalize,
   stabilizes,
-} from './roundtrip.js';
+} from '../src/roundtrip.js';
 
 // Perfect round-trip examples
 const PERFECT_MOLECULES = [
