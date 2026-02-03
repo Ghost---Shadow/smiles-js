@@ -20,6 +20,18 @@ let buildBranchWithRingsInternal;
 let buildLinearNodeSimpleInternal;
 
 /**
+ * Find the next sequential atom in the chain
+ */
+function findNextSeqAtom(atoms, prevIdx, branchDepth, branchId) {
+  return atoms.find(
+    (a) => a.prevAtomIndex === prevIdx
+      && a.branchDepth === branchDepth
+      && a.branchId === branchId
+      && !a.afterBranchClose,
+  );
+}
+
+/**
  * Check if two atoms are in the same branch context
  * (share the same branch ancestry)
  */
@@ -585,21 +597,11 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
 
         // Collect sequential linear atoms starting from firstSeqAtom
         const seqLinearAtoms = [firstSeqAtom];
-        let lastIdx = firstSeqAtom.index;
-        let foundMore = true;
-        while (foundMore) {
-          foundMore = false;
-          const nextA = atoms.find(
-            (a) => a.prevAtomIndex === lastIdx
-              && a.branchDepth === firstSeqAtom.branchDepth
-              && a.branchId === firstSeqAtom.branchId
-              && !a.afterBranchClose,
-          );
-          if (nextA) {
-            seqLinearAtoms.push(nextA);
-            lastIdx = nextA.index;
-            foundMore = true;
-          }
+        const { branchDepth, branchId } = firstSeqAtom;
+        let nextA = findNextSeqAtom(atoms, firstSeqAtom.index, branchDepth, branchId);
+        while (nextA) {
+          seqLinearAtoms.push(nextA);
+          nextA = findNextSeqAtom(atoms, nextA.index, branchDepth, branchId);
         }
 
         // Build a linear node for the sequential atoms
