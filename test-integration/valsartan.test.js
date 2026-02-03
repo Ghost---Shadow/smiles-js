@@ -11,8 +11,8 @@ describe('Valsartan - Real Structure', () => {
     const atoms = tokens.filter((t) => t.type === 'atom');
     const ringMarkers = tokens.filter((t) => t.type === 'ring_marker');
 
-    expect(atoms.length).toBe(40);
-    expect(ringMarkers.length).toBe(8); // 1,1,2,2,3,3 = 6 pairs = 8 markers total (3 open + 3 close = 6 unique, but tetrazole has 4 markers for ring 3)
+    expect(atoms.length).toBe(32);
+    expect(ringMarkers.length).toBe(6); // 3 rings with open + close markers each
   });
 
   test('identifies ring markers at correct atom indices', () => {
@@ -28,12 +28,12 @@ describe('Valsartan - Real Structure', () => {
     });
 
     expect(ringMarkerPositions).toEqual([
-      { ringNumber: 1, atomIndex: 7 },
-      { ringNumber: 1, atomIndex: 12 },
-      { ringNumber: 2, atomIndex: 13 },
-      { ringNumber: 2, atomIndex: 18 },
-      { ringNumber: 3, atomIndex: 19 },
-      { ringNumber: 3, atomIndex: 23 },
+      { ringNumber: 1, atomIndex: 8 },
+      { ringNumber: 1, atomIndex: 13 },
+      { ringNumber: 2, atomIndex: 14 },
+      { ringNumber: 2, atomIndex: 19 },
+      { ringNumber: 3, atomIndex: 20 },
+      { ringNumber: 3, atomIndex: 24 },
     ]);
   });
 
@@ -131,15 +131,17 @@ describe('Valsartan - Divide and Conquer Build-Up', () => {
   });
 
   // Level 3: N-substituted amide with branches
+  // Level 3: N-substituted amide with branches
+  const amideWithTwoBranchesSmiles = 'CC(=O)N(C)C';
+
   test('amide with two branches', () => {
-    const smiles = 'CC(=O)N(C)C';
-    const ast = parse(smiles);
-    expect(ast.smiles).toBe(smiles);
+    const ast = parse(amideWithTwoBranchesSmiles);
+    expect(ast.smiles).toBe(amideWithTwoBranchesSmiles);
   });
 
   test('amide with two branches codegen', () => {
-    const reconstructed = codegenRoundTrip('CC(=O)N(C)C');
-    expect(reconstructed.smiles).toBe('CC(=O)N(C)C)');
+    const reconstructed = codegenRoundTrip(amideWithTwoBranchesSmiles);
+    expect(reconstructed.smiles).toBe(amideWithTwoBranchesSmiles);
   });
 
   // Level 4: Simple benzene ring
