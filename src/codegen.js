@@ -294,6 +294,25 @@ export function buildRingSMILES(ring) {
     atoms, size, ringNumber, substitutions = {}, attachments = {}, bonds = [],
   } = ring;
 
+  // Check if this ring has sequential ring metadata (from a single-ring FusedRing)
+  // If so, treat it like an interleaved fused ring
+  const hasSequentialRings = ring.metaSequentialRings && ring.metaSequentialRings.length > 0;
+  if (hasSequentialRings && ring.metaAllPositions) {
+    // Treat this as a fused ring with sequential rings
+    // Build a temporary fused ring structure for codegen
+    const tempFusedRing = {
+      rings: [ring],
+      metaSequentialRings: ring.metaSequentialRings,
+      metaAllPositions: ring.metaAllPositions,
+      metaBranchDepthMap: ring.metaBranchDepthMap,
+      metaAtomValueMap: ring.metaAtomValueMap,
+      metaBondMap: ring.metaBondMap,
+      metaSeqAtomAttachments: ring.metaSeqAtomAttachments,
+      metaRingOrderMap: ring.metaRingOrderMap,
+    };
+    return buildInterleavedFusedRingSMILES(tempFusedRing);
+  }
+
   // Check if this ring crosses branch boundaries (ring closure inside a branch)
   const branchDepths = ring.metaBranchDepths || [];
   const hasBranchCrossing = branchDepths.length > 0

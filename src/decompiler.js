@@ -281,14 +281,25 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
   }
 
   // Set ring position metadata on the FUSED ring's internal rings (not pre-fused)
-  fusedRing.rings.forEach((ring, ringIdx) => {
+  // For single-ring FusedRings, set metadata directly on the ring variable
+  if (fusedRing.rings.length === 1) {
+    const ring = fusedRing.rings[0];
     const positions = ring.metaPositions || [];
     if (positions.length > 0) {
-      lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaPositions = [${positions.join(', ')}];`);
-      lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaStart = ${ring.metaStart};`);
-      lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaEnd = ${ring.metaEnd};`);
+      lines.push(`${indent}${fusedVar}.metaPositions = [${positions.join(', ')}];`);
+      lines.push(`${indent}${fusedVar}.metaStart = ${ring.metaStart};`);
+      lines.push(`${indent}${fusedVar}.metaEnd = ${ring.metaEnd};`);
     }
-  });
+  } else {
+    fusedRing.rings.forEach((ring, ringIdx) => {
+      const positions = ring.metaPositions || [];
+      if (positions.length > 0) {
+        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaPositions = [${positions.join(', ')}];`);
+        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaStart = ${ring.metaStart};`);
+        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaEnd = ${ring.metaEnd};`);
+      }
+    });
+  }
 
   // Step 2: Decompile sequential rings
   const seqRingVars = [];
@@ -628,14 +639,26 @@ decompileNodeInternal = function decompileNodeImpl(node, indent, nextVar) {
  * @param {Object} options - Options
  * @param {number} options.indent - Indentation level (default 0)
  * @param {string} options.varName - Variable name prefix (default 'v')
+ * @param {boolean} options.includeMetadata - Include metadata assignments (default true)
+ *                                            Set to false for cleaner output (but code may not work)
  */
 export function decompile(node, options = {}) {
-  const { indent = 0, varName = 'v' } = options;
+  const { indent = 0, varName = 'v', includeMetadata = true } = options;
   const indentStr = '  '.repeat(indent);
   const nextVar = createCounter(varName);
 
   const { code } = decompileNodeInternal(node, indentStr, nextVar);
 
   // Always use export const
-  return code.replace(/^(\s*)const /gm, '$1export const ');
+  let result = code.replace(/^(\s*)const /gm, '$1export const ');
+
+  // Filter out metadata assignments if not requested
+  if (!includeMetadata) {
+    result = result.split('\n').filter((line) => {
+      // Remove lines that set meta properties
+      return !line.match(/\.meta[A-Z][a-zA-Z]*\s*=/);
+    }).join('\n');
+  }
+
+  return result;
 }

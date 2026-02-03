@@ -13,6 +13,7 @@ import {
   Linear,
   FusedRing,
   Molecule,
+  createFusedRingNode,
 } from './constructors.js';
 
 // Forward declarations for mutual recursion
@@ -626,9 +627,28 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   const sortedGroup = [...group].sort((a, b) => a.start - b.start);
   const baseRing = sortedGroup[0];
 
-  // Calculate the total atom span for this fused system
+  // CRITICAL FIX: Separate truly fused rings (share atoms) from sequential rings (don't share)
+  // When the group was expanded via sequential ring detection (lines 555-559), it may contain
+  // rings that don't actually share atoms. These should be treated as sequential rings.
+  const trulyFusedRings = [baseRing];
+  const sequentialRingsFromGroup = [];
+
+  if (sortedGroup.length > 1) {
+    for (let i = 1; i < sortedGroup.length; i += 1) {
+      const ring = sortedGroup[i];
+      // Check if this ring shares atoms with any of the truly fused rings
+      const sharesAtoms = trulyFusedRings.some((fusedRing) => ringsShareAtoms(ring, fusedRing));
+      if (sharesAtoms) {
+        trulyFusedRings.push(ring);
+      } else {
+        sequentialRingsFromGroup.push(ring);
+      }
+    }
+  }
+
+  // Calculate the total atom span for this fused system (only truly fused rings)
   const allPositions = new Set();
-  sortedGroup.forEach((ring) => {
+  trulyFusedRings.forEach((ring) => {
     ring.positions.forEach((pos) => allPositions.add(pos));
   });
 
@@ -651,7 +671,8 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   });
 
   // Track rings found during sequential continuation - they need to be in codegen output
-  const sequentialRings = [];
+  // Start with rings from the group that don't share atoms (detected above)
+  const sequentialRings = [...sequentialRingsFromGroup];
 
   // Unified iterative loop to collect all atoms that should be output inline:
   // 1. Sequential continuations (atoms that follow a ring's end without afterBranchClose)
@@ -742,7 +763,8 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
 
   // Pass allRingPositions to exclude them from attachments - these atoms are part
   // of the fused ring structure and should not be treated as branch attachments
-  const rings = sortedGroup.map((ring) => {
+  // Use trulyFusedRings (not sortedGroup) to only include rings that share atoms
+  const rings = trulyFusedRings.map((ring) => {
     const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
     return buildSingleRingNodeWithContext(
       ring,
@@ -765,6 +787,54 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
       allRingPositions,
     ),
   );
+
+  // If we only have 1 truly fused ring but have sequential rings, we need to wrap it
+  // in a FusedRing structure so the sequential ring metadata can be attached
+  // Use createFusedRingNode directly to bypass the validation that requires 2+ rings
+  if (rings.length === 1 && seqRingNodes.length > 0) {
+    const fusedNode = createFusedRingNode([rings[0]]);
+    fusedNode.metaTotalAtoms = totalAtoms;
+    fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
+    fusedNode.metaSequentialRings = seqRingNodes;
+
+    // Set up metadata...
+    const branchDepthMap = new Map();
+    const parentIndexMap = new Map();
+    const atomValueMap = new Map();
+    const bondMap = new Map();
+    fusedNode.metaAllPositions.forEach((pos) => {
+      branchDepthMap.set(pos, atoms[pos].branchDepth);
+      parentIndexMap.set(pos, atoms[pos].parentIndex);
+      atomValueMap.set(pos, atoms[pos].value);
+      bondMap.set(pos, atoms[pos].bond);
+    });
+    fusedNode.metaBranchDepthMap = branchDepthMap;
+    fusedNode.metaParentIndexMap = parentIndexMap;
+    fusedNode.metaAtomValueMap = atomValueMap;
+    fusedNode.metaBondMap = bondMap;
+
+    // Also need to include sequential ring positions in allPositions
+    seqRingNodes.forEach((seqRing) => {
+      const seqPositions = seqRing.metaPositions || [];
+      seqPositions.forEach((pos) => {
+        if (!fusedNode.metaAllPositions.includes(pos)) {
+          fusedNode.metaAllPositions.push(pos);
+          branchDepthMap.set(pos, atoms[pos].branchDepth);
+          parentIndexMap.set(pos, atoms[pos].parentIndex);
+          atomValueMap.set(pos, atoms[pos].value);
+          bondMap.set(pos, atoms[pos].bond);
+        }
+      });
+    });
+    fusedNode.metaAllPositions.sort((a, b) => a - b);
+
+    return fusedNode;
+  }
+
+  // If we only have 1 truly fused ring and no sequential rings, return the single ring
+  if (rings.length === 1) {
+    return rings[0];
+  }
 
   const fusedNode = FusedRing(rings);
   // Store total atoms and all positions for proper codegen
@@ -924,6 +994,20 @@ buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, 
         components.push(ringNode);
         processedGroups.add(groupIdx);
 
+        // CRITICAL FIX: Mark ALL ring numbers in this built node as processed
+        // When buildRingGroupNodeWithContext expands the group (e.g., [1] -> [1,2]),
+        // it builds a fused ring containing multiple rings. We need to mark ALL those
+        // rings' groups as processed so they don't get built again as separate components.
+        const allRingsInNode = ringNode.rings || [ringNode];
+        allRingsInNode.forEach((r) => {
+          const ringNum = r.ringNumber;
+          fusedGroups.forEach((grp, grpIdx) => {
+            if (grp.some((gr) => gr.ringNumber === ringNum)) {
+              processedGroups.add(grpIdx);
+            }
+          });
+        });
+
         // Update atomToGroup with all positions from the built ring node
         // This includes sequential continuation atoms that were discovered during ring building
         const ringAllPositions = ringNode.metaAllPositions || new Set();
@@ -931,6 +1015,27 @@ buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, 
           if (!atomToGroup.has(pos)) {
             atomToGroup.set(pos, groupIdx);
           }
+        });
+
+        // CRITICAL FIX: Mark sequential rings as processed to prevent duplication
+        // When buildRingGroupNodeWithContext discovers sequential continuation rings,
+        // they are included in the fused ring's metaSequentialRings. We need to mark
+        // ALL atoms from these sequential rings as belonging to this group so they
+        // don't get processed again as separate components.
+        const seqRings = ringNode.metaSequentialRings || [];
+        seqRings.forEach((seqRingNode) => {
+          const seqPositions = seqRingNode.metaPositions || [];
+          seqPositions.forEach((pos) => {
+            atomToGroup.set(pos, groupIdx);
+          });
+          // Also mark the ring's group as processed to prevent it from being built again
+          // Find which group index contains this sequential ring and mark it as processed
+          const seqRingNumber = seqRingNode.ringNumber;
+          fusedGroups.forEach((grp, grpIdx) => {
+            if (grp.some((r) => r.ringNumber === seqRingNumber)) {
+              processedGroups.add(grpIdx);
+            }
+          });
         });
       }
 

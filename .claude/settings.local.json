@@ -27,7 +27,8 @@
       "Bash(do sed -i \"s/import { stripExports } from ''.\\\\/utils.js'';/import { stripExports, createFunction, executeCode } from ''.\\\\/utils.js'';/\" \"$file\")",
       "Bash(done)",
       "Bash(do sed -i \"s/factory = new Function\\(''Ring'', ''Linear'', ''FusedRing'', ''Molecule'', executableCode\\);/factory = createFunction\\(''Ring'', ''Linear'', ''FusedRing'', ''Molecule'', executableCode\\);/\" \"$file\")",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(Select-String -Pattern \"Valsartan\" -Context 10)"
     ]
   }
 }
