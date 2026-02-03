@@ -40,17 +40,17 @@ test('validateRoundTrip - returns AST', () => {
   expect(result.ast.smiles).toBe('c1ccccc1');
 });
 
-test('validateRoundTrip - stabilizing molecule', () => {
+test('validateRoundTrip - omeprazole (previously imperfect, now perfect)', () => {
+  // This molecule used to require stabilization but is now perfect after fixes
   const input = 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1';
   const result = validateRoundTrip(input);
 
-  expect(result.perfect).toBe(false);
+  expect(result.perfect).toBe(true);
   expect(result.stabilizes).toBe(true);
-  expect(result.status).toBe('stabilized');
+  expect(result.status).toBe('perfect');
   expect(result.original).toBe(input);
-  expect(result.firstRoundTrip).not.toBe(input);
+  expect(result.firstRoundTrip).toBe(input);
   expect(result.secondRoundTrip).toBe(result.firstRoundTrip);
-  expect(result.recommendation).toContain('normalized');
 });
 
 test('isValidRoundTrip - perfect molecules', () => {
@@ -59,9 +59,10 @@ test('isValidRoundTrip - perfect molecules', () => {
   expect(isValidRoundTrip('CCCc1ccccc1')).toBe(true);
 });
 
-test('isValidRoundTrip - imperfect molecules', () => {
+test('isValidRoundTrip - omeprazole now perfect', () => {
+  // This molecule is now perfect after round-trip fixes
   const input = 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1';
-  expect(isValidRoundTrip(input)).toBe(false);
+  expect(isValidRoundTrip(input)).toBe(true);
 });
 
 test('normalize - returns original for perfect molecules', () => {
@@ -69,12 +70,12 @@ test('normalize - returns original for perfect molecules', () => {
   expect(normalize('CCC')).toBe('CCC');
 });
 
-test('normalize - returns stabilized form for imperfect molecules', () => {
+test('normalize - returns original for now-perfect molecules', () => {
+  // This molecule is now perfect, so normalize returns the original
   const input = 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1';
   const normalized = normalize(input);
 
-  expect(normalized).not.toBe(input);
-  expect(normalized.length).toBeLessThan(input.length);
+  expect(normalized).toBe(input);
 
   // Should be stable
   const secondNormalize = normalize(normalized);
@@ -100,12 +101,13 @@ test('parseWithValidation - silent mode suppresses warnings', () => {
   expect(ast.smiles).toBeDefined();
 });
 
-test('parseWithValidation - strict mode throws on imperfect', () => {
+test('parseWithValidation - strict mode allows now-perfect molecules', () => {
+  // This molecule is now perfect, so strict mode should not throw
   const input = 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1';
 
   expect(() => {
     parseWithValidation(input, { strict: true });
-  }).toThrow();
+  }).not.toThrow();
 });
 
 test('parseWithValidation - strict mode allows perfect molecules', () => {
@@ -156,18 +158,17 @@ test('validateRoundTrip - result fields are consistent', () => {
   expect(result.stabilizes).toBe(true);
 });
 
-test('validateRoundTrip - stabilized result fields are consistent', () => {
+test('validateRoundTrip - now-perfect result fields are consistent', () => {
+  // This molecule is now perfect after round-trip fixes
   const input = 'COc1ccc2nc(S(=O)Cc3ncc(C)c(OC)c3C)[nH]c2c1';
   const result = validateRoundTrip(input);
 
-  // First and second should match (stabilized)
+  // All should match (perfect)
   expect(result.firstRoundTrip).toBe(result.secondRoundTrip);
-
-  // But original should differ
-  expect(result.original).not.toBe(result.firstRoundTrip);
+  expect(result.original).toBe(result.firstRoundTrip);
 
   // Status and flags should match
-  expect(result.status).toBe('stabilized');
-  expect(result.perfect).toBe(false);
+  expect(result.status).toBe('perfect');
+  expect(result.perfect).toBe(true);
   expect(result.stabilizes).toBe(true);
 });

@@ -62,6 +62,7 @@ export function ringSubstitute(ring, position, newAtom) {
     updatedSubstitutions,
     ring.attachments,
     ring.bonds || [],
+    ring.metaBranchDepths || null,
   );
 }
 

@@ -199,9 +199,15 @@ function buildBranchCrossingRingSMILES(ring) {
       } else {
         // Output attachments immediately
         attachments[i].forEach((attachment) => {
-          parts.push('(');
+          // Check if this attachment should be rendered inline (no parentheses)
+          const isInline = attachment.metaIsSibling === false;
+          if (!isInline) {
+            parts.push('(');
+          }
           parts.push(buildSMILES(attachment));
-          parts.push(')');
+          if (!isInline) {
+            parts.push(')');
+          }
         });
       }
     }
@@ -477,9 +483,15 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
       if (pendingAttachments.has(currentDepth)) {
         const attachmentsToOutput = pendingAttachments.get(currentDepth);
         attachmentsToOutput.forEach((attachment) => {
-          parts.push('(');
+          // Check if this attachment should be rendered inline (no parentheses)
+          const isInline = attachment.metaIsSibling === false;
+          if (!isInline) {
+            parts.push('(');
+          }
           parts.push(buildSMILES(attachment));
-          parts.push(')');
+          if (!isInline) {
+            parts.push(')');
+          }
         });
         pendingAttachments.delete(currentDepth);
       }
@@ -542,9 +554,15 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
       } else {
         // Output attachments immediately
         entry.attachments.forEach((attachment) => {
-          parts.push('(');
+          // Check if this attachment should be rendered inline (no parentheses)
+          const isInline = attachment.metaIsSibling === false;
+          if (!isInline) {
+            parts.push('(');
+          }
           parts.push(buildSMILES(attachment));
-          parts.push(')');
+          if (!isInline) {
+            parts.push(')');
+          }
         });
       }
     }
@@ -554,6 +572,23 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   while (currentDepth > 0) {
     parts.push(')');
     currentDepth -= 1;
+
+    // Check if we have pending attachments for this depth
+    if (pendingAttachments.has(currentDepth)) {
+      const attachmentsToOutput = pendingAttachments.get(currentDepth);
+      attachmentsToOutput.forEach((attachment) => {
+        // Check if this attachment should be rendered inline (no parentheses)
+        const isInline = attachment.metaIsSibling === false;
+        if (!isInline) {
+          parts.push('(');
+        }
+        parts.push(buildSMILES(attachment));
+        if (!isInline) {
+          parts.push(')');
+        }
+      });
+      pendingAttachments.delete(currentDepth);
+    }
   }
 
   return parts.join('');
@@ -659,9 +694,16 @@ function buildSimpleFusedRingSMILES(fusedRing) {
     });
 
     attachments.forEach((attachment) => {
-      parts.push('(');
+      // Check if this attachment should be rendered inline (no parentheses)
+      // This happens for sequential continuation atoms after ring closures
+      const isInline = attachment.metaIsSibling === false;
+      if (!isInline) {
+        parts.push('(');
+      }
       parts.push(buildSMILES(attachment));
-      parts.push(')');
+      if (!isInline) {
+        parts.push(')');
+      }
     });
   });
 

@@ -521,11 +521,11 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
     const endAtom = atoms[ring.end];
 
     // Check if ring closes at a deeper branch level than where it opened
-    const hasSeqContinuation = endAtom
+    const hasDeepSeqContinuation = endAtom
       && endAtom.branchDepth > ring.branchDepth
       && endAtom.branchId !== null;
 
-    if (hasSeqContinuation) {
+    if (hasDeepSeqContinuation) {
       // Check if there's a ring that immediately follows this ring's close
       const nextAtom = atoms.find(
         (a) => a.prevAtomIndex === ring.end
@@ -545,6 +545,73 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
           // Recursively process the expanded group
           return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries);
         }
+      }
+    }
+
+    // Check for sequential continuation atoms at the SAME depth (not just deeper)
+    // This handles patterns like C(C1CCCCC1C) where C follows ring closure in branch
+    if (endAtom && endAtom.branchId !== null) {
+      // Find atoms that follow the ring's end position in the same branch
+      const seqAtoms = atoms.filter(
+        (a) => a.prevAtomIndex === ring.end
+          && a.branchDepth === endAtom.branchDepth
+          && a.branchId === endAtom.branchId
+          && !a.afterBranchClose,
+      );
+
+      if (seqAtoms.length > 0) {
+        // Check if the first sequential atom is a ring or linear
+        const firstSeqAtom = seqAtoms[0];
+        const nextRing = ringBoundaries.find(
+          (rb) => rb.positions.includes(firstSeqAtom.index)
+            && rb.branchDepth === firstSeqAtom.branchDepth,
+        );
+
+        if (nextRing) {
+          // Sequential continuation with another ring - expand group
+          const expandedGroup = [...group, nextRing];
+          return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries);
+        }
+
+        // Sequential continuation with linear atoms - need to include them
+        // Build a Molecule containing the ring and the trailing atoms
+        const ringNode = buildSingleRingNodeWithContext(
+          ring,
+          atoms,
+          ringBoundaries,
+          0,
+          ring.ringNumber,
+        );
+
+        // Collect sequential linear atoms starting from firstSeqAtom
+        const seqLinearAtoms = [firstSeqAtom];
+        let lastIdx = firstSeqAtom.index;
+        let foundMore = true;
+        while (foundMore) {
+          foundMore = false;
+          const nextA = atoms.find(
+            (a) => a.prevAtomIndex === lastIdx
+              && a.branchDepth === firstSeqAtom.branchDepth
+              && a.branchId === firstSeqAtom.branchId
+              && !a.afterBranchClose,
+          );
+          if (nextA) {
+            seqLinearAtoms.push(nextA);
+            lastIdx = nextA.index;
+            foundMore = true;
+          }
+        }
+
+        // Build a linear node for the sequential atoms
+        const seqLinearNode = buildLinearNodeSimpleInternal(
+          seqLinearAtoms,
+          atoms,
+          ringBoundaries,
+          false,
+        );
+
+        // Return a Molecule combining ring and sequential linear
+        return Molecule([ringNode, seqLinearNode]);
       }
     }
 

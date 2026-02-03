@@ -797,6 +797,32 @@ function computeFusedRingPositions(fusedRingNodeParam) {
   target.node.metaRingOrderMap = ringOrderMap;
 }
 
+/**
+ * Apply branch depths from constituent rings to fused ring's branchDepthMap
+ * This handles branch-crossing rings created via API with branchDepths option
+ */
+function applyRingBranchDepthsToFusedRing(node) {
+  const branchDepthMap = node.metaBranchDepthMap;
+  if (!branchDepthMap) return;
+
+  node.rings.forEach((ring) => {
+    const ringBranchDepths = ring.metaBranchDepths;
+    const ringPositions = ring.metaPositions;
+
+    if (ringBranchDepths && ringPositions && ringBranchDepths.length === ringPositions.length) {
+      // Apply the ring's branch depths to the corresponding positions
+      ringPositions.forEach((pos, idx) => {
+        const depth = ringBranchDepths[idx];
+        // Use the maximum depth (ring's depth takes precedence if higher)
+        const currentDepth = branchDepthMap.get(pos) || 0;
+        if (depth > currentDepth) {
+          branchDepthMap.set(pos, depth);
+        }
+      });
+    }
+  });
+}
+
 export function createFusedRingNode(rings, options = {}) {
   // Create base node
   const node = {
@@ -817,6 +843,9 @@ export function createFusedRingNode(rings, options = {}) {
     // Compute interleaved position metadata for proper SMILES generation
     // This is needed when rings are created via API (not parser)
     computeFusedRingPositions(node);
+
+    // Apply branch depths from constituent rings if they have metaBranchDepths
+    applyRingBranchDepthsToFusedRing(node);
   }
 
   attachSmilesGetter(node);
