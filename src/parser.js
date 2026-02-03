@@ -573,8 +573,20 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
       );
 
       if (seqAtoms.length > 0) {
-        // Check if the first sequential atom is a ring or linear
+        // Check if these atoms are already attachments to an earlier ring position
+        // by checking if any atom's parentIndex points to a ring position before the end
         const firstSeqAtom = seqAtoms[0];
+        const isAttachmentToEarlierPosition = ring.positions.some(
+          (pos) => pos < ring.end && firstSeqAtom.parentIndex === pos,
+        );
+
+        // Skip sequential continuation if atoms are already attachments
+        if (isAttachmentToEarlierPosition) {
+          // These atoms will be handled as attachments in buildSingleRingNodeWithContext
+          return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber);
+        }
+
+        // Check if the first sequential atom is a ring or linear
         const nextRing = ringBoundaries.find(
           (rb) => rb.positions.includes(firstSeqAtom.index)
             && rb.branchDepth === firstSeqAtom.branchDepth,
@@ -698,6 +710,8 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
           const matchesBranch = a.branchDepth === posAtom.branchDepth
             && a.branchId === posAtom.branchId;
           const notAlreadyIncluded = !allRingPositions.has(a.index) && !allPositions.has(a.index);
+          // Include atoms even if afterBranchClose=true, as long as they're in the same branch
+          // The afterBranchClose flag just means a nested sub-branch closed, not the main branch
 
           if (matchesPrev && matchesBranch && notAlreadyIncluded) {
             // Check if this atom is part of another ring

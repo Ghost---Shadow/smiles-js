@@ -194,12 +194,24 @@ function buildBranchCrossingRingSMILES(ring) {
     if (attachments[i] && attachments[i].length > 0) {
       if (hasInlineBranchAfter) {
         // Delay attachments - output after inline branch closes back to this depth
-        // Both siblings and inline continuations are output when returning to posDepth
-        pendingAttachments.set(i, { depth: posDepth, attachments: [...attachments[i]] });
+        // Compute metaIsSibling for each attachment if not set
+        const processedAttachments = attachments[i].map((att) => {
+          // If metaIsSibling is already set, use it
+          if (att.metaIsSibling !== undefined) {
+            return att;
+          }
+          // Otherwise, infer it: for branch-crossing rings, attachments at positions
+          // where an inline branch opens should be inline continuations
+          // (metaIsSibling = false means inline)
+          const cloned = { ...att, metaIsSibling: false };
+          return cloned;
+        });
+        pendingAttachments.set(i, { depth: posDepth, attachments: processedAttachments });
       } else {
         // Output attachments immediately
         attachments[i].forEach((attachment) => {
           // Check if this attachment should be rendered inline (no parentheses)
+          // If metaIsSibling is not set, assume it's NOT inline (regular sibling)
           const isInline = attachment.metaIsSibling === false;
           if (!isInline) {
             parts.push('(');
