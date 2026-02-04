@@ -3,7 +3,7 @@
  * Wraps parse() to provide a simpler interface for common use cases
  */
 
-import { parse } from './parser.js';
+import { parse } from './parser/index.js';
 
 /**
  * Validate and parse a SMILES string into an AST

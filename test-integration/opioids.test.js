@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import { stripExports, createFunction, executeCode } from './utils.js';
 
 const MORPHINE_SMILES = 'CN1CCC23C4C1CC5=C2C(=C(C=C5)O)OC3C(C=C4)O';

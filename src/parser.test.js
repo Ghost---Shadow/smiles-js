@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from './parser.js';
+import { parse } from './parser/index.js';
 
 describe('Parser - Simple Molecules', () => {
   test('parses single atom', () => {

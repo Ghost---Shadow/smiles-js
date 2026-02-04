@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import { stripExports, createFunction, executeCode } from './utils.js';
 
 const TELMISARTAN_SMILES = 'CCCC1=NC2=C(C=C(C=C2N1CC3=CC=C(C=C3)C4=CC=CC=C4C(=O)O)C5=NC6=CC=CC=C6N5C)C';

@@ -639,8 +639,8 @@ decompileNodeInternal = function decompileNodeImpl(node, indent, nextVar) {
  * @param {Object} options - Options
  * @param {number} options.indent - Indentation level (default 0)
  * @param {string} options.varName - Variable name prefix (default 'v')
- * @param {boolean} options.includeMetadata - Include metadata assignments (default true)
- *                                            Set to false for cleaner output (but code may not work)
+ * @param {boolean} options.includeMetadata - Include metadata assignments
+ *   (default true). Set to false for cleaner output (but code may not work)
  */
 export function decompile(node, options = {}) {
   const { indent = 0, varName = 'v', includeMetadata = true } = options;
@@ -654,10 +654,10 @@ export function decompile(node, options = {}) {
 
   // Filter out metadata assignments if not requested
   if (!includeMetadata) {
-    result = result.split('\n').filter((line) => {
+    result = result.split('\n').filter((line) => (
       // Remove lines that set meta properties
-      return !line.match(/\.meta[A-Z][a-zA-Z]*\s*=/);
-    }).join('\n');
+      !line.match(/\.meta[A-Z][a-zA-Z]*\s*=/)
+    )).join('\n');
   }
 
   return result;

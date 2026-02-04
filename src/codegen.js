@@ -296,6 +296,9 @@ function buildBranchCrossingRingSMILES(ring) {
   return parts.join('');
 }
 
+// Forward declaration for mutual recursion
+let buildInterleavedFusedRingSMILES;
+
 /**
  * Build SMILES for a Ring node
  * @param {Object} ring - Ring AST node
@@ -388,7 +391,7 @@ export function buildRingSMILES(ring) {
 /**
  * Build SMILES for interleaved fused rings using stored position data
  */
-function buildInterleavedFusedRingSMILES(fusedRing) {
+buildInterleavedFusedRingSMILES = function buildInterleavedFusedRingSMILESImpl(fusedRing) {
   const { rings } = fusedRing;
   const allPositions = fusedRing.metaAllPositions;
   const rawBranchDepthMap = fusedRing.metaBranchDepthMap || new Map();
@@ -623,7 +626,7 @@ function buildInterleavedFusedRingSMILES(fusedRing) {
   }
 
   return parts.join('');
-}
+};
 
 /**
  * Build SMILES for simple (non-interleaved) fused rings using offset approach

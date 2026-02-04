@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import { stripExports, createFunction, executeCode } from './utils.js';
 
 const CORTISONE_SMILES = 'CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12';

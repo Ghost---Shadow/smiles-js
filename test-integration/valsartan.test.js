@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import { tokenize } from '../src/tokenizer.js';
 import { codegenRoundTrip } from './utils.js';
 

@@ -1,4 +1,4 @@
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import {
   Ring, Linear, FusedRing, Molecule,
 } from '../src/constructors.js';

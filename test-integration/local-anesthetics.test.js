@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import { stripExports, createFunction, executeCode } from './utils.js';
 
 const LIDOCAINE_SMILES = 'CCN(CC)CC(=O)NC1=C(C)C=CC=C1C';

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parse } from '../src/parser.js';
+import { parse } from '../src/parser/index.js';
 import { stripExports, createFunction, executeCode } from './utils.js';
 
 const CELECOXIB_SMILES = 'CC1=CC=CC=C1C2=CC=NN2C(F)(F)F';

@@ -8,7 +8,7 @@ export {
 export { ASTNodeType } from './ast.js';
 export { buildSMILES } from './codegen.js';
 export { tokenize, TokenType } from './tokenizer.js';
-export { parse } from './parser.js';
+export { parse } from './parser/index.js';
 export { decompile } from './decompiler.js';
 export { Fragment } from './fragment.js';
 export {

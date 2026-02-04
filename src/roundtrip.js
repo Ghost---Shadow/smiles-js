@@ -8,7 +8,7 @@
  * Provides automatic stabilization detection and user guidance.
  */
 
-import { parse } from './parser.js';
+import { parse } from './parser/index.js';
 
 // Default logger uses console, can be overridden for testing or custom logging
 const defaultLogger = {

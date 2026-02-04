@@ -9,7 +9,14 @@ import { collectRingPath } from './ring-utils.js';
 /**
  * Create an atom object with branch and ring metadata
  */
-export function createAtom(currentAtomIndex, token, currentBond, branchStack, lastAtomAtDepth, branchClosedSinceLastAtom) {
+export function createAtom(
+  currentAtomIndex,
+  token,
+  currentBond,
+  branchStack,
+  lastAtomAtDepth,
+  branchClosedSinceLastAtom,
+) {
   const parentIndex = branchStack.length > 0
     ? branchStack[branchStack.length - 1].parentIndex
     : null;
@@ -38,7 +45,15 @@ export function createAtom(currentAtomIndex, token, currentBond, branchStack, la
 /**
  * Handle ring marker token (open or close ring)
  */
-export function handleRingMarker(token, currentAtomIndex, ringStacks, atoms, closedRings, ringBoundaries, branchStack) {
+export function handleRingMarker(
+  token,
+  currentAtomIndex,
+  ringStacks,
+  atoms,
+  closedRings,
+  ringBoundaries,
+  branchStack,
+) {
   const { ringNumber } = token;
 
   if (ringStacks.has(ringNumber)) {
@@ -110,7 +125,14 @@ export function buildAtomList(tokens) {
 
     if (token.type === TokenType.ATOM) {
       currentAtomIndex += 1;
-      const atom = createAtom(currentAtomIndex, token, currentBond, branchStack, lastAtomAtDepth, branchClosedSinceLastAtom);
+      const atom = createAtom(
+        currentAtomIndex,
+        token,
+        currentBond,
+        branchStack,
+        lastAtomAtDepth,
+        branchClosedSinceLastAtom,
+      );
       atoms.push(atom);
       lastAtomAtDepth.set(branchStack.length, currentAtomIndex);
       branchClosedSinceLastAtom.set(branchStack.length, false);
@@ -118,7 +140,15 @@ export function buildAtomList(tokens) {
     } else if (token.type === TokenType.BOND) {
       currentBond = token.value;
     } else if (token.type === TokenType.RING_MARKER) {
-      handleRingMarker(token, currentAtomIndex, ringStacks, atoms, closedRings, ringBoundaries, branchStack);
+      handleRingMarker(
+        token,
+        currentAtomIndex,
+        ringStacks,
+        atoms,
+        closedRings,
+        ringBoundaries,
+        branchStack,
+      );
     } else if (token.type === TokenType.BRANCH_OPEN) {
       const currentDepth = branchStack.length;
       const parentIdx = lastAtomAtDepth.get(currentDepth);

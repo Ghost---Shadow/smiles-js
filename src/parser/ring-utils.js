@@ -56,7 +56,14 @@ export function traceRingPathBranchIds(endAtom, branchDepth, atoms) {
 /**
  * Check if an atom should be included in the ring path
  */
-export function shouldIncludeAtomInRing(atom, startAtom, branchDepth, branchId, ringPathBranchIds, atoms) {
+export function shouldIncludeAtomInRing(
+  atom,
+  startAtom,
+  branchDepth,
+  branchId,
+  ringPathBranchIds,
+  atoms,
+) {
   const atOriginalDepth = atom.branchDepth === branchDepth;
   const inRingPathBranch = ringPathBranchIds.has(atom.branchId);
 
@@ -71,7 +78,14 @@ export function shouldIncludeAtomInRing(atom, startAtom, branchDepth, branchId, 
 /**
  * Collect the proper path for a ring, handling interleaved fused rings
  */
-export function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, closedRings) {
+export function collectRingPath(
+  startIdx,
+  endIdx,
+  atoms,
+  branchDepth,
+  branchId,
+  closedRings,
+) {
   const positions = [];
   const innerRings = findInnerFusedRings(startIdx, endIdx, atoms, branchDepth, closedRings);
   const endAtom = atoms[endIdx];
@@ -93,7 +107,14 @@ export function collectRingPath(startIdx, endIdx, atoms, branchDepth, branchId, 
         idx = innerRing.end;
       } else {
         const startAtom = atoms[startIdx];
-        if (shouldIncludeAtomInRing(atom, startAtom, branchDepth, branchId, ringPathBranchIds, atoms)) {
+        if (shouldIncludeAtomInRing(
+          atom,
+          startAtom,
+          branchDepth,
+          branchId,
+          ringPathBranchIds,
+          atoms,
+        )) {
           positions.push(idx);
         }
         idx += 1;

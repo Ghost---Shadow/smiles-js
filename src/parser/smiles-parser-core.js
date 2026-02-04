@@ -7,14 +7,14 @@
 import {
   tokenize,
   TokenType,
-} from './tokenizer.js';
+} from '../tokenizer.js';
 import {
   Ring,
   Linear,
   FusedRing,
   Molecule,
   createFusedRingNode,
-} from './constructors.js';
+} from '../constructors.js';
 
 // Forward declarations for mutual recursion
 let buildBranchWithRingsInternal;

@@ -1,0 +1,8 @@
+[test]
+coverage = true
+coverageSkipTestFiles = true
+
+# Exclude integration tests from coverage
+coverageExclude = [
+  "test-integration/**"
+]

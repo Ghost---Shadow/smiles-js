@@ -28,7 +28,8 @@
       "Bash(done)",
       "Bash(do sed -i \"s/factory = new Function\\(''Ring'', ''Linear'', ''FusedRing'', ''Molecule'', executableCode\\);/factory = createFunction\\(''Ring'', ''Linear'', ''FusedRing'', ''Molecule'', executableCode\\);/\" \"$file\")",
       "Bash(wc:*)",
-      "Bash(Select-String -Pattern \"Valsartan\" -Context 10)"
+      "Bash(Select-String -Pattern \"Valsartan\" -Context 10)",
+      "Bash(find:*)"
     ]
   }
 }
