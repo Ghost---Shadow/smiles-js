@@ -146,4 +146,144 @@ describe('Branch Utils', () => {
       expect(areSeqAtomsAttachmentsToEarlierPosition(seqAtoms, ring)).toBe(false);
     });
   });
+
+  describe('collectBranchChain', () => {
+    it('should collect single atom branch', () => {
+      const branchAtom = {
+        index: 1, branchDepth: 1, parentIndex: 0, branchId: 5,
+      };
+      const allAtoms = [
+        {
+          index: 0, branchDepth: 0, parentIndex: null, branchId: null,
+        },
+        branchAtom,
+      ];
+      const processed = new Set();
+      const { collectBranchChain } = require('./branch-utils.js');
+      const result = collectBranchChain(branchAtom, allAtoms, processed);
+
+      expect(result).toEqual([branchAtom]);
+      expect(processed.has(1)).toBe(true);
+    });
+
+    it('should collect consecutive atoms in same branch', () => {
+      const branchAtom = {
+        index: 1, branchDepth: 1, parentIndex: 0, branchId: 5,
+      };
+      const allAtoms = [
+        {
+          index: 0, branchDepth: 0, parentIndex: null, branchId: null,
+        },
+        branchAtom,
+        {
+          index: 2, branchDepth: 1, parentIndex: 0, branchId: 5,
+        },
+        {
+          index: 3, branchDepth: 1, parentIndex: 0, branchId: 5,
+        },
+      ];
+      const processed = new Set();
+      const { collectBranchChain } = require('./branch-utils.js');
+      const result = collectBranchChain(branchAtom, allAtoms, processed);
+
+      expect(result).toHaveLength(3);
+      expect(result[0].index).toBe(1);
+      expect(result[1].index).toBe(2);
+      expect(result[2].index).toBe(3);
+    });
+
+    it('should stop at different parent', () => {
+      const branchAtom = {
+        index: 1, branchDepth: 1, parentIndex: 0, branchId: 5,
+      };
+      const allAtoms = [
+        {
+          index: 0, branchDepth: 0, parentIndex: null, branchId: null,
+        },
+        branchAtom,
+        {
+          index: 2, branchDepth: 1, parentIndex: 1, branchId: 6,
+        },
+      ];
+      const processed = new Set();
+      const { collectBranchChain } = require('./branch-utils.js');
+      const result = collectBranchChain(branchAtom, allAtoms, processed);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it('should include deeper nested branches', () => {
+      const branchAtom = {
+        index: 1, branchDepth: 1, parentIndex: 0, branchId: 5,
+      };
+      const allAtoms = [
+        {
+          index: 0, branchDepth: 0, parentIndex: null, branchId: null,
+        },
+        branchAtom,
+        {
+          index: 2, branchDepth: 2, parentIndex: 1, branchId: 10,
+        },
+        {
+          index: 3, branchDepth: 1, parentIndex: 0, branchId: 5,
+        },
+      ];
+      const processed = new Set();
+      const { collectBranchChain } = require('./branch-utils.js');
+      const result = collectBranchChain(branchAtom, allAtoms, processed);
+
+      expect(result).toHaveLength(3);
+    });
+
+    it('should handle missing atoms in sequence', () => {
+      const branchAtom = {
+        index: 1, branchDepth: 1, parentIndex: 0, branchId: 5,
+      };
+      const allAtoms = [
+        {
+          index: 0, branchDepth: 0, parentIndex: null, branchId: null,
+        },
+        branchAtom,
+      ];
+      const processed = new Set();
+      const { collectBranchChain } = require('./branch-utils.js');
+      const result = collectBranchChain(branchAtom, allAtoms, processed);
+
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('buildExcludedPositions', () => {
+    it('should return fusedGroupPositions when provided', () => {
+      const fusedGroupPositions = new Set([1, 2, 3]);
+      const { buildExcludedPositions } = require('./branch-utils.js');
+      const result = buildExcludedPositions(fusedGroupPositions, [], []);
+
+      expect(result).toBe(fusedGroupPositions);
+    });
+
+    it('should build excluded positions from ring boundaries', () => {
+      const ringAtoms = [{ branchDepth: 0 }];
+      const ringBoundaries = [
+        { branchDepth: 0, positions: [0, 1, 2] },
+        { branchDepth: 0, positions: [3, 4, 5] },
+        { branchDepth: 1, positions: [6, 7] },
+      ];
+      const { buildExcludedPositions } = require('./branch-utils.js');
+      const result = buildExcludedPositions(null, ringAtoms, ringBoundaries);
+
+      expect(result.has(0)).toBe(true);
+      expect(result.has(1)).toBe(true);
+      expect(result.has(2)).toBe(true);
+      expect(result.has(3)).toBe(true);
+      expect(result.has(6)).toBe(false);
+    });
+
+    it('should handle empty ringAtoms', () => {
+      const { buildExcludedPositions } = require('./branch-utils.js');
+      const result = buildExcludedPositions(null, [], []);
+
+      expect(result.size).toBe(0);
+    });
+  });
 });

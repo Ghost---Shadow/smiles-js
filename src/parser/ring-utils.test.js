@@ -44,6 +44,24 @@ describe('Ring Utils', () => {
       ];
       expect(isInSameBranchContext(atoms[1], atoms[2], atoms)).toBe(true);
     });
+
+    it('should return false when parent atoms are missing and different branchId', () => {
+      const atoms = [
+        { index: 0, branchDepth: 0, parentIndex: null },
+        { index: 1, branchDepth: 1, parentIndex: 5, branchId: 'branch1' },
+        { index: 2, branchDepth: 1, parentIndex: 6, branchId: 'branch2' },
+      ];
+      expect(isInSameBranchContext(atoms[1], atoms[2], atoms)).toBe(false);
+    });
+
+    it('should return true when parent atoms are missing but same branchId', () => {
+      const atoms = [
+        { index: 0, branchDepth: 0, parentIndex: null },
+        { index: 1, branchDepth: 1, parentIndex: 5, branchId: 'branch1' },
+        { index: 2, branchDepth: 1, parentIndex: 6, branchId: 'branch1' },
+      ];
+      expect(isInSameBranchContext(atoms[1], atoms[2], atoms)).toBe(true);
+    });
   });
 
   describe('findInnerFusedRings', () => {
@@ -328,6 +346,99 @@ describe('Ring Utils', () => {
       ];
       const result = extractRingBonds(ringAtoms);
       expect(result).toEqual(['=', null]);
+    });
+  });
+
+  describe('collectRingPath', () => {
+    it('should collect simple ring path', () => {
+      const { collectRingPath } = require('./ring-utils.js');
+      const atoms = [
+        {
+          index: 0, branchDepth: 0, branchId: null,
+        },
+        {
+          index: 1, branchDepth: 0, branchId: null,
+        },
+        {
+          index: 2, branchDepth: 0, branchId: null,
+        },
+      ];
+      const result = collectRingPath(0, 2, atoms, 0, null, []);
+
+      expect(result).toEqual([0, 1, 2]);
+    });
+
+    it('should skip inner fused rings', () => {
+      const { collectRingPath } = require('./ring-utils.js');
+      const atoms = Array.from({ length: 10 }, (_, i) => ({
+        index: i,
+        branchDepth: 0,
+        branchId: null,
+      }));
+      const closedRings = [
+        { start: 2, end: 5, ringNumber: 2 },
+      ];
+      const result = collectRingPath(0, 8, atoms, 0, null, closedRings);
+
+      expect(result).toEqual([0, 1, 2, 5, 6, 7, 8]);
+    });
+
+    it('should handle ring entering deep branch', () => {
+      const { collectRingPath } = require('./ring-utils.js');
+      const atoms = [
+        {
+          index: 0, branchDepth: 0, branchId: null, parentIndex: null,
+        },
+        {
+          index: 1, branchDepth: 0, branchId: null, parentIndex: null,
+        },
+        {
+          index: 2, branchDepth: 1, branchId: 5, parentIndex: 1,
+        },
+        {
+          index: 3, branchDepth: 1, branchId: 5, parentIndex: 1,
+        },
+      ];
+      const result = collectRingPath(0, 3, atoms, 0, null, []);
+
+      expect(result).toEqual([0, 1, 2, 3]);
+    });
+
+    it('should exclude atoms not in ring path branch', () => {
+      const { collectRingPath } = require('./ring-utils.js');
+      const atoms = [
+        {
+          index: 0, branchDepth: 0, branchId: null, parentIndex: null,
+        },
+        {
+          index: 1, branchDepth: 1, branchId: 5, parentIndex: 0,
+        },
+        {
+          index: 2, branchDepth: 1, branchId: 10, parentIndex: 0,
+        },
+        {
+          index: 3, branchDepth: 1, branchId: 5, parentIndex: 0,
+        },
+      ];
+      const result = collectRingPath(0, 3, atoms, 0, null, []);
+
+      expect(result).toEqual([0, 1, 3]);
+    });
+
+    it('should handle missing atoms in range', () => {
+      const { collectRingPath } = require('./ring-utils.js');
+      const atoms = [
+        {
+          index: 0, branchDepth: 0, branchId: null,
+        },
+        null,
+        {
+          index: 2, branchDepth: 0, branchId: null,
+        },
+      ];
+      const result = collectRingPath(0, 2, atoms, 0, null, []);
+
+      expect(result).toEqual([0, 2]);
     });
   });
 });

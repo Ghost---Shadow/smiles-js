@@ -260,5 +260,48 @@ describe('Simple Fused Ring Builder', () => {
       expect(marker2Open).not.toBe(marker2Close);
       expect(marker1Open).toBeLessThan(marker2Open);
     });
+
+    it('should handle ring size of 1', () => {
+      const ring = {
+        offset: 0,
+        size: 1,
+        atoms: 'C',
+        substitutions: {},
+        attachments: {},
+        ringNumber: 1,
+        bonds: [],
+      };
+      const fusedRing = { rings: [ring] };
+      const mockBuildSMILES = () => 'C';
+      const result = buildSimpleFusedRingSMILES(fusedRing, mockBuildSMILES);
+      expect(result).toContain('C');
+      expect(result).toContain('1');
+    });
+
+    it('should handle markers at positions without atoms yet', () => {
+      const ring1 = {
+        offset: 0,
+        size: 3,
+        atoms: 'C',
+        substitutions: {},
+        attachments: {},
+        ringNumber: 1,
+        bonds: [],
+      };
+      const ring2 = {
+        offset: 1,
+        size: 4,
+        atoms: 'C',
+        substitutions: {},
+        attachments: {},
+        ringNumber: 2,
+        bonds: [],
+      };
+      const fusedRing = { rings: [ring1, ring2] };
+      const mockBuildSMILES = () => 'C';
+      const result = buildSimpleFusedRingSMILES(fusedRing, mockBuildSMILES);
+      expect(result).toContain('1');
+      expect(result).toContain('2');
+    });
   });
 });

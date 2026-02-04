@@ -244,6 +244,15 @@ describe('Linear.concat()', () => {
     expect(pentyl.smiles).toBe('CCCCC');
   });
 
+  test('concatenates linear chains with bonds', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const ethyl = Linear(['C', 'C'], ['=']);
+    const result = propyl.concat(ethyl);
+
+    expect(result.atoms).toEqual(['C', 'C', 'C', 'C', 'C']);
+    expect(result.bonds).toEqual(['=']);
+  });
+
   test('concatenates linear with ring', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const benzene = Ring({ atoms: 'c', size: 6 });
@@ -300,6 +309,14 @@ describe('FusedRing methods', () => {
     const retrieved = fusedRing.getRing(99);
 
     expect(retrieved).toBeUndefined();
+  });
+
+  test('substituteInRing() throws for non-existent ring', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const fusedRing = ring1.fuse(ring2, 2);
+
+    expect(() => fusedRing.substituteInRing(99, 3, 'N')).toThrow('Ring 99 not found in fused ring system');
   });
 
   test('substituteInRing() substitutes in specific ring', () => {
