@@ -10,7 +10,7 @@ import {
   isRingNode,
 } from './ast.js';
 
-import { buildSMILES } from './codegen.js';
+import { buildSMILES } from './codegen/index.js';
 import { decompile } from './decompiler.js';
 import {
   ringAttach,
