@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser/index.js';
-import { stripExports, createFunction, executeCode } from './utils.js';
+import { stripExports, createFunction, executeCode, codegenRoundTrip } from './utils.js';
 
 const CORTISONE_SMILES = 'CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12';
 const HYDROCORTISONE_SMILES = 'CC12CCC(=O)C=C1CCC1C2C(O)CC2(C)C(C(=O)CO)CCC12O';
@@ -24,6 +24,11 @@ describe('Cortisone Integration Test', () => {
     const ast = parse(CORTISONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(CORTISONE_SMILES);
+    expect(ast.smiles).toBe(CORTISONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
@@ -62,6 +67,11 @@ describe('Hydrocortisone Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(HYDROCORTISONE_SMILES);
+    expect(ast.smiles).toBe(HYDROCORTISONE_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(HYDROCORTISONE_SMILES);
     const code = ast.toCode('v');
@@ -96,6 +106,11 @@ describe('Prednisone Integration Test', () => {
     const ast = parse(PREDNISONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(PREDNISONE_SMILES);
+    expect(ast.smiles).toBe(PREDNISONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
@@ -134,6 +149,11 @@ describe('Prednisolone Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(PREDNISOLONE_SMILES);
+    expect(ast.smiles).toBe(PREDNISOLONE_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(PREDNISOLONE_SMILES);
     const code = ast.toCode('v');
@@ -168,6 +188,11 @@ describe('Methylprednisolone Integration Test', () => {
     const ast = parse(METHYLPREDNISOLONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(METHYLPREDNISOLONE_SMILES);
+    expect(ast.smiles).toBe(METHYLPREDNISOLONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
@@ -206,6 +231,11 @@ describe('Dexamethasone Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(DEXAMETHASONE_SMILES);
+    expect(ast.smiles).toBe(DEXAMETHASONE_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(DEXAMETHASONE_SMILES);
     const code = ast.toCode('v');
@@ -240,6 +270,11 @@ describe('Triamcinolone Integration Test', () => {
     const ast = parse(TRIAMCINOLONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(TRIAMCINOLONE_SMILES);
+    expect(ast.smiles).toBe(TRIAMCINOLONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
@@ -278,6 +313,11 @@ describe('Budesonide Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(BUDESONIDE_SMILES);
+    expect(ast.smiles).toBe(BUDESONIDE_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(BUDESONIDE_SMILES);
     const code = ast.toCode('v');
@@ -312,6 +352,11 @@ describe('Fluticasone Integration Test', () => {
     const ast = parse(FLUTICASONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(FLUTICASONE_SMILES);
+    expect(ast.smiles).toBe(FLUTICASONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
@@ -350,6 +395,11 @@ describe('Beclomethasone Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(BECLOMETHASONE_SMILES);
+    expect(ast.smiles).toBe(BECLOMETHASONE_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(BECLOMETHASONE_SMILES);
     const code = ast.toCode('v');
@@ -384,6 +434,11 @@ describe('Fludrocortisone Integration Test', () => {
     const ast = parse(FLUDROCORTISONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(FLUDROCORTISONE_SMILES);
+    expect(ast.smiles).toBe(FLUDROCORTISONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
@@ -422,6 +477,11 @@ describe('Mometasone Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(MOMETASONE_SMILES);
+    expect(ast.smiles).toBe(MOMETASONE_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(MOMETASONE_SMILES);
     const code = ast.toCode('v');
@@ -458,6 +518,11 @@ describe('Cortisol Integration Test', () => {
     expect(obj).toMatchSnapshot();
   });
 
+  test('AST round-trips correctly', () => {
+    const ast = parse(CORTISOL_SMILES);
+    expect(ast.smiles).toBe(CORTISOL_SMILES);
+  });
+
   test('generates valid code via toCode()', () => {
     const ast = parse(CORTISOL_SMILES);
     const code = ast.toCode('v');
@@ -492,6 +557,11 @@ describe('Betamethasone Integration Test', () => {
     const ast = parse(BETAMETHASONE_SMILES);
     const obj = ast.toObject();
     expect(obj).toMatchSnapshot();
+  });
+
+  test('AST round-trips correctly', () => {
+    const ast = parse(BETAMETHASONE_SMILES);
+    expect(ast.smiles).toBe(BETAMETHASONE_SMILES);
   });
 
   test('generates valid code via toCode()', () => {
