@@ -113,8 +113,8 @@ export function attachSmilesGetter(node) {
 // Attach manipulation methods to Ring nodes
 export function attachRingMethods(node) {
   return Object.assign(node, {
-    attach(attachment, position) {
-      return ringAttach(this, attachment, position);
+    attach(attachment, position, options) {
+      return ringAttach(this, attachment, position, options);
     },
     substitute(position, newAtom) {
       return ringSubstitute(this, position, newAtom);

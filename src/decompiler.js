@@ -134,8 +134,10 @@ function decompileRing(ring, indent, nextVar) {
 
         const newVar = nextVar();
         const isSibling = attachment.metaIsSibling;
-        if (isSibling) {
+        if (isSibling === true) {
           lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos}, { sibling: true });`);
+        } else if (isSibling === false) {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos}, { sibling: false });`);
         } else {
           lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
         }

@@ -457,12 +457,12 @@ export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: [null, '=', 
 export const v4 = Linear(['C', 'C']);
 export const v5 = Linear(['C'], ['=']);
 export const v6 = v4.attach(v5, 1);
-export const v7 = v3.attach(v6, 3);
+export const v7 = v3.attach(v6, 3, { sibling: false });
 export const v8 = Linear(['C']);
 export const v9 = Molecule([v7, v8]);
-export const v10 = v2.attach(v9, 3);
+export const v10 = v2.attach(v9, 3, { sibling: false });
 export const v11 = Linear(['O']);
-export const v12 = v10.attach(v11, 4);
+export const v12 = v10.attach(v11, 4, { sibling: false });
 export const v13 = Linear(['O']);
 export const v14 = Molecule([v1, v12, v13]);"
 `;

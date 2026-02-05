@@ -19,7 +19,7 @@ import { validatePosition, isLinearNode, isMoleculeNode } from './ast.js';
  * Ring manipulation methods
  */
 
-export function ringAttach(ring, attachment, position) {
+export function ringAttach(ring, attachment, position, options = {}) {
   validatePosition(position, ring.size);
 
   const updatedAttachments = cloneAttachments(ring.attachments);
@@ -28,7 +28,13 @@ export function ringAttach(ring, attachment, position) {
     updatedAttachments[position] = [];
   }
 
-  updatedAttachments[position] = [...updatedAttachments[position], attachment];
+  // Clone the attachment and set metaIsSibling if provided in options
+  let attachmentToAdd = attachment;
+  if (options.sibling !== undefined) {
+    attachmentToAdd = { ...attachment, metaIsSibling: options.sibling };
+  }
+
+  updatedAttachments[position] = [...updatedAttachments[position], attachmentToAdd];
 
   return createRingNode(
     ring.atoms,
