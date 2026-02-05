@@ -1,6 +1,6 @@
 import { parse } from '../src/parser/index.js';
 import {
-  Ring, Linear, FusedRing, Molecule,
+  Ring, Linear, FusedRing, Molecule, RawFragment,
 } from '../src/constructors.js';
 
 // Use indirect Function constructor access to satisfy linter
@@ -37,9 +37,10 @@ export function executeCode(code, returnVar) {
     'Linear',
     'FusedRing',
     'Molecule',
+    'RawFragment',
     `${code}\nreturn ${returnVar};`,
   );
-  return factory(Ring, Linear, FusedRing, Molecule);
+  return factory(Ring, Linear, FusedRing, Molecule, RawFragment);
 }
 
 /**

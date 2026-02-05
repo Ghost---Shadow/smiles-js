@@ -50,19 +50,24 @@ export function buildLinearSMILES(linear) {
   const { atoms, bonds = [], attachments = {} } = linear;
   const parts = [];
 
+  // Bond array format varies:
+  // - Branch: bonds.length === atoms.length, bonds[i] is bond BEFORE atoms[i]
+  // - Main chain: bonds.length === atoms.length - 1, bonds[i] is bond BETWEEN atoms[i] and atoms[i+1]
+  const isBranchFormat = bonds.length === atoms.length;
+
   atoms.forEach((atom, i) => {
     // Add bond before atom
-    // For a branch attachment (single atom with bond), bonds.length === 1 and atoms.length === 1
-    // In this case, bonds[0] is the bond from parent to this atom
-    // For regular linear chains, bonds[i-1] is the bond between atoms[i-1] and atoms[i]
-    const isBranchWithBond = atoms.length === 1 && bonds.length === 1;
-
-    if (isBranchWithBond && i === 0) {
-      // Single-atom branch with explicit bond
-      parts.push(bonds[0]);
-    } else if (i > 0 && bonds[i - 1]) {
-      // Regular case: bond between previous and current atom
-      parts.push(bonds[i - 1]);
+    if (isBranchFormat) {
+      // Branch format: bonds[i] is the bond before atoms[i]
+      if (bonds[i]) {
+        parts.push(bonds[i]);
+      }
+    } else {
+      // Main chain format: bonds[i] is bond between atoms[i] and atoms[i+1]
+      // So for atoms[i], we need bonds[i-1]
+      if (i > 0 && bonds[i - 1]) {
+        parts.push(bonds[i - 1]);
+      }
     }
 
     // Add atom

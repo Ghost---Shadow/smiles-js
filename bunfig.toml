@@ -1,5 +1,5 @@
 [test]
-coverage = true
+coverage = false
 coverageSkipTestFiles = true
 
 # Exclude integration tests from coverage

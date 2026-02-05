@@ -39,6 +39,9 @@ export function buildInterleavedFusedRingSMILES(fusedRing, buildSMILES) {
   // attachments, but we should only output them once
   const positionsWithAttachments = new Set();
 
+  // Get metaAtomValueMap early for use in atom value lookups
+  const atomValueMap = fusedRing.metaAtomValueMap || new Map();
+
   // Collect all ring markers, atom sequence, and bonds
   allRings.forEach((ring) => {
     const positions = ring.metaPositions || [];
@@ -65,7 +68,9 @@ export function buildInterleavedFusedRingSMILES(fusedRing, buildSMILES) {
     // Fill in atom values, bonds, and attachments for this ring's positions
     positions.forEach((pos, idx) => {
       const relativePos = idx + 1;
-      const atomValue = substitutions[relativePos] || atoms;
+      // Use metaAtomValueMap if available (for interleaved patterns with metadata),
+      // otherwise fall back to substitutions or ring's base atoms
+      const atomValue = atomValueMap.get(pos) || substitutions[relativePos] || atoms;
       if (!atomSequence[pos]) {
         atomSequence[pos] = { atom: atomValue, attachments: [] };
       }
@@ -90,7 +95,6 @@ export function buildInterleavedFusedRingSMILES(fusedRing, buildSMILES) {
   // create atomSequence entries. These are atoms that follow ring-closing atoms
   // but aren't part of the ring structure.
   const allRingPositions = new Set(allRings.flatMap((r) => r.metaPositions || []));
-  const atomValueMap = fusedRing.metaAtomValueMap || new Map();
   const seqAtomAttachments = fusedRing.metaSeqAtomAttachments || new Map();
   const bondMap = fusedRing.metaBondMap || new Map();
   allPositions.forEach((pos) => {

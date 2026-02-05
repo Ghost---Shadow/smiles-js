@@ -122,16 +122,15 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
     if (attachments[i] && attachments[i].length > 0) {
       if (hasInlineBranchAfter) {
         // Delay attachments - output after inline branch closes back to this depth
-        // Compute metaIsSibling for each attachment if not set
+        // If metaIsSibling is not set, treat as sibling (separate branch)
         const processedAttachments = attachments[i].map((att) => {
           // If metaIsSibling is already set, use it
           if (att.metaIsSibling !== undefined) {
             return att;
           }
-          // Otherwise, infer it: for branch-crossing rings, attachments at positions
-          // where an inline branch opens should be inline continuations
-          // (metaIsSibling = false means inline)
-          const cloned = { ...att, metaIsSibling: false };
+          // Otherwise, assume it's a sibling (separate branch with parentheses)
+          // This is the safe default - parentheses are explicit and clear
+          const cloned = { ...att, metaIsSibling: true };
           return cloned;
         });
         pendingAttachments.set(i, { depth: posDepth, attachments: processedAttachments });

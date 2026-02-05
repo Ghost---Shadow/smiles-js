@@ -133,7 +133,12 @@ function decompileRing(ring, indent, nextVar) {
         lines.push(aCode);
 
         const newVar = nextVar();
-        lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
+        const isSibling = attachment.metaIsSibling;
+        if (isSibling) {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos}, { sibling: true });`);
+        } else {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
+        }
         currentVar = newVar;
       });
     });
@@ -561,16 +566,183 @@ function decompileFusedRingWithInjection(fusedRing, indent, nextVar) {
 }
 
 /**
+ * Decompile an interleaved fused ring using FusedRing constructor
+ * For patterns like C2C3CCCC3C(OC2)C where ring3 is nested within ring2
+ *
+ * For interleaved patterns, we do NOT decompile substitutions or attachments on individual rings.
+ * Instead, all atom values (including substitutions and attachments) are already encoded in the
+ * metaAtomValueMap and will be used during SMILES generation.
+ */
+function decompileInterleavedFusedRing(fusedRing, indent, nextVar) {
+  const lines = [];
+  const ringVars = [];
+
+  // Create individual rings with metadata preserved (WITHOUT substitutions or attachments)
+  fusedRing.rings.forEach((ring) => {
+    // Build ring with basic options only
+    const options = {
+      atoms: `'${ring.atoms}'`,
+      size: ring.size,
+    };
+
+    if (ring.ringNumber !== 1) {
+      options.ringNumber = ring.ringNumber;
+    }
+
+    if (ring.offset !== 0) {
+      options.offset = ring.offset;
+    }
+
+    // Include bonds if present
+    const bonds = ring.bonds || [];
+    const hasNonNullBonds = bonds.some((b) => b !== null);
+    if (hasNonNullBonds) {
+      options.bonds = `[${formatBondsArray(bonds)}]`;
+    }
+
+    // Include branchDepths
+    if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
+      const firstDepth = ring.metaBranchDepths[0];
+      const hasVaryingDepths = ring.metaBranchDepths.some((d) => d !== firstDepth);
+      if (hasVaryingDepths) {
+        options.branchDepths = `[${ring.metaBranchDepths.join(', ')}]`;
+      }
+    }
+
+    const optionsStr = Object.entries(options)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(', ');
+
+    const varName = nextVar();
+    lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+
+    // Preserve metaPositions, metaStart, metaEnd
+    const positions = ring.metaPositions || [];
+    if (positions.length > 0) {
+      lines.push(`${indent}${varName}.metaPositions = [${positions.join(', ')}];`);
+      lines.push(`${indent}${varName}.metaStart = ${ring.metaStart};`);
+      lines.push(`${indent}${varName}.metaEnd = ${ring.metaEnd};`);
+    }
+
+    // Preserve attachments (needed for codegen to know about sibling attachments)
+    if (Object.keys(ring.attachments).length > 0) {
+      const attEntries = [];
+      Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
+        const attListCode = attachmentList.map((att) => {
+          const attCode = decompileChildNode(att, '', nextVar);
+          // Extract just the constructor call, removing export/const/variable name
+          const match = attCode.code.match(/= (.+);?$/);
+          if (match) {
+            return match[1].replace(/;$/, '');
+          }
+          return `Linear(['${att.atoms?.[0] || 'C'}'])`;
+        });
+        attEntries.push(`${pos}: [${attListCode.join(', ')}]`);
+      });
+      lines.push(`${indent}${varName}.attachments = { ${attEntries.join(', ')} };`);
+    }
+
+    ringVars.push(varName);
+  });
+
+  // Create FusedRing with skipPositionComputation option
+  const finalVar = nextVar();
+  const ringsStr = ringVars.join(', ');
+  const leadingBond = fusedRing.metaLeadingBond;
+
+  if (leadingBond) {
+    lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { leadingBond: '${leadingBond}', skipPositionComputation: true });`);
+  } else {
+    lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { skipPositionComputation: true });`);
+  }
+
+  // Preserve FusedRing-level metadata
+  if (fusedRing.metaTotalAtoms) {
+    lines.push(`${indent}${finalVar}.metaTotalAtoms = ${fusedRing.metaTotalAtoms};`);
+  }
+  if (fusedRing.metaAllPositions && fusedRing.metaAllPositions.length > 0) {
+    lines.push(`${indent}${finalVar}.metaAllPositions = [${fusedRing.metaAllPositions.join(', ')}];`);
+  }
+  if (fusedRing.metaSequentialRings) {
+    lines.push(`${indent}${finalVar}.metaSequentialRings = [];`);
+  }
+  if (fusedRing.metaBranchDepthMap && fusedRing.metaBranchDepthMap.size > 0) {
+    lines.push(`${indent}${finalVar}.metaBranchDepthMap = ${formatMapCode(fusedRing.metaBranchDepthMap)};`);
+  }
+  if (fusedRing.metaParentIndexMap && fusedRing.metaParentIndexMap.size > 0) {
+    lines.push(`${indent}${finalVar}.metaParentIndexMap = ${formatMapCode(fusedRing.metaParentIndexMap)};`);
+  }
+  if (fusedRing.metaAtomValueMap && fusedRing.metaAtomValueMap.size > 0) {
+    lines.push(`${indent}${finalVar}.metaAtomValueMap = ${formatMapCode(fusedRing.metaAtomValueMap)};`);
+  }
+  if (fusedRing.metaBondMap && fusedRing.metaBondMap.size > 0) {
+    lines.push(`${indent}${finalVar}.metaBondMap = ${formatMapCode(fusedRing.metaBondMap)};`);
+  }
+  if (fusedRing.metaRingOrderMap && fusedRing.metaRingOrderMap.size > 0) {
+    const entries = [];
+    fusedRing.metaRingOrderMap.forEach((value, key) => {
+      entries.push(`[${key}, [${value.join(', ')}]]`);
+    });
+    lines.push(`${indent}${finalVar}.metaRingOrderMap = new Map([${entries.join(', ')}]);`);
+  }
+  if (fusedRing.metaSeqAtomAttachments) {
+    lines.push(`${indent}${finalVar}.metaSeqAtomAttachments = new Map();`);
+  }
+
+  return { code: lines.join('\n'), finalVar };
+}
+
+/**
+ * Check if a fused ring has interleaved pattern (rings nested within each other)
+ * Example: C2C3CCCC3C(OC2)C where ring3 is fully nested within ring2
+ *
+ * Sequential pattern: C1=CC2CCCCC2C1
+ *   Ring1 branchDepths: [0, 0, 0, 0, 0] - all at same depth
+ *   Ring2 branchDepths: [0, 0, 0, 0, 0, 0] - all at same depth
+ *   .fuse() API works correctly
+ *
+ * Interleaved pattern: C2C3CCCC3C(OC2)C
+ *   Ring2 branchDepths: [0, 0, 0, 0, 1, 1] - crosses branch boundary
+ *   Ring3 branchDepths: [0, 0, 0, 0, 0] - all at same depth
+ *   .fuse() API fails - need FusedRing constructor
+ *
+ * The key indicator is varying branch depths in ANY ring
+ */
+function isInterleavedFusedRing(fusedRing) {
+  // Check if any ring has varying branch depths
+  for (const ring of fusedRing.rings) {
+    if (!ring.metaBranchDepths || ring.metaBranchDepths.length === 0) continue;
+
+    const firstDepth = ring.metaBranchDepths[0];
+    const hasVaryingDepths = ring.metaBranchDepths.some((d) => d !== firstDepth);
+
+    if (hasVaryingDepths) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Decompile a FusedRing node
  */
 function decompileFusedRing(fusedRing, indent, nextVar) {
   const seqRings = fusedRing.metaSequentialRings;
   const hasSeqRings = seqRings && seqRings.length > 0;
+  const isInterleaved = isInterleavedFusedRing(fusedRing);
   const hasSeqLinear = hasSequentialLinearAtoms(fusedRing);
 
   // Use complex decompilation if there are sequential rings
   if (hasSeqRings) {
     return decompileComplexFusedRing(fusedRing, indent, nextVar);
+  }
+
+  // Use FusedRing constructor for interleaved patterns (check BEFORE sequential linear)
+  // Interleaved patterns may have sequential positions (sibling attachments) but should
+  // use the interleaved decompiler which handles them via metadata
+  if (isInterleaved) {
+    return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
   }
 
   // Use injection approach for fused rings with sequential linear atoms but no sequential rings

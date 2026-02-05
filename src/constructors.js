@@ -836,10 +836,12 @@ export function createFusedRingNode(rings, options = {}) {
   }
 
   // Only compute position metadata if not already present from parser
-  // Parser-generated rings have _positions, API-created rings don't
-  const hasParserPositions = rings.some((r) => r.metaPositions);
+  // Parser-generated rings have metaPositions, API-created rings don't
+  // Also skip if explicitly requested via options
+  const hasParserPositions = node.rings.some((r) => r.metaPositions);
+  const skipComputation = options.skipPositionComputation || false;
 
-  if (!hasParserPositions) {
+  if (!hasParserPositions && !skipComputation) {
     // Compute interleaved position metadata for proper SMILES generation
     // This is needed when rings are created via API (not parser)
     computeFusedRingPositions(node);

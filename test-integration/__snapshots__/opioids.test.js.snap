@@ -126,20 +126,38 @@ exports[`Morphine Integration Test parses morphine 1`] = `
 
 exports[`Morphine Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C']);
-export const v2 = Linear(['O']);
-v2.metaIsSibling = false;
-export const v3 = Ring({ atoms: 'C', size: 6 });
-export const v4 = v3.substitute(1, 'N');
-export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
-export const v6 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
-export const v7 = v6.substitute(6, 'O');
-export const v8 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
-export const v9 = v8.substitute(5, 'O');
-export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
-export const v11 = v10.attach(v2, 4);
-export const v12 = FusedRing([v4, v5, v7, v9, v11]);
-export const v13 = Linear(['O']);
-export const v14 = Molecule([v1, v12, v13]);"
+export const v2 = Ring({ atoms: 'C', size: 6 });
+v2.metaPositions = [1, 2, 3, 4, 5, 6];
+v2.metaStart = 1;
+v2.metaEnd = 6;
+export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
+v3.metaPositions = [4, 5, 6, 7, 8, 9];
+v3.metaStart = 4;
+v3.metaEnd = 9;
+export const v4 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
+v4.metaPositions = [4, 5, 6, 7, 8, 15, 16];
+v4.metaStart = 4;
+v4.metaEnd = 16;
+export const v5 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
+v5.metaPositions = [5, 6, 7, 8, 15, 16, 17, 18, 19];
+v5.metaStart = 5;
+v5.metaEnd = 19;
+export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+v6.metaPositions = [8, 9, 10, 11, 12, 13];
+v6.metaStart = 8;
+v6.metaEnd = 13;
+export const v7 = FusedRing([v2, v3, v4, v5, v6], { skipPositionComputation: true });
+v7.metaTotalAtoms = 19;
+v7.metaAllPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+v7.metaSequentialRings = [];
+v7.metaBranchDepthMap = new Map([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 1], [12, 2], [13, 2], [14, 1], [15, 0], [16, 0], [17, 0], [18, 1], [19, 1]]);
+v7.metaParentIndexMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, null], [10, null], [11, 10], [12, 11], [13, 11], [14, 10], [15, null], [16, null], [17, null], [18, 17], [19, 17]]);
+v7.metaAtomValueMap = new Map([[1, 'N'], [2, 'C'], [3, 'C'], [4, 'C'], [5, 'C'], [6, 'C'], [7, 'C'], [8, 'C'], [9, 'C'], [10, 'C'], [11, 'C'], [12, 'C'], [13, 'C'], [14, 'O'], [15, 'O'], [16, 'C'], [17, 'C'], [18, 'C'], [19, 'C']]);
+v7.metaBondMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, '='], [10, null], [11, '='], [12, null], [13, '='], [14, null], [15, null], [16, null], [17, null], [18, null], [19, '=']]);
+v7.metaRingOrderMap = new Map([[1, [1, 1]], [2, [1]], [3, [1]], [4, [2, 3, 1, 2, 3]], [5, [4, 1, 2, 3, 4]], [6, [1, 2, 3, 4]], [7, [2, 3, 4]], [8, [5, 2, 5, 3, 4]], [9, [2, 5]], [10, [5]], [11, [5]], [12, [5]], [13, [5]], [15, [3, 4]], [16, [3, 4]], [17, [4]], [18, [4]], [19, [4]]]);
+v7.metaSeqAtomAttachments = new Map();
+export const v8 = Linear(['O']);
+export const v9 = Molecule([v1, v7, v8]);"
 `;
 
 exports[`Codeine Integration Test parses codeine 1`] = `
@@ -268,22 +286,38 @@ exports[`Codeine Integration Test parses codeine 1`] = `
 
 exports[`Codeine Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C']);
-export const v2 = Linear(['O']);
-v2.metaIsSibling = false;
-export const v3 = Linear(['C']);
-v3.metaIsSibling = false;
-export const v4 = Ring({ atoms: 'C', size: 6 });
-export const v5 = v4.substitute(1, 'N');
-export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
-export const v7 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
-export const v8 = v7.substitute(6, 'O');
-export const v9 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
-export const v10 = v9.substitute(5, 'O');
-export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
-export const v12 = v11.attach(v3, 4);
-export const v13 = FusedRing([v5, v6, v8, v10, v12]);
-export const v14 = Linear(['O']);
-export const v15 = Molecule([v1, v13, v14]);"
+export const v2 = Ring({ atoms: 'C', size: 6 });
+v2.metaPositions = [1, 2, 3, 4, 5, 6];
+v2.metaStart = 1;
+v2.metaEnd = 6;
+export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
+v3.metaPositions = [4, 5, 6, 7, 8, 9];
+v3.metaStart = 4;
+v3.metaEnd = 9;
+export const v4 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
+v4.metaPositions = [4, 5, 6, 7, 8, 16, 17];
+v4.metaStart = 4;
+v4.metaEnd = 17;
+export const v5 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 0, 1, 1] });
+v5.metaPositions = [5, 6, 7, 8, 16, 17, 18, 19, 20];
+v5.metaStart = 5;
+v5.metaEnd = 20;
+export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+v6.metaPositions = [8, 9, 10, 11, 12, 13];
+v6.metaStart = 8;
+v6.metaEnd = 13;
+export const v7 = FusedRing([v2, v3, v4, v5, v6], { skipPositionComputation: true });
+v7.metaTotalAtoms = 20;
+v7.metaAllPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+v7.metaSequentialRings = [];
+v7.metaBranchDepthMap = new Map([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 1], [12, 2], [13, 2], [14, 1], [15, 1], [16, 0], [17, 0], [18, 0], [19, 1], [20, 1]]);
+v7.metaParentIndexMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, null], [10, null], [11, 10], [12, 11], [13, 11], [14, 10], [15, 10], [16, null], [17, null], [18, null], [19, 18], [20, 18]]);
+v7.metaAtomValueMap = new Map([[1, 'N'], [2, 'C'], [3, 'C'], [4, 'C'], [5, 'C'], [6, 'C'], [7, 'C'], [8, 'C'], [9, 'C'], [10, 'C'], [11, 'C'], [12, 'C'], [13, 'C'], [14, 'O'], [15, 'C'], [16, 'O'], [17, 'C'], [18, 'C'], [19, 'C'], [20, 'C']]);
+v7.metaBondMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, '='], [10, null], [11, '='], [12, null], [13, '='], [14, null], [15, null], [16, null], [17, null], [18, null], [19, null], [20, '=']]);
+v7.metaRingOrderMap = new Map([[1, [1, 1]], [2, [1]], [3, [1]], [4, [2, 3, 1, 2, 3]], [5, [4, 1, 2, 3, 4]], [6, [1, 2, 3, 4]], [7, [2, 3, 4]], [8, [5, 2, 5, 3, 4]], [9, [2, 5]], [10, [5]], [11, [5]], [12, [5]], [13, [5]], [16, [3, 4]], [17, [3, 4]], [18, [4]], [19, [4]], [20, [4]]]);
+v7.metaSeqAtomAttachments = new Map();
+export const v8 = Linear(['O']);
+export const v9 = Molecule([v1, v7, v8]);"
 `;
 
 exports[`Oxycodone Integration Test parses oxycodone 1`] = `
@@ -454,27 +488,41 @@ exports[`Oxycodone Integration Test parses oxycodone 1`] = `
 
 exports[`Oxycodone Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C']);
-export const v2 = Linear(['O']);
-v2.metaIsSibling = false;
-export const v3 = Linear(['C']);
-v3.metaIsSibling = false;
-export const v4 = Ring({ atoms: 'C', size: 6, branchDepths: [0, 0, 0, 0, 0, 1] });
-export const v5 = v4.substitute(1, 'N');
-export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
-export const v7 = Linear(['O'], ['=']);
-export const v8 = v6.attach(v7, 3);
-export const v9 = Ring({ atoms: 'C', size: 10, ringNumber: 3, offset: 3, bonds: [null, null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1] });
-export const v10 = Linear(['O'], ['=']);
-export const v11 = v9.attach(v10, 3);
-export const v12 = Ring({ atoms: 'C', size: 11, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null, null, null], branchDepths: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1] });
-export const v13 = v12.substitute(11, 'O');
-export const v14 = Linear(['O'], ['=']);
-export const v15 = v13.attach(v14, 2);
-export const v16 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [1, 1, 1, 2, 3, 3] });
-export const v17 = v16.attach(v3, 4);
-export const v18 = FusedRing([v5, v8, v11, v15, v17]);
-export const v19 = Linear(['O']);
-export const v20 = Molecule([v1, v18, v19]);"
+export const v2 = Ring({ atoms: 'C', size: 6, branchDepths: [0, 0, 0, 0, 0, 1] });
+v2.metaPositions = [1, 2, 3, 4, 10, 11];
+v2.metaStart = 1;
+v2.metaEnd = 11;
+export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+v3.metaPositions = [4, 5, 6, 8, 9, 10];
+v3.metaStart = 4;
+v3.metaEnd = 10;
+v3.attachments = { 3: [Linear(['O'], ['='])] };
+export const v5 = Ring({ atoms: 'C', size: 10, ringNumber: 3, offset: 3, bonds: [null, null, null, null, null, null, null, null, '=', null], branchDepths: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1] });
+v5.metaPositions = [4, 5, 6, 8, 9, 10, 11, 12, 13, 14];
+v5.metaStart = 4;
+v5.metaEnd = 14;
+v5.attachments = { 3: [Linear(['O'], ['='])] };
+export const v7 = Ring({ atoms: 'C', size: 11, ringNumber: 4, offset: 4, bonds: [null, null, null, null, null, null, null, '=', null, null, null], branchDepths: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1] });
+v7.metaPositions = [5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 21];
+v7.metaStart = 5;
+v7.metaEnd = 21;
+v7.attachments = { 2: [Linear(['O'], ['='])] };
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [1, 1, 1, 2, 3, 3] });
+v9.metaPositions = [13, 14, 15, 16, 17, 18];
+v9.metaStart = 13;
+v9.metaEnd = 18;
+export const v10 = FusedRing([v2, v3, v5, v7, v9], { skipPositionComputation: true });
+v10.metaTotalAtoms = 20;
+v10.metaAllPositions = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+v10.metaSequentialRings = [];
+v10.metaBranchDepthMap = new Map([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [8, 0], [9, 0], [10, 0], [11, 1], [12, 1], [13, 1], [14, 1], [15, 1], [16, 2], [17, 3], [18, 3], [19, 2], [20, 2], [21, 1]]);
+v10.metaParentIndexMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [8, null], [9, null], [10, null], [11, 10], [12, 10], [13, 10], [14, 10], [15, 10], [16, 15], [17, 16], [18, 16], [19, 15], [20, 15], [21, 10]]);
+v10.metaAtomValueMap = new Map([[1, 'N'], [2, 'C'], [3, 'C'], [4, 'C'], [5, 'C'], [6, 'C'], [8, 'C'], [9, 'C'], [10, 'C'], [11, 'C'], [12, 'C'], [13, 'C'], [14, 'C'], [15, 'C'], [16, 'C'], [17, 'C'], [18, 'C'], [19, 'O'], [20, 'C'], [21, 'O']]);
+v10.metaBondMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [8, null], [9, null], [10, null], [11, null], [12, null], [13, null], [14, '='], [15, null], [16, '='], [17, null], [18, '='], [19, null], [20, null], [21, null]]);
+v10.metaRingOrderMap = new Map([[1, [1, 1]], [2, [1]], [3, [1]], [4, [2, 3, 2, 1, 3]], [5, [4, 2, 3, 4]], [6, [2, 3, 4]], [8, [2, 3, 4]], [9, [2, 3, 4]], [10, [2, 1, 3, 4]], [11, [1, 3, 4]], [12, [3, 4]], [13, [5, 3, 5, 4]], [14, [3, 5, 4]], [15, [5, 4]], [16, [5]], [17, [5]], [18, [5]], [21, [4]]]);
+v10.metaSeqAtomAttachments = new Map();
+export const v11 = Linear(['O']);
+export const v12 = Molecule([v1, v10, v11]);"
 `;
 
 exports[`Hydrocodone Integration Test parses hydrocodone 1`] = `
@@ -608,23 +656,38 @@ exports[`Hydrocodone Integration Test parses hydrocodone 1`] = `
 
 exports[`Hydrocodone Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C']);
-export const v2 = Linear(['O']);
-v2.metaIsSibling = false;
-export const v3 = Linear(['C']);
-v3.metaIsSibling = false;
-export const v4 = Ring({ atoms: 'C', size: 6 });
-export const v5 = v4.substitute(1, 'N');
-export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
-export const v7 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
-export const v8 = v7.substitute(6, 'O');
-export const v9 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4 });
-export const v10 = v9.substitute(5, 'O');
-export const v11 = Linear(['O'], ['=']);
-export const v12 = v10.attach(v11, 7);
-export const v13 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
-export const v14 = v13.attach(v3, 4);
-export const v15 = FusedRing([v5, v6, v8, v12, v14]);
-export const v16 = Molecule([v1, v15]);"
+export const v2 = Ring({ atoms: 'C', size: 6 });
+v2.metaPositions = [1, 2, 3, 4, 5, 6];
+v2.metaStart = 1;
+v2.metaEnd = 6;
+export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, null, null, '=', null] });
+v3.metaPositions = [4, 5, 6, 7, 8, 9];
+v3.metaStart = 4;
+v3.metaEnd = 9;
+export const v4 = Ring({ atoms: 'C', size: 7, ringNumber: 3, offset: 3 });
+v4.metaPositions = [4, 5, 6, 7, 8, 16, 17];
+v4.metaStart = 4;
+v4.metaEnd = 17;
+export const v5 = Ring({ atoms: 'C', size: 9, ringNumber: 4, offset: 4 });
+v5.metaPositions = [5, 6, 7, 8, 16, 17, 18, 20, 21];
+v5.metaStart = 5;
+v5.metaEnd = 21;
+v5.attachments = { 7: [Linear(['O'], ['='])] };
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 5, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+v7.metaPositions = [8, 9, 10, 11, 12, 13];
+v7.metaStart = 8;
+v7.metaEnd = 13;
+export const v8 = FusedRing([v2, v3, v4, v5, v7], { skipPositionComputation: true });
+v8.metaTotalAtoms = 20;
+v8.metaAllPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21];
+v8.metaSequentialRings = [];
+v8.metaBranchDepthMap = new Map([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 1], [12, 2], [13, 2], [14, 1], [15, 1], [16, 0], [17, 0], [18, 0], [20, 0], [21, 0]]);
+v8.metaParentIndexMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, null], [10, null], [11, 10], [12, 11], [13, 11], [14, 10], [15, 10], [16, null], [17, null], [18, null], [20, null], [21, null]]);
+v8.metaAtomValueMap = new Map([[1, 'N'], [2, 'C'], [3, 'C'], [4, 'C'], [5, 'C'], [6, 'C'], [7, 'C'], [8, 'C'], [9, 'C'], [10, 'C'], [11, 'C'], [12, 'C'], [13, 'C'], [14, 'O'], [15, 'C'], [16, 'O'], [17, 'C'], [18, 'C'], [20, 'C'], [21, 'C']]);
+v8.metaBondMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, '='], [10, null], [11, '='], [12, null], [13, '='], [14, null], [15, null], [16, null], [17, null], [18, null], [20, null], [21, null]]);
+v8.metaRingOrderMap = new Map([[1, [1, 1]], [2, [1]], [3, [1]], [4, [2, 3, 1, 2, 3]], [5, [4, 1, 2, 3, 4]], [6, [1, 2, 3, 4]], [7, [2, 3, 4]], [8, [5, 2, 5, 3, 4]], [9, [2, 5]], [10, [5]], [11, [5]], [12, [5]], [13, [5]], [16, [3, 4]], [17, [3, 4]], [18, [4]], [20, [4]], [21, [4]]]);
+v8.metaSeqAtomAttachments = new Map();
+export const v9 = Molecule([v1, v8]);"
 `;
 
 exports[`Fentanyl Integration Test parses fentanyl 1`] = `
