@@ -363,34 +363,38 @@ function computeFusedRingPositions(fusedRingNodeParam) {
 
   // Rings with offset 0 (other than base) fuse with another inner ring
   const offsetZeroInnerRings = innerRings.filter((r) => r.offset === 0);
-  if (offsetZeroInnerRings.length > 0 && innerRings.length > 1) {
-    offsetZeroInnerRings.forEach((ring) => {
+  if (offsetZeroInnerRings.length === 1 && innerRings.length === 1) {
+    // Single offset=0 inner ring fuses with base ring (e.g., C12CCCCC1CCC2)
+    const ring = offsetZeroInnerRings[0];
+    const ringIndex = sortedRings.indexOf(ring);
+    fusionGraph.get(0).add(ringIndex);
+    fusionGraph.get(ringIndex).add(0);
+  } else if (offsetZeroInnerRings.length > 0 && innerRings.length > 1) {
+    // Multiple offset=0 inner rings: first fuses with base, rest chain together
+    // For 3-ring steroid: Ring 0 (base), Ring 1 (offset=0, fuses with Ring 0), Ring 2 (offset=0, fuses with Ring 1)
+    const firstOffsetZero = offsetZeroInnerRings[0];
+    const firstIndex = sortedRings.indexOf(firstOffsetZero);
+
+    // First offset=0 ring fuses with base
+    fusionGraph.get(0).add(firstIndex);
+    fusionGraph.get(firstIndex).add(0);
+
+    // Remaining offset=0 rings chain with previous rings
+    for (let i = 1; i < offsetZeroInnerRings.length; i += 1) {
+      const ring = offsetZeroInnerRings[i];
       const ringIndex = sortedRings.indexOf(ring);
-      let fusionPartnerIndex = -1;
-      let maxOffset = -1;
+      const prevRing = offsetZeroInnerRings[i - 1];
+      const prevIndex = sortedRings.indexOf(prevRing);
 
-      for (let i = 1; i < sortedRings.length; i += 1) {
-        if (i !== ringIndex) {
-          const other = sortedRings[i];
-          if (other.offset > maxOffset) {
-            maxOffset = other.offset;
-            fusionPartnerIndex = i;
-          }
-        }
-      }
-
-      if (fusionPartnerIndex >= 0) {
-        fusionGraph.get(fusionPartnerIndex).add(ringIndex);
-        fusionGraph.get(ringIndex).add(fusionPartnerIndex);
-        fusionGraph.get(0).delete(ringIndex);
-        fusionGraph.get(ringIndex).delete(0);
-      }
-    });
+      fusionGraph.get(prevIndex).add(ringIndex);
+      fusionGraph.get(ringIndex).add(prevIndex);
+    }
   }
 
   // Classify inner rings
   const insideRings = []; // Fully contained in base ring traversal
-  const extendingRings = []; // Extend beyond base ring
+  const extendingRings = []; // Extend beyond base ring (share 2 atoms)
+  const startSharingRings = []; // Share only starting atom (offset=0) and extend
   const endpointRings = []; // End at same point as base ring
   const chainedRings = []; // Fuse with another inner ring, not base
 
@@ -404,7 +408,10 @@ function computeFusedRingPositions(fusedRingNodeParam) {
       const innerEnd = ring.offset + ring.size - 1;
       const baseEnd = baseRing.size - 1;
 
-      if (innerEnd > baseEnd) {
+      if (ring.offset === 0 && innerEnd > baseEnd) {
+        // Special case: share only starting atom and extend (e.g., C12CCCCC1CCC2)
+        startSharingRings.push(ring);
+      } else if (innerEnd > baseEnd) {
         // Inner ring extends BEYOND base ring - need branch for base's remaining atoms
         extendingRings.push(ring);
       } else if (innerEnd === baseEnd) {
@@ -431,6 +438,9 @@ function computeFusedRingPositions(fusedRingNodeParam) {
 
   const extendingRingAtOffset = new Map();
   extendingRings.forEach((ring) => extendingRingAtOffset.set(ring.offset, ring));
+
+  const startSharingRingAtOffset = new Map();
+  startSharingRings.forEach((ring) => startSharingRingAtOffset.set(ring.offset, ring));
 
   const endpointRingAtOffset = new Map();
   endpointRings.forEach((ring) => endpointRingAtOffset.set(ring.offset, ring));
@@ -486,10 +496,213 @@ function computeFusedRingPositions(fusedRingNodeParam) {
   while (basePos < baseRing.size) {
     const insideRing = insideRingAtOffset.get(basePos);
     const extendingRing = extendingRingAtOffset.get(basePos);
+    const startSharingRing = startSharingRingAtOffset.get(basePos);
     const endpointRing = endpointRingAtOffset.get(basePos);
     const spiroRing = spiroRingAtOffset.get(basePos);
 
-    if (spiroRing) {
+    if (startSharingRing) {
+      // Start-sharing fusion: rings share ONLY the starting atom (offset=0)
+      // E.g., C12CCCCC1CCC2 - Ring 1 and Ring 2 both open at position 0
+      // Ring 2 has size=9 meaning it SPANS positions 0-8, touching all atoms in base ring + its own
+      // Traversal: shared atom (C with 12), base ring atoms 1-5 (CCCCC1), inner ring atoms 6-8 (CCC2)
+      const data = innerRingData.get(startSharingRing);
+
+      // Shared starting atom (both rings open here)
+      allPositions.push(currentPos);
+      baseRingPositions.push(currentPos);
+      data.positions.push(currentPos);
+      data.start = currentPos;
+      branchDepthMap.set(currentPos, currentDepth);
+      currentPos += 1;
+
+      // Check if first atom has attachments (position 1)
+      if (baseRing.attachments && baseRing.attachments[1]) {
+        currentPos += baseRing.attachments[1].length;
+      }
+
+      // Base ring's remaining atoms (atoms 1 through size-1)
+      // Inner ring's metaPositions includes these positions (they're traversed)
+      for (let i = 1; i < baseRing.size; i += 1) {
+        allPositions.push(currentPos);
+        baseRingPositions.push(currentPos);
+        data.positions.push(currentPos); // Inner ring "touches" these positions
+        branchDepthMap.set(currentPos, currentDepth);
+        currentPos += 1;
+
+        // Check if this atom has attachments (positions are 1-indexed)
+        const atomPosition = i + 1;
+        if (baseRing.attachments && baseRing.attachments[atomPosition]) {
+          // Each attachment occupies a position
+          currentPos += baseRing.attachments[atomPosition].length;
+        }
+      }
+
+      // Start-sharing ring's unique atoms beyond the base ring
+      // From position baseRing.size to position startSharingRing.size - 1
+      // Check for chained rings that fuse with the start-sharing ring
+      const uniqueAtoms = startSharingRing.size - baseRing.size;
+      let innerIdx = 0;
+      while (innerIdx < uniqueAtoms) {
+        // Check if a chained ring starts at this position
+        // Chained rings fuse at the last 2 positions of the host ring
+        // So check if we have exactly 2 positions left in uniqueAtoms
+        let chainedRingHere = null;
+        const positionsRemaining = uniqueAtoms - innerIdx;
+        if (positionsRemaining === 2) {
+          // This is where a chained ring should start (if one exists)
+          for (let cr = 0; cr < chainedRings.length; cr += 1) {
+            const chainedRing = chainedRings[cr];
+            const info = chainedRingInfo.get(chainedRing);
+            if (info && info.hostRing === startSharingRing) {
+              chainedRingHere = chainedRing;
+              break;
+            }
+          }
+        }
+
+        if (chainedRingHere) {
+          // First fusion: shared between start-sharing and chained ring
+          allPositions.push(currentPos);
+          data.positions.push(currentPos);
+          const chainedData = innerRingData.get(chainedRingHere);
+          chainedData.start = currentPos;
+          chainedData.positions.push(currentPos);
+          branchDepthMap.set(currentPos, currentDepth);
+          currentPos += 1;
+          innerIdx += 1;
+
+          // Second fusion: shared between start-sharing and chained ring
+          // This is the last atom of the start-sharing ring
+          allPositions.push(currentPos);
+          data.positions.push(currentPos);
+          chainedData.positions.push(currentPos);
+          branchDepthMap.set(currentPos, currentDepth);
+          currentPos += 1;
+          innerIdx += 1;
+
+          // Chained ring's remaining atoms (not shared with host)
+          // Check if there are nested chained rings (rings that chain to this chained ring)
+          const chainedInnerAtoms = chainedRingHere.size - 2; // Exclude first and last fusion atoms
+          for (let j = 0; j < chainedInnerAtoms; j += 1) {
+            // Check if another chained ring starts at this position
+            // First check for endpoint fusion (nested ring spans all remaining atoms)
+            // Then check using hostOffset for extending fusion
+            let nestedChainedRing = null;
+            const hostRemainingAtoms = chainedInnerAtoms - j;
+
+            for (let cr = 0; cr < chainedRings.length; cr += 1) {
+              const possibleNested = chainedRings[cr];
+              if (possibleNested === chainedRingHere) continue;
+              const info = chainedRingInfo.get(possibleNested);
+              if (info && info.hostRing === chainedRingHere) {
+                // Check if this is endpoint fusion
+                if (possibleNested.size === hostRemainingAtoms) {
+                  nestedChainedRing = possibleNested;
+                  break;
+                }
+                // Check if we're at hostOffset for extending fusion
+                const nestedHostInnerAtoms = chainedRingHere.size - 2;
+                const nestedHostOffset = nestedHostInnerAtoms - 3;
+                if (j === nestedHostOffset) {
+                  nestedChainedRing = possibleNested;
+                  break;
+                }
+              }
+            }
+
+            if (nestedChainedRing) {
+              // Process nested chained ring (Ring 3 chaining to Ring 2)
+              // Check if it's an endpoint fusion (nested ring ends at same position as host)
+              const nestedData = innerRingData.get(nestedChainedRing);
+              const hostRemainingAtoms = chainedInnerAtoms - j; // How many atoms left in host INCLUDING current
+
+              // For endpoint fusion, nested ring spans all remaining atoms of host
+              if (nestedChainedRing.size === hostRemainingAtoms) {
+                // Endpoint fusion: nested ring spans all remaining atoms of host
+                // All remaining positions belong to both rings
+                nestedData.start = currentPos;
+                for (let k = 0; k < hostRemainingAtoms; k += 1) {
+                  allPositions.push(currentPos);
+                  chainedData.positions.push(currentPos);
+                  nestedData.positions.push(currentPos);
+                  branchDepthMap.set(currentPos, currentDepth);
+                  currentPos += 1;
+                }
+                nestedData.end = currentPos - 1;
+                chainedData.end = currentPos - 1;
+                break; // Done processing this chained ring
+              } else {
+                // Regular fusion: first 2 shared, then nested extends beyond
+                // First fusion with nested
+                allPositions.push(currentPos);
+                chainedData.positions.push(currentPos);
+                nestedData.start = currentPos;
+                nestedData.positions.push(currentPos);
+                branchDepthMap.set(currentPos, currentDepth);
+                currentPos += 1;
+
+                // Second fusion with nested
+                allPositions.push(currentPos);
+                chainedData.positions.push(currentPos);
+                nestedData.positions.push(currentPos);
+                branchDepthMap.set(currentPos, currentDepth);
+                currentPos += 1;
+
+                // Nested ring's remaining atoms
+                for (let k = 2; k < nestedChainedRing.size; k += 1) {
+                  allPositions.push(currentPos);
+                  nestedData.positions.push(currentPos);
+                  branchDepthMap.set(currentPos, currentDepth);
+                  currentPos += 1;
+                }
+
+                nestedData.end = currentPos - 1;
+                chainedData.end = nestedData.positions[1]; // Chained ring ends at second fusion with nested
+                break; // Done processing this chained ring
+              }
+            } else {
+              // Regular atom in chained ring
+              allPositions.push(currentPos);
+              chainedData.positions.push(currentPos);
+              branchDepthMap.set(currentPos, currentDepth);
+              currentPos += 1;
+            }
+          }
+
+          // Set chainedData.end if not already set by nested ring
+          if (chainedData.end === undefined || chainedData.end === -1) {
+            chainedData.end = currentPos - 1;
+          }
+
+          // Done with start-sharing ring (chained ring consumed the last 2 positions)
+          // The start-sharing ring ends at the second fusion point
+          data.end = data.positions[data.positions.length - 1];
+          break;
+        } else {
+          // Regular start-sharing ring unique atom
+          allPositions.push(currentPos);
+          data.positions.push(currentPos);
+          branchDepthMap.set(currentPos, currentDepth);
+          currentPos += 1;
+
+          // Check if this atom has attachments (positions are 1-indexed, atoms are baseRing.size + innerIdx + 1)
+          const atomPosition = baseRing.size + innerIdx + 1;
+          if (startSharingRing.attachments && startSharingRing.attachments[atomPosition]) {
+            currentPos += startSharingRing.attachments[atomPosition].length;
+          }
+
+          innerIdx += 1;
+        }
+      }
+
+      // Set data.end if not already set (chained ring case sets it earlier)
+      if (data.end === undefined || data.end === -1) {
+        data.end = currentPos - 1;
+      }
+
+      // Skip past entire base ring (it's been fully processed)
+      basePos = baseRing.size;
+    } else if (spiroRing) {
       // Spiro junction: only ONE atom is shared between the rings
       // The rest of the spiro ring goes into a branch
       const data = innerRingData.get(spiroRing);
@@ -812,11 +1025,14 @@ function computeFusedRingPositions(fusedRingNodeParam) {
         const aIsEndpoint = endpointRingNumbers.includes(a);
         const bIsEndpoint = endpointRingNumbers.includes(b);
 
-        if (aIsChained && !bIsChained) return -1;
-        if (!aIsChained && bIsChained) return 1;
-        if (aIsEndpoint && !bIsEndpoint) return -1;
-        if (!aIsEndpoint && bIsEndpoint) return 1;
-        return b - a;
+        // Chained rings close LAST (they are innermost)
+        if (aIsChained && !bIsChained) return 1;
+        if (!aIsChained && bIsChained) return -1;
+        // Endpoint rings close LAST (they span to the end)
+        if (aIsEndpoint && !bIsEndpoint) return 1;
+        if (!aIsEndpoint && bIsEndpoint) return -1;
+        // Otherwise sort by ring number ascending
+        return a - b;
       });
       ringOrderMap.set(pos, sorted);
     }
