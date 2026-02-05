@@ -36,7 +36,7 @@ export function ringAttach(ring, attachment, position, options = {}) {
 
   updatedAttachments[position] = [...updatedAttachments[position], attachmentToAdd];
 
-  return createRingNode(
+  const newRing = createRingNode(
     ring.atoms,
     ring.size,
     ring.ringNumber,
@@ -46,6 +46,13 @@ export function ringAttach(ring, attachment, position, options = {}) {
     ring.bonds || [],
     ring.metaBranchDepths || null,
   );
+
+  // Preserve metadata from original ring
+  if (ring.metaLeadingBond) {
+    newRing.metaLeadingBond = ring.metaLeadingBond;
+  }
+
+  return newRing;
 }
 
 export function ringSubstitute(ring, position, newAtom) {

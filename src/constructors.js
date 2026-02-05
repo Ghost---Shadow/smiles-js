@@ -1135,12 +1135,13 @@ export function Ring(options) {
     attachments = {},
     bonds = [],
     branchDepths = null,
+    leadingBond = null,
   } = options;
 
   validateAtoms(atoms);
   validateSize(size);
 
-  return createRingNode(
+  const node = createRingNode(
     atoms,
     size,
     ringNumber,
@@ -1150,6 +1151,13 @@ export function Ring(options) {
     bonds,
     branchDepths,
   );
+
+  // Preserve leading bond metadata if provided
+  if (leadingBond) {
+    node.metaLeadingBond = leadingBond;
+  }
+
+  return node;
 }
 
 /**

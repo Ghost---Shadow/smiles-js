@@ -30,7 +30,9 @@
       "Bash(wc:*)",
       "Bash(Select-String -Pattern \"Valsartan\" -Context 10)",
       "Bash(find:*)",
-      "Bash(Select-String -Pattern \"pass|fail|% Lines|All files\")"
+      "Bash(Select-String -Pattern \"pass|fail|% Lines|All files\")",
+      "Bash(Select-String -Pattern \"\\(pass|fail\\)\")",
+      "Bash(Select-Object -Last 5)"
     ]
   }
 }

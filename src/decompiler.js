@@ -77,6 +77,11 @@ function buildRingOptions(ring, opts = {}) {
     }
   }
 
+  // Include leadingBond if present (bond before the ring in the SMILES)
+  if (ring.metaLeadingBond) {
+    options.leadingBond = `'${ring.metaLeadingBond}'`;
+  }
+
   const optionsStr = Object.entries(options)
     .map(([key, value]) => `${key}: ${value}`)
     .join(', ');
@@ -632,7 +637,20 @@ function decompileInterleavedFusedRing(fusedRing, indent, nextVar) {
       Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
         const attListCode = attachmentList.map((att) => {
           const attCode = decompileChildNode(att, '', nextVar);
-          // Extract just the constructor call, removing export/const/variable name
+          const codeLines = attCode.code.split('\n').filter((line) => line.trim());
+
+          // If the attachment decompilation produced multiple lines, we need to output
+          // ALL lines, then use the final variable
+          if (codeLines.length > 1) {
+            // Output all lines
+            codeLines.forEach((line) => {
+              lines.push(indent + line);
+            });
+            // Use the finalVar from the decompilation
+            return attCode.finalVar;
+          }
+
+          // Single line - extract just the constructor call, removing export/const/variable name
           const match = attCode.code.match(/= (.+);?$/);
           if (match) {
             return match[1].replace(/;$/, '');
@@ -735,6 +753,9 @@ function decompileFusedRing(fusedRing, indent, nextVar) {
   const isInterleaved = isInterleavedFusedRing(fusedRing);
   const hasSeqLinear = hasSequentialLinearAtoms(fusedRing);
 
+  // Check if any ring has position metadata (indicates complex ring structure)
+  const hasPositionData = fusedRing.metaAllPositions || fusedRing.rings.some((r) => r.metaPositions);
+
   // Use complex decompilation if there are sequential rings
   if (hasSeqRings) {
     return decompileComplexFusedRing(fusedRing, indent, nextVar);
@@ -744,6 +765,12 @@ function decompileFusedRing(fusedRing, indent, nextVar) {
   // Interleaved patterns may have sequential positions (sibling attachments) but should
   // use the interleaved decompiler which handles them via metadata
   if (isInterleaved) {
+    return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
+  }
+
+  // If there's position metadata, use interleaved decompiler even without varying branch depths
+  // This handles complex fused rings like steroids where rings share atoms
+  if (hasPositionData) {
     return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
   }
 

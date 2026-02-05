@@ -1,0 +1,265 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Dexamethasone Integration Test parses dexamethasone 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+    {
+      "rings": [
+        {
+          "atoms": "C",
+          "attachments": {
+            "4": [
+              {
+                "atoms": [
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "5": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 5,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "3": [
+              {
+                "atoms": [
+                  "F",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "4": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "6": [
+              {
+                "atoms": [
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 2,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "5": [
+              {
+                "atoms": [
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "6": [
+              {
+                "atoms": [
+                  "F",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 3,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
+            "3": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+            "6": [
+              {
+                "atoms": [
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            "=",
+            null,
+            null,
+            "=",
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 4,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "C",
+        "O",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Dexamethasone Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Ring({ atoms: 'C', size: 5 });
+v2.metaPositions = [1, 2, 3, 20, 22];
+v2.metaStart = 1;
+v2.metaEnd = 22;
+v2.attachments = { 4: [Linear(['C'])], 5: [Linear(['O'])] };
+export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
+v5.metaPositions = [3, 4, 15, 17, 19, 20];
+v5.metaStart = 3;
+v5.metaEnd = 20;
+v5.attachments = { 3: [Linear(['F'])], 4: [Linear(['O'])], 6: [Linear(['C'])] };
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
+v9.metaPositions = [4, 5, 6, 7, 13, 15];
+v9.metaStart = 4;
+v9.metaEnd = 15;
+v9.attachments = { 5: [Linear(['C'])], 6: [Linear(['F'])] };
+export const v12 = Ring({ atoms: 'C', size: 6, ringNumber: 4, bonds: ['=', null, null, '=', null, null] });
+v12.metaPositions = [7, 8, 9, 11, 12, 13];
+v12.metaStart = 7;
+v12.metaEnd = 13;
+v12.attachments = { 3: [Linear(['O'], ['='])], 6: [Linear(['C'])] };
+export const v15 = FusedRing([v2, v5, v9, v12], { skipPositionComputation: true });
+v15.metaTotalAtoms = 17;
+v15.metaAllPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 15, 17, 19, 20, 22];
+v15.metaSequentialRings = [];
+v15.metaBranchDepthMap = new Map([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [11, 0], [12, 0], [13, 0], [15, 0], [17, 0], [19, 0], [20, 0], [22, 0]]);
+v15.metaParentIndexMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, null], [9, null], [11, null], [12, null], [13, null], [15, null], [17, null], [19, null], [20, null], [22, null]]);
+v15.metaAtomValueMap = new Map([[1, 'C'], [2, 'C'], [3, 'C'], [4, 'C'], [5, 'C'], [6, 'C'], [7, 'C'], [8, 'C'], [9, 'C'], [11, 'C'], [12, 'C'], [13, 'C'], [15, 'C'], [17, 'C'], [19, 'C'], [20, 'C'], [22, 'C']]);
+v15.metaBondMap = new Map([[1, null], [2, null], [3, null], [4, null], [5, null], [6, null], [7, null], [8, '='], [9, null], [11, null], [12, '='], [13, null], [15, null], [17, null], [19, null], [20, null], [22, null]]);
+v15.metaRingOrderMap = new Map([[1, [1, 1]], [2, [1]], [3, [2, 2, 1]], [4, [3, 3, 2]], [5, [3]], [6, [3]], [7, [4, 4, 3]], [8, [4]], [9, [4]], [11, [4]], [12, [4]], [13, [4, 3]], [15, [3, 2]], [17, [2]], [19, [2]], [20, [2, 1]], [22, [1]]]);
+v15.metaSeqAtomAttachments = new Map();
+export const v16 = Linear(['C', 'C', 'O']);
+export const v17 = Linear(['O'], ['=']);
+export const v18 = v16.attach(v17, 1);
+export const v19 = Molecule([v1, v15, v18]);"
+`;
