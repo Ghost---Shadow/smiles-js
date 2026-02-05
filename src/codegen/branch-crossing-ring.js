@@ -21,6 +21,12 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
   const normalizedDepths = branchDepths.map((d) => d - minDepth);
 
   const parts = [];
+
+  // Add leading bond if present (e.g., C(=C2...) has = before the ring)
+  if (ring.metaLeadingBond) {
+    parts.push(ring.metaLeadingBond);
+  }
+
   let currentDepth = 0;
 
   // Track pending attachments that should be output after we return from deeper branches

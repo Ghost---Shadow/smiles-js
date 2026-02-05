@@ -519,6 +519,12 @@ function buildSingleRingNodeWithContext(
   ringNode.metaBranchDepths = ringAtoms.map((a) => a.branchDepth);
   ringNode.metaParentIndices = ringAtoms.map((a) => a.parentIndex);
 
+  // Store leading bond if the first ring atom has a bond (e.g., C(=C2...) has = before C2)
+  const firstRingAtom = ringAtoms[0];
+  if (firstRingAtom && firstRingAtom.bond) {
+    ringNode.metaLeadingBond = firstRingAtom.bond;
+  }
+
   return ringNode;
 }
 

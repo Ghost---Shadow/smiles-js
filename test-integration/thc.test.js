@@ -192,7 +192,7 @@ describe('THC - toCode() Round-trips (interleaved patterns)', () => {
 
 describe('THC - Known Issues', () => {
   test('parser loses double bond before ring in branch', () => {
-    // Known parser bug: C(=C2...) loses the double bond
+    // Pattern: C(=C2C(C)C2) - double bond before ring in branch
     const ast = parse('C(=C2C(C)C2)');
     expect(ast.smiles).toBe('C(=C2C(C)C2)');
   });

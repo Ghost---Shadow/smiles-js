@@ -40,7 +40,18 @@ export function buildNodeFromAtoms(
   );
 
   if (containedRings.length > 0) {
-    // This would need buildBranchWithRingsInternal - not implemented yet
+    // If this branch contains exactly one complete ring and nothing else, build it as a ring
+    if (containedRings.length === 1 && atomIndices.size === containedRings[0].positions.length) {
+      const ring = containedRings[0];
+      return buildSingleRingNodeWithContext(
+        ring,
+        allAtoms,
+        ringBoundaries,
+        0,
+        ring.ringNumber,
+      );
+    }
+    // Otherwise fall back to linear (for complex cases with rings + extra atoms)
     return buildLinearNodeSimpleInternal(atomList, allAtoms, ringBoundaries, isBranch);
   }
 
@@ -178,6 +189,12 @@ export function buildSingleRingNodeWithContext(
   ringNode.metaEnd = ring.end;
   ringNode.metaBranchDepths = ringAtoms.map((a) => a.branchDepth);
   ringNode.metaParentIndices = ringAtoms.map((a) => a.parentIndex);
+
+  // Store leading bond if the first ring atom has a bond (e.g., C(=C2...) has = before C2)
+  const firstRingAtom = ringAtoms[0];
+  if (firstRingAtom && firstRingAtom.bond) {
+    ringNode.metaLeadingBond = firstRingAtom.bond;
+  }
 
   return ringNode;
 }

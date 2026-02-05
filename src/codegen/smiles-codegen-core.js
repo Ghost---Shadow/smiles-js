@@ -127,6 +127,11 @@ export function buildRingSMILES(ring) {
 
   const parts = [];
 
+  // Add leading bond if present (e.g., C(=C2...) has = before the ring)
+  if (ring.metaLeadingBond) {
+    parts.push(ring.metaLeadingBond);
+  }
+
   // Build ring with standard SMILES notation
   // Ring marker appears AFTER the first atom (standard notation)
   // Bonds array: bonds[i-1] is the bond BEFORE atom i (for i=2..size)
