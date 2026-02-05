@@ -681,33 +681,61 @@ function computeFusedRingPositions(fusedRingNodeParam) {
         branchDepthMap.set(currentPos, currentDepth);
         currentPos += 1;
       } else {
-        // Benzimidazole case: inner ring's middle atoms come between fusion points
-        // No branch needed
+        // Two sub-cases for extending rings:
+        // 1. Base ring ends at/before extending ring's second atom (ketorolac pattern)
+        // 2. Base ring has multiple atoms that extend past the extending ring's start (benzimidazole pattern)
+        const baseRemainingAfterFirstFusion = baseRing.size - (extendingRing.offset + 1);
+        const isCompactFusion = baseRemainingAfterFirstFusion === 1;
 
-        // Inner ring's middle atoms (atoms 1 through size-2)
-        for (let i = 1; i < extendingRing.size - 1; i += 1) {
+        if (isCompactFusion) {
+          // Ketorolac case: base ring has exactly one atom left after first fusion
+          // Second fusion point is at offset+1 (next position), shared with extending atom 1
+
+          // Second fusion point: base atom at offset+1 / extending atom 1
           allPositions.push(currentPos);
+          baseRingPositions.push(currentPos);
           data.positions.push(currentPos);
           branchDepthMap.set(currentPos, currentDepth);
           currentPos += 1;
-        }
 
-        // Second fusion point: base atom at offset+1 / inner atom size-1
-        // This is the inner ring's closing atom
-        allPositions.push(currentPos);
-        baseRingPositions.push(currentPos);
-        data.positions.push(currentPos);
-        data.end = currentPos;
-        branchDepthMap.set(currentPos, currentDepth);
-        currentPos += 1;
+          // Extending ring's remaining atoms (atoms 2 through size-1)
+          for (let i = 2; i < extendingRing.size; i += 1) {
+            allPositions.push(currentPos);
+            data.positions.push(currentPos);
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+          }
 
-        // Base ring's remaining atoms (atoms offset+2 through size-1)
-        const remainingBaseAtoms = baseRing.size - (extendingRing.offset + 2);
-        for (let i = 0; i < remainingBaseAtoms; i += 1) {
+          data.end = currentPos - 1;
+        } else {
+          // Benzimidazole case: base ring has multiple atoms remaining
+          // Second fusion point is at the END of extending ring, shared with extending atom size-1
+
+          // Inner ring's middle atoms (atoms 1 through size-2)
+          for (let i = 1; i < extendingRing.size - 1; i += 1) {
+            allPositions.push(currentPos);
+            data.positions.push(currentPos);
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+          }
+
+          // Second fusion point: base atom at offset+1 / inner atom size-1
+          // This is the inner ring's closing atom
           allPositions.push(currentPos);
           baseRingPositions.push(currentPos);
+          data.positions.push(currentPos);
+          data.end = currentPos;
           branchDepthMap.set(currentPos, currentDepth);
           currentPos += 1;
+
+          // Base ring's remaining atoms (atoms offset+2 through size-1)
+          const remainingBaseAtoms = baseRing.size - (extendingRing.offset + 2);
+          for (let i = 0; i < remainingBaseAtoms; i += 1) {
+            allPositions.push(currentPos);
+            baseRingPositions.push(currentPos);
+            branchDepthMap.set(currentPos, currentDepth);
+            currentPos += 1;
+          }
         }
       }
 
