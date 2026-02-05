@@ -825,7 +825,7 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
     fusedNode.metaAllPositions.forEach((pos) => {
       branchDepthMap.set(pos, atoms[pos].branchDepth);
       parentIndexMap.set(pos, atoms[pos].parentIndex);
-      atomValueMap.set(pos, atoms[pos].value);
+      atomValueMap.set(pos, atoms[pos].rawValue);
       bondMap.set(pos, atoms[pos].bond);
     });
     fusedNode.metaBranchDepthMap = branchDepthMap;
@@ -841,7 +841,7 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
           fusedNode.metaAllPositions.push(pos);
           branchDepthMap.set(pos, atoms[pos].branchDepth);
           parentIndexMap.set(pos, atoms[pos].parentIndex);
-          atomValueMap.set(pos, atoms[pos].value);
+          atomValueMap.set(pos, atoms[pos].rawValue);
           bondMap.set(pos, atoms[pos].bond);
         }
       });
@@ -871,7 +871,7 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
   fusedNode.metaAllPositions.forEach((pos) => {
     branchDepthMap.set(pos, atoms[pos].branchDepth);
     parentIndexMap.set(pos, atoms[pos].parentIndex);
-    atomValueMap.set(pos, atoms[pos].value);
+    atomValueMap.set(pos, atoms[pos].rawValue);
     bondMap.set(pos, atoms[pos].bond);
   });
   fusedNode.metaBranchDepthMap = branchDepthMap;
