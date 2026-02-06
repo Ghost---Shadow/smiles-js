@@ -236,6 +236,95 @@ export function fusedRingRenumber(fusedRing, startNumber = 1) {
   return createFusedRingNode(newRings);
 }
 
+export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
+  const newRings = fusedRing.rings.map((r) => ({ ...r }));
+  const newNode = createFusedRingNode(newRings, { skipPositionComputation: true });
+
+  // Copy existing metadata
+  newNode.metaAllPositions = [...(fusedRing.metaAllPositions || [])];
+  newNode.metaTotalAtoms = fusedRing.metaTotalAtoms || 0;
+  newNode.metaBranchDepthMap = new Map(fusedRing.metaBranchDepthMap || []);
+  newNode.metaAtomValueMap = new Map(fusedRing.metaAtomValueMap || []);
+  newNode.metaBondMap = new Map(fusedRing.metaBondMap || []);
+  newNode.metaRingOrderMap = new Map(fusedRing.metaRingOrderMap || []);
+
+  // Copy ring-level metadata
+  fusedRing.rings.forEach((origRing, idx) => {
+    if (origRing.metaPositions) newNode.rings[idx].metaPositions = [...origRing.metaPositions];
+    if (origRing.metaStart !== undefined) newNode.rings[idx].metaStart = origRing.metaStart;
+    if (origRing.metaEnd !== undefined) newNode.rings[idx].metaEnd = origRing.metaEnd;
+  });
+
+  // Store sequential rings
+  newNode.metaSequentialRings = [...seqRings];
+
+  // Extend allPositions with sequential ring positions
+  let nextPos = newNode.metaTotalAtoms;
+  seqRings.forEach((seqRing) => {
+    const positions = [];
+    for (let i = 0; i < seqRing.size; i += 1) {
+      positions.push(nextPos);
+      newNode.metaAllPositions.push(nextPos);
+      newNode.metaBranchDepthMap.set(nextPos, 0);
+
+      const relativePos = i + 1;
+      if (seqRing.substitutions && seqRing.substitutions[relativePos]) {
+        newNode.metaAtomValueMap.set(nextPos, seqRing.substitutions[relativePos]);
+      }
+      if (i > 0 && seqRing.bonds && seqRing.bonds[i - 1]) {
+        newNode.metaBondMap.set(nextPos, seqRing.bonds[i - 1]);
+      }
+
+      nextPos += 1;
+    }
+    seqRing.metaPositions = positions;
+    seqRing.metaStart = positions[0];
+    seqRing.metaEnd = positions[positions.length - 1];
+  });
+
+  newNode.metaTotalAtoms = nextPos;
+
+  // Store seq atom attachments
+  if (options.atomAttachments) {
+    newNode.metaSeqAtomAttachments = new Map(Object.entries(options.atomAttachments).map(
+      ([pos, atts]) => [Number(pos), atts],
+    ));
+  } else {
+    newNode.metaSeqAtomAttachments = new Map();
+  }
+
+  return newNode;
+}
+
+export function fusedRingAddSequentialAtomAttachment(fusedRing, position, attachment) {
+  const newRings = fusedRing.rings.map((r) => ({ ...r }));
+  const newNode = createFusedRingNode(newRings, { skipPositionComputation: true });
+
+  // Copy all existing metadata
+  newNode.metaAllPositions = [...(fusedRing.metaAllPositions || [])];
+  newNode.metaTotalAtoms = fusedRing.metaTotalAtoms || 0;
+  newNode.metaBranchDepthMap = new Map(fusedRing.metaBranchDepthMap || []);
+  newNode.metaAtomValueMap = new Map(fusedRing.metaAtomValueMap || []);
+  newNode.metaBondMap = new Map(fusedRing.metaBondMap || []);
+  newNode.metaRingOrderMap = new Map(fusedRing.metaRingOrderMap || []);
+  newNode.metaSequentialRings = fusedRing.metaSequentialRings ? [...fusedRing.metaSequentialRings] : [];
+
+  // Copy ring-level metadata
+  fusedRing.rings.forEach((origRing, idx) => {
+    if (origRing.metaPositions) newNode.rings[idx].metaPositions = [...origRing.metaPositions];
+    if (origRing.metaStart !== undefined) newNode.rings[idx].metaStart = origRing.metaStart;
+    if (origRing.metaEnd !== undefined) newNode.rings[idx].metaEnd = origRing.metaEnd;
+  });
+
+  // Copy and extend seq atom attachments
+  const existingAttachments = new Map(fusedRing.metaSeqAtomAttachments || []);
+  const current = existingAttachments.get(position) || [];
+  existingAttachments.set(position, [...current, attachment]);
+  newNode.metaSeqAtomAttachments = existingAttachments;
+
+  return newNode;
+}
+
 export function fusedRingConcat(fusedRing, other) {
   return createMoleculeNode([fusedRing, other]);
 }

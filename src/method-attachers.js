@@ -22,6 +22,8 @@ import {
   fusedRingAttachToRing,
   fusedRingRenumber,
   fusedRingConcat,
+  fusedRingAddSequentialRings,
+  fusedRingAddSequentialAtomAttachment,
   moleculeAppend,
   moleculePrepend,
   moleculeConcat,
@@ -175,6 +177,12 @@ export function attachFusedRingMethods(node) {
     },
     renumber(startNumber = 1) {
       return fusedRingRenumber(this, startNumber);
+    },
+    addSequentialRings(seqRings, options) {
+      return fusedRingAddSequentialRings(this, seqRings, options);
+    },
+    addSequentialAtomAttachment(position, attachment) {
+      return fusedRingAddSequentialAtomAttachment(this, position, attachment);
     },
     concat(other) {
       return fusedRingConcat(this, other);
