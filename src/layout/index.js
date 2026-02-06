@@ -102,6 +102,11 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
     endpointRings,
   );
   target.node.metaRingOrderMap = ringOrderMap;
+
+  // Build atom-level maps from ring data
+  const { atomValueMap, bondMap } = buildAtomLevelMaps(sortedRings);
+  target.node.metaAtomValueMap = atomValueMap;
+  target.node.metaBondMap = bondMap;
 }
 
 /**
@@ -745,4 +750,31 @@ function buildRingOrderMap(baseRing, innerRings, innerRingData, totalAtoms, chai
   });
 
   return ringOrderMap;
+}
+
+function buildAtomLevelMaps(sortedRings) {
+  const atomValueMap = new Map();
+  const bondMap = new Map();
+
+  sortedRings.forEach((ring) => {
+    const positions = ring.metaPositions || [];
+    const { atoms, substitutions = {}, bonds = [] } = ring;
+
+    positions.forEach((pos, idx) => {
+      const relativePos = idx + 1;
+      const atomValue = substitutions[relativePos] || atoms;
+
+      // Only store if different from base atom (substituted)
+      if (substitutions[relativePos] && !atomValueMap.has(pos)) {
+        atomValueMap.set(pos, atomValue);
+      }
+
+      // Store bond before this atom (for atoms after the first in the ring)
+      if (idx > 0 && bonds[idx - 1] && !bondMap.has(pos)) {
+        bondMap.set(pos, bonds[idx - 1]);
+      }
+    });
+  });
+
+  return { atomValueMap, bondMap };
 }
