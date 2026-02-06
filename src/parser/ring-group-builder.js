@@ -179,116 +179,12 @@ export function buildSingleRingNodeWithContext(
 }
 
 /**
- * Build a ring or fused ring node from a group with context
- * @param {Array} group - Array of ring boundary objects
- * @param {Array} atoms - All atoms
- * @param {Array} ringBoundaries - All ring boundaries
- * @param {Function} buildNodeFromAtomsFn - Callback to build nodes from atom lists
- * @param {Function} buildLinearNodeSimpleFn - Callback to build simple linear nodes
+ * Separate truly fused rings (share atoms) from sequential rings (don't share)
+ * @param {Array} sortedGroup - Rings sorted by start position
+ * @returns {{ trulyFusedRings: Array, sequentialRingsFromGroup: Array }}
  */
-export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn) {
-  // For single rings, check if there's a sequential continuation ring in a branch.
-  if (group.length === 1) {
-    const ring = group[0];
-    const endAtom = atoms[ring.end];
-
-    // Check if ring closes at a deeper branch level than where it opened
-    const hasDeepSeqContinuation = endAtom
-      && endAtom.branchDepth > ring.branchDepth
-      && endAtom.branchId !== null;
-
-    if (hasDeepSeqContinuation) {
-      const nextAtom = atoms.find(
-        (a) => a.prevAtomIndex === ring.end
-          && a.branchDepth === endAtom.branchDepth
-          && a.branchId === endAtom.branchId
-          && !a.afterBranchClose,
-      );
-
-      if (nextAtom) {
-        const nextRing = ringBoundaries.find(
-          (rb) => rb.positions.includes(nextAtom.index) && rb.branchDepth === nextAtom.branchDepth,
-        );
-
-        if (nextRing && !group.some((g) => g.ringNumber === nextRing.ringNumber)) {
-          const expandedGroup = [...group, nextRing];
-          return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
-        }
-      }
-    }
-
-    // Check for sequential continuation atoms at the SAME depth
-    if (endAtom && endAtom.branchId !== null) {
-      const seqAtoms = atoms.filter(
-        (a) => a.prevAtomIndex === ring.end
-          && a.branchDepth === endAtom.branchDepth
-          && a.branchId === endAtom.branchId
-          && !a.afterBranchClose,
-      );
-
-      if (seqAtoms.length > 0) {
-        const firstSeqAtom = seqAtoms[0];
-        const isAttachmentToEarlierPosition = ring.positions.some(
-          (pos) => pos < ring.end && firstSeqAtom.parentIndex === pos,
-        );
-
-        if (isAttachmentToEarlierPosition) {
-          return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, null, buildNodeFromAtomsFn);
-        }
-
-        const nextRing = ringBoundaries.find(
-          (rb) => rb.positions.includes(firstSeqAtom.index)
-            && rb.branchDepth === firstSeqAtom.branchDepth,
-        );
-
-        if (nextRing) {
-          const expandedGroup = [...group, nextRing];
-          return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
-        }
-
-        // Sequential continuation with linear atoms
-        const ringNode = buildSingleRingNodeWithContext(
-          ring,
-          atoms,
-          ringBoundaries,
-          0,
-          ring.ringNumber,
-          null,
-          buildNodeFromAtomsFn,
-        );
-
-        const seqLinearAtoms = [firstSeqAtom];
-        const { branchDepth, branchId } = firstSeqAtom;
-        let nextA = findNextSeqAtom(atoms, firstSeqAtom.index, branchDepth, branchId);
-        while (nextA) {
-          seqLinearAtoms.push(nextA);
-          nextA = findNextSeqAtom(atoms, nextA.index, branchDepth, branchId);
-        }
-
-        const seqLinearNode = buildLinearNodeSimpleFn(
-          seqLinearAtoms,
-          atoms,
-          ringBoundaries,
-          false,
-        );
-
-        if (firstSeqAtom.bond) {
-          seqLinearNode.metaLeadingBond = firstSeqAtom.bond;
-        }
-
-        return Molecule([ringNode, seqLinearNode]);
-      }
-    }
-
-    // No sequential continuation - return a simple ring node
-    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, null, buildNodeFromAtomsFn);
-  }
-
-  // Sort rings by their start position to determine base ring
-  const sortedGroup = [...group].sort((a, b) => a.start - b.start);
+function separateFusedFromSequential(sortedGroup) {
   const baseRing = sortedGroup[0];
-
-  // Separate truly fused rings (share atoms) from sequential rings (don't share)
   const trulyFusedRings = [baseRing];
   const sequentialRingsFromGroup = [];
 
@@ -304,7 +200,15 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buil
     }
   }
 
-  // Calculate the total atom span for this fused system (only truly fused rings)
+  return { trulyFusedRings, sequentialRingsFromGroup };
+}
+
+/**
+ * Collect all atom positions that should be output inline (ring + sequential + continuation)
+ * Walks branches to find sequential rings and continuation atoms beyond the fused ring core.
+ * @returns {{ allPositions: Set, allRingPositions: Set, sequentialRings: Array }}
+ */
+function collectAllPositions(trulyFusedRings, sequentialRingsFromGroup, group, atoms, ringBoundaries) {
   const allPositions = new Set();
   trulyFusedRings.forEach((ring) => {
     ring.positions.forEach((pos) => allPositions.add(pos));
@@ -312,7 +216,6 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buil
 
   const allRingPositions = new Set(allPositions);
 
-  // Build a map of position -> ring boundary for rings not in this fused group
   const otherRingsByPosition = new Map();
   ringBoundaries.forEach((rb) => {
     const isInGroup = group.some((g) => g.ringNumber === rb.ringNumber);
@@ -323,7 +226,6 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buil
 
   const sequentialRings = [...sequentialRingsFromGroup];
 
-  // Unified iterative loop to collect all atoms that should be output inline
   let addedNewPositions = true;
   while (addedNewPositions) {
     addedNewPositions = false;
@@ -384,105 +286,33 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buil
     }
   }
 
-  const totalAtoms = allPositions.size;
+  return { allPositions, allRingPositions, sequentialRings };
+}
 
-  const rings = trulyFusedRings.map((ring) => {
-    const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
-    return buildSingleRingNodeWithContext(
-      ring,
-      atoms,
-      ringBoundaries,
-      ringOffset,
-      ring.ringNumber,
-      allRingPositions,
-      buildNodeFromAtomsFn,
-    );
-  });
-
-  const seqRingNodes = sequentialRings.map(
-    (ring) => buildSingleRingNodeWithContext(
-      ring,
-      atoms,
-      ringBoundaries,
-      0,
-      ring.ringNumber,
-      allRingPositions,
-      buildNodeFromAtomsFn,
-    ),
-  );
-
-  // If we only have 1 truly fused ring but have sequential rings, wrap in FusedRing
-  if (rings.length === 1 && seqRingNodes.length > 0) {
-    const fusedNode = createFusedRingNode([rings[0]]);
-    fusedNode.metaTotalAtoms = totalAtoms;
-    fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
-    fusedNode.metaSequentialRings = seqRingNodes;
-
-    const branchDepthMap = new Map();
-    const parentIndexMap = new Map();
-    const atomValueMap = new Map();
-    const bondMap = new Map();
-    fusedNode.metaAllPositions.forEach((pos) => {
-      branchDepthMap.set(pos, atoms[pos].branchDepth);
-      parentIndexMap.set(pos, atoms[pos].parentIndex);
-      atomValueMap.set(pos, atoms[pos].rawValue);
-      bondMap.set(pos, atoms[pos].bond);
-    });
-    fusedNode.metaBranchDepthMap = branchDepthMap;
-    fusedNode.metaParentIndexMap = parentIndexMap;
-    fusedNode.metaAtomValueMap = atomValueMap;
-    fusedNode.metaBondMap = bondMap;
-
-    seqRingNodes.forEach((seqRing) => {
-      const seqPositions = seqRing.metaPositions || [];
-      seqPositions.forEach((pos) => {
-        if (!fusedNode.metaAllPositions.includes(pos)) {
-          fusedNode.metaAllPositions.push(pos);
-          branchDepthMap.set(pos, atoms[pos].branchDepth);
-          parentIndexMap.set(pos, atoms[pos].parentIndex);
-          atomValueMap.set(pos, atoms[pos].rawValue);
-          bondMap.set(pos, atoms[pos].bond);
-        }
-      });
-    });
-    fusedNode.metaAllPositions.sort((a, b) => a - b);
-
-    return fusedNode;
-  }
-
-  // If we only have 1 truly fused ring and no sequential rings, return the single ring
-  if (rings.length === 1) {
-    return rings[0];
-  }
-
-  const fusedNode = FusedRing(rings);
-  fusedNode.metaTotalAtoms = totalAtoms;
-  fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
-  fusedNode.metaSequentialRings = seqRingNodes;
+/**
+ * Build branchDepth, parentIndex, atomValue, and bond maps from positions
+ * @param {Array} positions - Sorted array of atom positions
+ * @param {Array} atoms - All atoms
+ * @returns {{ branchDepthMap, parentIndexMap, atomValueMap, bondMap }}
+ */
+function buildMetadataMaps(positions, atoms) {
   const branchDepthMap = new Map();
   const parentIndexMap = new Map();
   const atomValueMap = new Map();
   const bondMap = new Map();
-  fusedNode.metaAllPositions.forEach((pos) => {
+  positions.forEach((pos) => {
     branchDepthMap.set(pos, atoms[pos].branchDepth);
     parentIndexMap.set(pos, atoms[pos].parentIndex);
     atomValueMap.set(pos, atoms[pos].rawValue);
     bondMap.set(pos, atoms[pos].bond);
   });
-  fusedNode.metaBranchDepthMap = branchDepthMap;
-  fusedNode.metaParentIndexMap = parentIndexMap;
-  fusedNode.metaAtomValueMap = atomValueMap;
-  fusedNode.metaBondMap = bondMap;
+  return { branchDepthMap, parentIndexMap, atomValueMap, bondMap };
+}
 
-  const ringOrderMap = new Map();
-  fusedNode.metaAllPositions.forEach((pos) => {
-    if (atoms[pos].rings && atoms[pos].rings.length > 0) {
-      ringOrderMap.set(pos, [...atoms[pos].rings]);
-    }
-  });
-  fusedNode.metaRingOrderMap = ringOrderMap;
-
-  // Build attachments for sequential continuation atoms (non-ring positions)
+/**
+ * Build attachments map for sequential continuation atoms (non-ring positions)
+ */
+function buildSeqAtomAttachments(fusedNode, rings, seqRingNodes, atoms, ringBoundaries, buildNodeFromAtomsFn) {
   const ringPositionsForAttachments = new Set();
   [...rings, ...seqRingNodes].forEach((r) => {
     (r.metaPositions || []).forEach((pos) => ringPositionsForAttachments.add(pos));
@@ -517,7 +347,215 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buil
       );
     }
   });
-  fusedNode.metaSeqAtomAttachments = seqAtomAttachments;
+
+  return seqAtomAttachments;
+}
+
+/**
+ * Assemble a FusedRing node with all metadata from ring nodes and position data
+ */
+function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, atoms, ringBoundaries, buildNodeFromAtomsFn) {
+  // If we only have 1 truly fused ring but have sequential rings, wrap in FusedRing
+  if (rings.length === 1 && seqRingNodes.length > 0) {
+    const fusedNode = createFusedRingNode([rings[0]]);
+    fusedNode.metaTotalAtoms = totalAtoms;
+    fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
+    fusedNode.metaSequentialRings = seqRingNodes;
+
+    const maps = buildMetadataMaps(fusedNode.metaAllPositions, atoms);
+    fusedNode.metaBranchDepthMap = maps.branchDepthMap;
+    fusedNode.metaParentIndexMap = maps.parentIndexMap;
+    fusedNode.metaAtomValueMap = maps.atomValueMap;
+    fusedNode.metaBondMap = maps.bondMap;
+
+    // Include sequential ring positions
+    seqRingNodes.forEach((seqRing) => {
+      const seqPositions = seqRing.metaPositions || [];
+      seqPositions.forEach((pos) => {
+        if (!fusedNode.metaAllPositions.includes(pos)) {
+          fusedNode.metaAllPositions.push(pos);
+          maps.branchDepthMap.set(pos, atoms[pos].branchDepth);
+          maps.parentIndexMap.set(pos, atoms[pos].parentIndex);
+          maps.atomValueMap.set(pos, atoms[pos].rawValue);
+          maps.bondMap.set(pos, atoms[pos].bond);
+        }
+      });
+    });
+    fusedNode.metaAllPositions.sort((a, b) => a - b);
+
+    return fusedNode;
+  }
+
+  // If we only have 1 truly fused ring and no sequential rings, return the single ring
+  if (rings.length === 1) {
+    return rings[0];
+  }
+
+  // Multi-ring fused node
+  const fusedNode = FusedRing(rings);
+  fusedNode.metaTotalAtoms = totalAtoms;
+  fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
+  fusedNode.metaSequentialRings = seqRingNodes;
+
+  const maps = buildMetadataMaps(fusedNode.metaAllPositions, atoms);
+  fusedNode.metaBranchDepthMap = maps.branchDepthMap;
+  fusedNode.metaParentIndexMap = maps.parentIndexMap;
+  fusedNode.metaAtomValueMap = maps.atomValueMap;
+  fusedNode.metaBondMap = maps.bondMap;
+
+  // Ring order map — tracks which ring markers appear at each position
+  const ringOrderMap = new Map();
+  fusedNode.metaAllPositions.forEach((pos) => {
+    if (atoms[pos].rings && atoms[pos].rings.length > 0) {
+      ringOrderMap.set(pos, [...atoms[pos].rings]);
+    }
+  });
+  fusedNode.metaRingOrderMap = ringOrderMap;
+
+  fusedNode.metaSeqAtomAttachments = buildSeqAtomAttachments(
+    fusedNode, rings, seqRingNodes, atoms, ringBoundaries, buildNodeFromAtomsFn,
+  );
 
   return fusedNode;
+}
+
+/**
+ * Handle single-ring groups: detect sequential continuation rings/atoms
+ * Returns a node if single-ring handling applies, or null to fall through to multi-ring logic
+ */
+function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn) {
+  const ring = group[0];
+  const endAtom = atoms[ring.end];
+
+  // Check if ring closes at a deeper branch level than where it opened
+  const hasDeepSeqContinuation = endAtom
+    && endAtom.branchDepth > ring.branchDepth
+    && endAtom.branchId !== null;
+
+  if (hasDeepSeqContinuation) {
+    const nextAtom = atoms.find(
+      (a) => a.prevAtomIndex === ring.end
+        && a.branchDepth === endAtom.branchDepth
+        && a.branchId === endAtom.branchId
+        && !a.afterBranchClose,
+    );
+
+    if (nextAtom) {
+      const nextRing = ringBoundaries.find(
+        (rb) => rb.positions.includes(nextAtom.index) && rb.branchDepth === nextAtom.branchDepth,
+      );
+
+      if (nextRing && !group.some((g) => g.ringNumber === nextRing.ringNumber)) {
+        const expandedGroup = [...group, nextRing];
+        return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
+      }
+    }
+  }
+
+  // Check for sequential continuation atoms at the SAME depth
+  if (endAtom && endAtom.branchId !== null) {
+    const seqAtoms = atoms.filter(
+      (a) => a.prevAtomIndex === ring.end
+        && a.branchDepth === endAtom.branchDepth
+        && a.branchId === endAtom.branchId
+        && !a.afterBranchClose,
+    );
+
+    if (seqAtoms.length > 0) {
+      const firstSeqAtom = seqAtoms[0];
+      const isAttachmentToEarlierPosition = ring.positions.some(
+        (pos) => pos < ring.end && firstSeqAtom.parentIndex === pos,
+      );
+
+      if (isAttachmentToEarlierPosition) {
+        return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, null, buildNodeFromAtomsFn);
+      }
+
+      const nextRing = ringBoundaries.find(
+        (rb) => rb.positions.includes(firstSeqAtom.index)
+          && rb.branchDepth === firstSeqAtom.branchDepth,
+      );
+
+      if (nextRing) {
+        const expandedGroup = [...group, nextRing];
+        return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
+      }
+
+      // Sequential continuation with linear atoms
+      const ringNode = buildSingleRingNodeWithContext(
+        ring,
+        atoms,
+        ringBoundaries,
+        0,
+        ring.ringNumber,
+        null,
+        buildNodeFromAtomsFn,
+      );
+
+      const seqLinearAtoms = [firstSeqAtom];
+      const { branchDepth, branchId } = firstSeqAtom;
+      let nextA = findNextSeqAtom(atoms, firstSeqAtom.index, branchDepth, branchId);
+      while (nextA) {
+        seqLinearAtoms.push(nextA);
+        nextA = findNextSeqAtom(atoms, nextA.index, branchDepth, branchId);
+      }
+
+      const seqLinearNode = buildLinearNodeSimpleFn(
+        seqLinearAtoms,
+        atoms,
+        ringBoundaries,
+        false,
+      );
+
+      if (firstSeqAtom.bond) {
+        seqLinearNode.metaLeadingBond = firstSeqAtom.bond;
+      }
+
+      return Molecule([ringNode, seqLinearNode]);
+    }
+  }
+
+  // No sequential continuation - return a simple ring node
+  return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, null, buildNodeFromAtomsFn);
+}
+
+/**
+ * Build a ring or fused ring node from a group with context
+ * @param {Array} group - Array of ring boundary objects
+ * @param {Array} atoms - All atoms
+ * @param {Array} ringBoundaries - All ring boundaries
+ * @param {Function} buildNodeFromAtomsFn - Callback to build nodes from atom lists
+ * @param {Function} buildLinearNodeSimpleFn - Callback to build simple linear nodes
+ */
+export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn) {
+  // Single-ring groups have special handling for sequential continuations
+  if (group.length === 1) {
+    return handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
+  }
+
+  const sortedGroup = [...group].sort((a, b) => a.start - b.start);
+  const baseRing = sortedGroup[0];
+
+  const { trulyFusedRings, sequentialRingsFromGroup } = separateFusedFromSequential(sortedGroup);
+
+  const { allPositions, allRingPositions, sequentialRings } = collectAllPositions(
+    trulyFusedRings, sequentialRingsFromGroup, group, atoms, ringBoundaries,
+  );
+
+  const totalAtoms = allPositions.size;
+
+  const rings = trulyFusedRings.map((ring) => {
+    const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
+    return buildSingleRingNodeWithContext(
+      ring, atoms, ringBoundaries, ringOffset, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn,
+    );
+  });
+
+  const seqRingNodes = sequentialRings.map(
+    (ring) => buildSingleRingNodeWithContext(
+      ring, atoms, ringBoundaries, 0, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn,
+    ),
+  );
+
+  return assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, atoms, ringBoundaries, buildNodeFromAtomsFn);
 }
