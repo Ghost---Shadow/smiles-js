@@ -27,10 +27,6 @@ import {
   collectBranchChain,
 } from './branch-utils.js';
 
-// Forward declarations for mutual recursion
-let buildBranchWithRingsInternal;
-let buildLinearNodeSimpleInternal;
-
 /**
  * Build an AST node from a list of atoms (could be Linear or Ring)
  * This is the recursive function that handles rings inside branches
@@ -45,17 +41,17 @@ function buildNodeFromAtoms(atomList, allAtoms, ringBoundaries, isBranch = false
   if (containedRings.length > 0) {
     // This branch contains ring(s) - build ring node(s)
     const rings = containedRings;
-    return buildBranchWithRingsInternal(atomList, allAtoms, rings, ringBoundaries, isBranch);
+    return buildBranchWithRings(atomList, allAtoms, rings, ringBoundaries, isBranch);
   }
 
   // No rings in this branch - build linear node
-  return buildLinearNodeSimpleInternal(atomList, allAtoms, ringBoundaries, isBranch);
+  return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
 }
 
 /**
  * Build a linear chain node from atoms (no rings in this chain)
  */
-buildLinearNodeSimpleInternal = function buildLinear(list, all, bounds, isBranch = false) {
+function buildLinearNodeSimple(list, all, bounds, isBranch = false) {
   const atomList = list;
   const allAtoms = all;
   const ringBoundaries = bounds;
@@ -105,7 +101,7 @@ buildLinearNodeSimpleInternal = function buildLinear(list, all, bounds, isBranch
   });
 
   return Linear(atomValues, bonds, attachments);
-};
+}
 
 /**
  * Build a single ring node with ringBoundaries context for nested attachments
@@ -400,7 +396,7 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
         }
 
         // Build a linear node for the sequential atoms
-        const seqLinearNode = buildLinearNodeSimpleInternal(
+        const seqLinearNode = buildLinearNodeSimple(
           seqLinearAtoms,
           atoms,
           ringBoundaries,
@@ -716,7 +712,7 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
 /**
  * Build a branch that contains rings
  */
-buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, bounds, branch) {
+function buildBranchWithRings(atoms, all, rings, bounds, branch) {
   const atomList = atoms;
   const allAtoms = all;
   const containedRings = rings;
@@ -782,7 +778,7 @@ buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, 
       // Flush pending linear chain
       if (currentLinear.length > 0) {
         const brch = isBranch && components.length === 0;
-        const lin = buildLinearNodeSimpleInternal(currentLinear, allAtoms, ringBoundaries, brch);
+        const lin = buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, brch);
         const linearNode = lin;
         components.push(linearNode);
         currentLinear = [];
@@ -853,7 +849,7 @@ buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, 
   // Flush remaining linear
   if (currentLinear.length > 0) {
     const lb = isBranch && components.length === 0;
-    const trailingLinear = buildLinearNodeSimpleInternal(currentLinear, allAtoms, ringBoundaries, lb);
+    const trailingLinear = buildLinearNodeSimple(currentLinear, allAtoms, ringBoundaries, lb);
     // Preserve the leading bond on trailing linear components (e.g., '/' in ring/C=C/C)
     if (components.length > 0 && currentLinear[0].bond) {
       trailingLinear.metaLeadingBond = currentLinear[0].bond;
@@ -869,7 +865,7 @@ buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, 
     return components[0];
   }
   return Molecule(components);
-};
+}
 
 /**
  * Pass 2: Build hierarchical AST
@@ -938,7 +934,7 @@ function buildAST(atoms, ringBoundaries) {
     if (atomToGroup.has(globalIdx)) {
       // Flush any pending linear chain
       if (currentLinear.length > 0) {
-        const linNode = buildLinearNodeSimpleInternal(currentLinear, atoms, ringBoundaries, false);
+        const linNode = buildLinearNodeSimple(currentLinear, atoms, ringBoundaries, false);
         // Preserve the leading bond on linear components between rings (e.g., '/' in ring/C=C/ring)
         if (components.length > 0 && currentLinear[0].bond) {
           linNode.metaLeadingBond = currentLinear[0].bond;
@@ -1007,7 +1003,7 @@ function buildAST(atoms, ringBoundaries) {
 
   // Flush remaining linear chain
   if (currentLinear.length > 0) {
-    const trailingLinear = buildLinearNodeSimpleInternal(currentLinear, atoms, ringBoundaries, false);
+    const trailingLinear = buildLinearNodeSimple(currentLinear, atoms, ringBoundaries, false);
     // Preserve the leading bond on trailing linear components (e.g., '/' in ring/C=C/C)
     if (components.length > 0 && currentLinear[0].bond) {
       trailingLinear.metaLeadingBond = currentLinear[0].bond;

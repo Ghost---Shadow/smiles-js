@@ -22,9 +22,6 @@ import {
   findNextSeqAtom,
 } from './branch-utils.js';
 
-// Forward declarations
-let buildLinearNodeSimpleInternal;
-
 /**
  * Build an AST node from a list of atoms (could be Linear or Ring)
  */
@@ -52,16 +49,16 @@ export function buildNodeFromAtoms(
       );
     }
     // Otherwise fall back to linear (for complex cases with rings + extra atoms)
-    return buildLinearNodeSimpleInternal(atomList, allAtoms, ringBoundaries, isBranch);
+    return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
   }
 
-  return buildLinearNodeSimpleInternal(atomList, allAtoms, ringBoundaries, isBranch);
+  return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
 }
 
 /**
  * Build a linear chain node from atoms (no rings in this chain)
  */
-buildLinearNodeSimpleInternal = function buildLinear(
+function buildLinearNodeSimple(
   list,
   all,
   bounds,
@@ -104,9 +101,9 @@ buildLinearNodeSimpleInternal = function buildLinear(
   });
 
   return Linear(atomValues, bonds, attachments);
-};
+}
 
-export { buildLinearNodeSimpleInternal };
+export { buildLinearNodeSimple };
 
 /**
  * Build a single ring node with ringBoundaries context for nested attachments
@@ -252,7 +249,7 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
         nextA = findNextSeqAtom(atoms, nextA.index, branchDepth, branchId);
       }
 
-      const seqLinearNode = buildLinearNodeSimpleInternal(
+      const seqLinearNode = buildLinearNodeSimple(
         seqLinearAtoms,
         atoms,
         ringBoundaries,

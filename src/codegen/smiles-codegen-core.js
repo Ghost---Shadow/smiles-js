@@ -13,16 +13,25 @@ import { buildBranchCrossingRingSMILES } from './branch-crossing-ring.js';
 import { buildInterleavedFusedRingSMILES } from './interleaved-fused-ring.js';
 import { buildSimpleFusedRingSMILES } from './simple-fused-ring.js';
 
-// Forward declaration to allow mutual recursion without violating no-use-before-define
-let buildSMILESInternal;
-
 /**
  * Main entry point: Convert any AST node to SMILES string
  * @param {Object} ast - AST node
  * @returns {string} SMILES string
  */
 export function buildSMILES(ast) {
-  return buildSMILESInternal(ast);
+  if (isMoleculeNode(ast)) {
+    return buildMoleculeSMILES(ast);
+  }
+  if (isFusedRingNode(ast)) {
+    return buildFusedRingSMILES(ast);
+  }
+  if (isRingNode(ast)) {
+    return buildRingSMILES(ast);
+  }
+  if (isLinearNode(ast)) {
+    return buildLinearSMILES(ast);
+  }
+  throw new Error(`Unknown AST node type: ${ast?.type}`);
 }
 
 /**
@@ -215,19 +224,3 @@ export function buildFusedRingSMILES(fusedRing) {
   return buildSimpleFusedRingSMILES(fusedRing, buildSMILES);
 }
 
-// Initialize the internal dispatcher after all functions are defined
-buildSMILESInternal = function buildSMILESInternalImpl(ast) {
-  if (isMoleculeNode(ast)) {
-    return buildMoleculeSMILES(ast);
-  }
-  if (isFusedRingNode(ast)) {
-    return buildFusedRingSMILES(ast);
-  }
-  if (isRingNode(ast)) {
-    return buildRingSMILES(ast);
-  }
-  if (isLinearNode(ast)) {
-    return buildLinearSMILES(ast);
-  }
-  throw new Error(`Unknown AST node type: ${ast?.type}`);
-};

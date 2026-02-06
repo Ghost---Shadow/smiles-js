@@ -10,12 +10,9 @@ import {
   isLinearNode,
 } from './ast.js';
 
-// Forward declaration for mutual recursion
-let decompileNodeInternal;
-
-// Helper to call decompileNodeInternal (satisfies no-loop-func rule)
+// Helper to call decompileNode (satisfies no-loop-func rule)
 function decompileChildNode(node, indent, nextVar) {
-  return decompileNodeInternal(node, indent, nextVar);
+  return decompileNode(node, indent, nextVar);
 }
 
 /**
@@ -196,7 +193,7 @@ function decompileLinear(linear, indent, nextVar) {
   if (Object.keys(linear.attachments).length > 0) {
     Object.entries(linear.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
-        const attachRes = decompileNodeInternal(attachment, indent, nextVar);
+        const attachRes = decompileNode(attachment, indent, nextVar);
         const { code: aCode, finalVar: aFinalVar } = attachRes;
         lines.push(aCode);
 
@@ -547,7 +544,7 @@ function decompileFusedRingWithInjection(fusedRing, indent, nextVar) {
     if (Object.keys(ring.attachments).length > 0) {
       Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
         attachmentList.forEach((attachment) => {
-          const attachResult = decompileNodeInternal(attachment, indent, nextVar);
+          const attachResult = decompileNode(attachment, indent, nextVar);
           const { code: aCode, finalVar: aFinalVar } = attachResult;
           lines.push(aCode);
 
@@ -847,7 +844,7 @@ function decompileMolecule(molecule, indent, nextVar) {
   // produces the right SMILES without needing attachToRing
   const componentFinalVars = [];
   components.forEach((component) => {
-    const { code: componentCode, finalVar } = decompileNodeInternal(component, indent, nextVar);
+    const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
     lines.push(componentCode);
     // Preserve metaLeadingBond on linear/ring components (e.g., '/' in ring/C=C/ring)
     if (component.metaLeadingBond) {
@@ -864,8 +861,7 @@ function decompileMolecule(molecule, indent, nextVar) {
   return { code: lines.join('\n'), finalVar: finalVarName };
 }
 
-// Initialize the internal dispatcher after all functions are defined
-decompileNodeInternal = function decompileNodeImpl(node, indent, nextVar) {
+function decompileNode(node, indent, nextVar) {
   if (isRingNode(node)) {
     return decompileRing(node, indent, nextVar);
   }
@@ -883,7 +879,7 @@ decompileNodeInternal = function decompileNodeImpl(node, indent, nextVar) {
   }
 
   throw new Error(`Unknown node type: ${node.type}`);
-};
+}
 
 /**
  * Main decompile dispatcher - public API
@@ -899,7 +895,7 @@ export function decompile(node, options = {}) {
   const indentStr = '  '.repeat(indent);
   const nextVar = createCounter(varName);
 
-  const { code } = decompileNodeInternal(node, indentStr, nextVar);
+  const { code } = decompileNode(node, indentStr, nextVar);
 
   // Always use export const
   let result = code.replace(/^(\s*)const /gm, '$1export const ');
