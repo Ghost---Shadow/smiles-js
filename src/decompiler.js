@@ -109,6 +109,37 @@ function generateSubstitutionCode(ring, indent, nextVar, initialVar) {
 }
 
 /**
+ * Generate code for ring attachments
+ * @returns {{ lines: string[], currentVar: string }}
+ */
+function generateAttachmentCode(ring, indent, nextVar, initialVar) {
+  const lines = [];
+  let currentVar = initialVar;
+
+  if (ring.attachments && Object.keys(ring.attachments).length > 0) {
+    Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
+      attachmentList.forEach((attachment) => {
+        const attachResult = decompileChildNode(attachment, indent, nextVar);
+        lines.push(attachResult.code);
+
+        const newVar = nextVar();
+        const isSibling = attachment.metaIsSibling;
+        if (isSibling === true) {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos}, { sibling: true });`);
+        } else if (isSibling === false) {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos}, { sibling: false });`);
+        } else {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos});`);
+        }
+        currentVar = newVar;
+      });
+    });
+  }
+
+  return { lines, currentVar };
+}
+
+/**
  * Decompile a Ring node
  */
 function decompileRing(ring, indent, nextVar) {
@@ -130,26 +161,14 @@ function decompileRing(ring, indent, nextVar) {
   let currentVar = subVar;
 
   // Add attachments
-  if (Object.keys(ring.attachments).length > 0) {
-    Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
-      attachmentList.forEach((attachment) => {
-        const attachResult = decompileNodeInternal(attachment, indent, nextVar);
-        const { code: aCode, finalVar: aFinalVar } = attachResult;
-        lines.push(aCode);
-
-        const newVar = nextVar();
-        const isSibling = attachment.metaIsSibling;
-        if (isSibling === true) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos}, { sibling: true });`);
-        } else if (isSibling === false) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos}, { sibling: false });`);
-        } else {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
-        }
-        currentVar = newVar;
-      });
-    });
-  }
+  const { lines: attLines, currentVar: attVar } = generateAttachmentCode(
+    ring,
+    indent,
+    nextVar,
+    currentVar,
+  );
+  lines.push(...attLines);
+  currentVar = attVar;
 
   return { code: lines.join('\n'), finalVar: currentVar };
 }
@@ -275,7 +294,10 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
     lines.push(...subResult.lines);
 
-    ringVars.push({ var: subResult.currentVar, ring });
+    const attResult = generateAttachmentCode(ring, indent, nextVar, subResult.currentVar);
+    lines.push(...attResult.lines);
+
+    ringVars.push({ var: attResult.currentVar, ring });
   });
 
   // Fuse the base rings
@@ -323,15 +345,18 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
     lines.push(...subResult.lines);
 
+    const attResult = generateAttachmentCode(ring, indent, nextVar, subResult.currentVar);
+    lines.push(...attResult.lines);
+
     // Set ring position metadata
     const positions = ring.metaPositions || [];
     if (positions.length > 0) {
-      lines.push(`${indent}${subResult.currentVar}.metaPositions = [${positions.join(', ')}];`);
-      lines.push(`${indent}${subResult.currentVar}.metaStart = ${ring.metaStart};`);
-      lines.push(`${indent}${subResult.currentVar}.metaEnd = ${ring.metaEnd};`);
+      lines.push(`${indent}${attResult.currentVar}.metaPositions = [${positions.join(', ')}];`);
+      lines.push(`${indent}${attResult.currentVar}.metaStart = ${ring.metaStart};`);
+      lines.push(`${indent}${attResult.currentVar}.metaEnd = ${ring.metaEnd};`);
     }
 
-    seqRingVars.push(subResult.currentVar);
+    seqRingVars.push(attResult.currentVar);
   });
 
   // Step 3: Decompile seq atom attachments
@@ -665,6 +690,23 @@ function decompileInterleavedFusedRing(fusedRing, indent, nextVar) {
     ringVars.push(varName);
   });
 
+  // Pre-decompile seq atom attachments BEFORE creating FusedRing
+  // so child variables are declared before the main FusedRing variable
+  let seqAttCode = null;
+  if (fusedRing.metaSeqAtomAttachments && fusedRing.metaSeqAtomAttachments.size > 0) {
+    const seqAttEntries = [];
+    fusedRing.metaSeqAtomAttachments.forEach((attachments, pos) => {
+      const attVars = [];
+      attachments.forEach((att) => {
+        const attResult = decompileChildNode(att, indent, nextVar);
+        lines.push(attResult.code);
+        attVars.push(attResult.finalVar);
+      });
+      seqAttEntries.push(`[${pos}, [${attVars.join(', ')}]]`);
+    });
+    seqAttCode = seqAttEntries;
+  }
+
   // Create FusedRing with skipPositionComputation option
   const finalVar = nextVar();
   const ringsStr = ringVars.join(', ');
@@ -706,7 +748,11 @@ function decompileInterleavedFusedRing(fusedRing, indent, nextVar) {
     lines.push(`${indent}${finalVar}.metaRingOrderMap = new Map([${entries.join(', ')}]);`);
   }
   if (fusedRing.metaSeqAtomAttachments) {
-    lines.push(`${indent}${finalVar}.metaSeqAtomAttachments = new Map();`);
+    if (seqAttCode) {
+      lines.push(`${indent}${finalVar}.metaSeqAtomAttachments = new Map([${seqAttCode.join(', ')}]);`);
+    } else {
+      lines.push(`${indent}${finalVar}.metaSeqAtomAttachments = new Map();`);
+    }
   }
 
   return { code: lines.join('\n'), finalVar };
