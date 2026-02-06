@@ -1,6 +1,8 @@
 import { describe, test, expect } from 'bun:test';
 import { parse } from '../src/parser/index.js';
-import { stripExports, createFunction, executeCode, codegenRoundTrip } from './utils.js';
+import {
+  stripExports, createFunction, executeCode, codegenRoundTrip,
+} from './utils.js';
 
 const DEXAMETHASONE_SMILES = 'CC1CC2C3CCC4=CC(=O)C=CC4(C)C3(F)C(O)CC2(C)C1(O)C(=O)CO';
 

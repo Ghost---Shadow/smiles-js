@@ -5,7 +5,9 @@ import { codegenRoundTrip } from './utils.js';
 
 describe('Leading Bond Tests', () => {
   test('Ring constructor preserves leadingBond', () => {
-    const ring = Ring({ atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-' });
+    const ring = Ring({
+      atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-',
+    });
     expect(ring.metaLeadingBond).toBe('-');
     expect(ring.smiles).toBe('-c2ccccc2');
   });
@@ -57,20 +59,24 @@ describe('Leading Bond Tests', () => {
     expect(ringCreations.length).toBeGreaterThanOrEqual(2);
 
     // Both should have leadingBond: '-'
-    ringCreations.forEach(creation => {
+    ringCreations.forEach((creation) => {
       expect(creation).toContain("leadingBond: '-'");
     });
   });
 
   test('Manual construction with two ring attachments', () => {
     const ring1 = Ring({ atoms: 'c', size: 5 });
-    const ring2 = Ring({ atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-' });
-    const ring3 = Ring({ atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-' });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-',
+    });
+    const ring3 = Ring({
+      atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-',
+    });
 
     const withFirst = ring1.attach(ring2, 3);
     const withBoth = withFirst.attach(ring3, 4);
 
-    const smiles = withBoth.smiles;
+    const { smiles } = withBoth;
     expect(smiles).toContain('-c2ccccc2');
 
     // Count how many times the leading bond appears

@@ -48,8 +48,12 @@ describe('Ring Utils', () => {
     it('should return false when parent atoms are missing and different branchId', () => {
       const atoms = [
         { index: 0, branchDepth: 0, parentIndex: null },
-        { index: 1, branchDepth: 1, parentIndex: 5, branchId: 'branch1' },
-        { index: 2, branchDepth: 1, parentIndex: 6, branchId: 'branch2' },
+        {
+          index: 1, branchDepth: 1, parentIndex: 5, branchId: 'branch1',
+        },
+        {
+          index: 2, branchDepth: 1, parentIndex: 6, branchId: 'branch2',
+        },
       ];
       expect(isInSameBranchContext(atoms[1], atoms[2], atoms)).toBe(false);
     });
@@ -57,8 +61,12 @@ describe('Ring Utils', () => {
     it('should return true when parent atoms are missing but same branchId', () => {
       const atoms = [
         { index: 0, branchDepth: 0, parentIndex: null },
-        { index: 1, branchDepth: 1, parentIndex: 5, branchId: 'branch1' },
-        { index: 2, branchDepth: 1, parentIndex: 6, branchId: 'branch1' },
+        {
+          index: 1, branchDepth: 1, parentIndex: 5, branchId: 'branch1',
+        },
+        {
+          index: 2, branchDepth: 1, parentIndex: 6, branchId: 'branch1',
+        },
       ];
       expect(isInSameBranchContext(atoms[1], atoms[2], atoms)).toBe(true);
     });

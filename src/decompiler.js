@@ -753,8 +753,9 @@ function decompileFusedRing(fusedRing, indent, nextVar) {
   const isInterleaved = isInterleavedFusedRing(fusedRing);
   const hasSeqLinear = hasSequentialLinearAtoms(fusedRing);
 
-  // Check if any ring has position metadata (indicates complex ring structure)
-  const hasPositionData = fusedRing.metaAllPositions || fusedRing.rings.some((r) => r.metaPositions);
+  // Check if this is a complex parsed structure (not a simple manual .fuse())
+  // Complex structures have metaRingOrderMap which tracks which rings contribute to each position
+  const isComplexParsed = fusedRing.metaRingOrderMap && fusedRing.metaRingOrderMap.size > 0;
 
   // Use complex decompilation if there are sequential rings
   if (hasSeqRings) {
@@ -768,9 +769,9 @@ function decompileFusedRing(fusedRing, indent, nextVar) {
     return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
   }
 
-  // If there's position metadata, use interleaved decompiler even without varying branch depths
+  // If this is a complex parsed structure with ring order metadata, use interleaved decompiler
   // This handles complex fused rings like steroids where rings share atoms
-  if (hasPositionData) {
+  if (isComplexParsed) {
     return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
   }
 

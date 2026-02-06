@@ -30,7 +30,7 @@ describe('Cortisone - Divide and Conquer', () => {
   });
 
   test('DEBUG: manual Ring construction - understanding offset and size', () => {
-    const Ring = require('../src/constructors.js').Ring;
+    const { Ring } = require('../src/constructors.js');
 
     console.log('\n=== Understanding Ring Offset and Size ===');
 
@@ -98,7 +98,7 @@ describe('Cortisone - Divide and Conquer', () => {
     // - Lines 366-371 now handle single offset=0 inner ring
     // - Added startSharingRings classification for rings that share only starting atom
     // - Added traversal logic at lines 505-540 for start-sharing fusion
-    const Ring = require('../src/constructors.js').Ring;
+    const { Ring } = require('../src/constructors.js');
     const v1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
     const v2 = Ring({ atoms: 'C', size: 9, ringNumber: 2 });
     const fused = v1.fuse(v2, 0);

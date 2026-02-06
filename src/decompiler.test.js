@@ -189,7 +189,6 @@ describe('Decompiler - Advanced Features', () => {
     expect(code).toContain('metaSequentialRings');
   });
 
-
   test('handles custom indent option', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     const code = decompile(ring, { indent: 2 });
@@ -201,7 +200,6 @@ describe('Decompiler - Advanced Features', () => {
     const code = decompile(ring, { varName: 'node' });
     expect(code).toContain('node1');
   });
-
 
   test('throws error for unknown node type', () => {
     const unknownNode = { type: 'UnknownType' };
@@ -518,7 +516,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map();
     fused.metaBondMap = new Map();
     fused.metaSeqAtomAttachments = new Map();
@@ -566,7 +564,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map([[10, 'N']]);
     fused.metaBondMap = new Map();
     fused.metaSeqAtomAttachments = new Map();
@@ -590,7 +588,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map();
     fused.metaBondMap = new Map([[1, '='], [2, null], [3, '#']]);
     fused.metaSeqAtomAttachments = new Map();
@@ -616,7 +614,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map();
     fused.metaBondMap = new Map();
     const att1 = Linear(['O']);
@@ -677,7 +675,7 @@ describe('Decompiler - Advanced Features', () => {
     const fused = ringWithAttach.fuse(ring2, 1);
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaBranchDepthMap.set(12, 0);
     fused.metaAtomValueMap = new Map([[12, 'O']]);
     fused.metaBondMap = new Map();
@@ -716,7 +714,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
     fused.metaBranchDepthMap = new Map();
-    fused.metaAllPositions.forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    fused.metaAllPositions.forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map();
     fused.metaBondMap = new Map();
     fused.metaSeqAtomAttachments = new Map();
@@ -730,7 +728,7 @@ describe('Decompiler - Advanced Features', () => {
     const fused = ring1.fuse(ring2, 1);
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaBranchDepthMap.set(12, 2);
     fused.metaBranchDepthMap.set(13, 1);
     fused.metaAtomValueMap = new Map([[12, 'O'], [13, 'N']]);
@@ -762,7 +760,7 @@ describe('Decompiler - Advanced Features', () => {
     const fused = ring1.fuse(ring2, 1);
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaBranchDepthMap.set(12, 3);
     fused.metaBranchDepthMap.set(13, 2);
     fused.metaBranchDepthMap.set(14, 3);
@@ -779,7 +777,7 @@ describe('Decompiler - Advanced Features', () => {
     const fused = ring1.fuse(ring2, 1);
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].forEach(i => fused.metaBranchDepthMap.set(i, 0));
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map([[12, 'N']]);
     fused.metaBondMap = new Map();
     fused.metaSeqAtomAttachments = new Map();
@@ -787,5 +785,4 @@ describe('Decompiler - Advanced Features', () => {
     const code = decompile(fused);
     expect(code).toContain('leadingBond');
   });
-
 });

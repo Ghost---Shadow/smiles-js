@@ -2,7 +2,9 @@
  * Unit tests for roundtrip.js
  */
 
-import { describe, it, expect, spyOn } from 'bun:test';
+import {
+  describe, it, expect, spyOn,
+} from 'bun:test';
 import {
   validateRoundTrip,
   parseWithValidation,
@@ -201,9 +203,7 @@ describe('isValidRoundTrip', () => {
   });
 
   it('should return false for non-perfect round-trip', () => {
-    const spy = spyOn(parserModule, 'parse').mockImplementation(() => {
-      return { smiles: 'DIFFERENT', type: 'linear' };
-    });
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => ({ smiles: 'DIFFERENT', type: 'linear' }));
 
     expect(isValidRoundTrip('ORIGINAL')).toBe(false);
 

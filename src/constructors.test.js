@@ -178,7 +178,9 @@ describe('Helper Functions - Clone Functions', () => {
 
   test('deepCloneFusedRing clones all rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'C', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const cloned = deepCloneFusedRing(fused);
@@ -438,7 +440,9 @@ describe('Molecule Methods', () => {
 describe('FusedRing Methods', () => {
   test('fusedRing.clone() returns deep clone', () => {
     const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'c', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const cloned = fused.clone();
@@ -513,7 +517,9 @@ describe('FusedRing Methods', () => {
 
   test('fusedRing.toObject() returns plain object with rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'C', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const obj = fused.toObject();
@@ -526,7 +532,9 @@ describe('FusedRing Methods', () => {
 
   test('fusedRing.toObject() handles rings without toObject method', () => {
     const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'C', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     delete fused.rings[0].toObject;
@@ -539,7 +547,9 @@ describe('FusedRing Methods', () => {
 
   test('fusedRing.toCode() returns decompiled code', () => {
     const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'c', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const code = fused.toCode('naphthalene');
@@ -549,7 +559,9 @@ describe('FusedRing Methods', () => {
 
   test('fusedRing.toCode() uses default varName', () => {
     const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'c', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const code = fused.toCode();
@@ -560,8 +572,12 @@ describe('FusedRing Methods', () => {
 
 describe('FusedRing - Position Computation', () => {
   test('computes positions for inside rings', () => {
-    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
+    const ring1 = Ring({
+      atoms: 'C', size: 10, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -569,8 +585,12 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('computes positions for extending rings', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 7, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -578,15 +598,21 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('computes positions for endpoint rings', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 4 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 4,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
   });
 
   test('handles spiro rings with branchDepths', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
     const ring2 = Ring({
       atoms: 'C',
       size: 6,
@@ -600,9 +626,15 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('handles chained rings (3+ ring systems)', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 3 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 7, ringNumber: 2, offset: 3,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 0,
+    });
     const fused = FusedRing([ring1, ring2, ring3]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -610,16 +642,24 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('handles extending rings with chained rings', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 3 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 7, ringNumber: 2, offset: 3,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 0,
+    });
     const fused = FusedRing([ring1, ring2, ring3]);
 
     expect(fused.metaBranchDepthMap).toBeDefined();
   });
 
   test('applies ring branchDepths to fused ring', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
     const ring2 = Ring({
       atoms: 'C',
       size: 6,
@@ -633,7 +673,9 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('uses maximum branch depth when applying ring depths', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
     const ring2 = Ring({
       atoms: 'C',
       size: 6,
@@ -649,7 +691,9 @@ describe('FusedRing - Position Computation', () => {
 
   test('handles FusedRing with leadingBond option', () => {
     const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'c', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, offset: 2, ringNumber: 2,
+    });
     const fused = FusedRing([ring1, ring2], { leadingBond: '=' });
 
     expect(fused.metaLeadingBond).toBe('=');
@@ -657,7 +701,9 @@ describe('FusedRing - Position Computation', () => {
 
   test('skips position computation for parser-generated rings', () => {
     const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'c', size: 6, offset: 2, ringNumber: 2 });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, offset: 2, ringNumber: 2,
+    });
     ring1.metaPositions = [0, 1, 2, 3, 4, 5];
     const fused = FusedRing([ring1, ring2]);
 
@@ -665,9 +711,15 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('handles chained rings inside extending rings', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 3 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 7, ringNumber: 2, offset: 3,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 0,
+    });
     const fused = FusedRing([ring1, ring2, ring3]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -675,9 +727,15 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('handles chained rings with inside ring host', () => {
-    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 2 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 10, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 7, ringNumber: 2, offset: 2,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 0,
+    });
     const fused = FusedRing([ring1, ring2, ring3]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -685,8 +743,12 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('handles endpoint rings with multiple rings at same position', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 4, ringNumber: 2, offset: 2 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 4, ringNumber: 2, offset: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -694,8 +756,12 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('handles endpoint ring that ends at base ring end', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 3, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 3, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);
@@ -703,17 +769,27 @@ describe('FusedRing - Position Computation', () => {
   });
 
   test('sorts ring order for chained and endpoint rings', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 7, ringNumber: 2, offset: 3 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 7, ringNumber: 2, offset: 3,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 0,
+    });
     const fused = FusedRing([ring1, ring2, ring3]);
 
     expect(fused.metaRingOrderMap).toBeDefined();
   });
 
   test('handles extending ring without chained rings - benzimidazole case', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 5, ringNumber: 2, offset: 2 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 5, ringNumber: 2, offset: 2,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaTotalAtoms).toBeGreaterThan(0);

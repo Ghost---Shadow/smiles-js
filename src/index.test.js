@@ -3,7 +3,9 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import { parse, buildSMILES, Ring, Linear, Molecule, FusedRing, decompile } from './index.js';
+import {
+  parse, buildSMILES, Ring, Linear, Molecule, FusedRing, decompile,
+} from './index.js';
 
 describe('Main Index Exports', () => {
   it('should export parse function', () => {
