@@ -3,6 +3,13 @@
  * Handles rings that cross branch boundaries
  */
 
+import {
+  normalizeBranchDepths,
+  emitAttachment,
+  openBranches,
+  closeBranchesCrossing,
+} from './branch-walker.js';
+
 /**
  * Build SMILES for a ring that crosses branch boundaries
  * (ring closure happens inside a branch)
@@ -17,8 +24,7 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
   const branchDepths = ring.metaBranchDepths || [];
 
   // Normalize branch depths to start from 0
-  const minDepth = Math.min(...branchDepths);
-  const normalizedDepths = branchDepths.map((d) => d - minDepth);
+  const normalizedDepths = normalizeBranchDepths(branchDepths);
 
   const parts = [];
 
@@ -27,12 +33,10 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
     parts.push(ring.metaLeadingBond);
   }
 
-  let currentDepth = 0;
+  const depthRef = { value: 0 };
 
   // Track pending attachments that should be output after we return from deeper branches
   // Key: the POSITION's 1-indexed index in the ring, Value: { depth, attachments, isSibling }
-  // Sibling attachments are output with their own parens
-  // Inline continuation attachments are output without extra parens
   const pendingAttachments = new Map();
 
   // Build ring with branch handling
@@ -40,62 +44,8 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
     const posDepth = normalizedDepths[i - 1] || 0;
 
     // Handle branch depth changes
-    while (currentDepth < posDepth) {
-      parts.push('(');
-      currentDepth += 1;
-    }
-
-    // Close branches back to the atom's depth, outputting pending attachments
-    while (currentDepth > posDepth) {
-      // Output non-sibling attachments BEFORE closing the branch (they're inside)
-      // Non-siblings at depth = currentDepth - 1 should be output now
-      const toDeleteNonSibling = [];
-      const targetDepthNonSibling = currentDepth - 1;
-
-      pendingAttachments.forEach((data, attachPos) => {
-        if (data.depth === targetDepthNonSibling) {
-          const nonSiblings = data.attachments.filter((a) => a.metaIsSibling === false);
-
-          nonSiblings.forEach((attachment) => {
-            parts.push(buildSMILES(attachment));
-          });
-          // Keep only siblings for later - replace the entry instead of mutating
-          const keepAttachments = data.attachments.filter((a) => a.metaIsSibling !== false);
-          const newEntry = { depth: data.depth, attachments: keepAttachments };
-          pendingAttachments.set(attachPos, newEntry);
-
-          if (keepAttachments.length === 0) {
-            toDeleteNonSibling.push(attachPos);
-          }
-        }
-      });
-
-      toDeleteNonSibling.forEach((pos) => pendingAttachments.delete(pos));
-
-      parts.push(')');
-      currentDepth -= 1;
-
-      // Output sibling attachments AFTER closing to this depth (they're outside)
-      const toDeleteSibling = [];
-      const targetDepthSibling = currentDepth;
-
-      pendingAttachments.forEach((data, attachPos) => {
-        if (data.depth === targetDepthSibling) {
-          data.attachments.forEach((attachment) => {
-            const isSibling = attachment.metaIsSibling !== false;
-
-            if (isSibling) {
-              parts.push('(');
-              parts.push(buildSMILES(attachment));
-              parts.push(')');
-            }
-          });
-          toDeleteSibling.push(attachPos);
-        }
-      });
-
-      toDeleteSibling.forEach((pos) => pendingAttachments.delete(pos));
-    }
+    openBranches(parts, depthRef, posDepth);
+    closeBranchesCrossing(parts, depthRef, posDepth, pendingAttachments, buildSMILES);
 
     // Add bond before atom (for atoms 2 through size)
     if (i > 1 && bonds[i - 2]) {
@@ -121,100 +71,36 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
     }
 
     // Check if there's an inline branch starting after this position
-    // (next position has greater depth). If so, delay outputting attachments.
     const nextDepth = i < size ? (normalizedDepths[i] || 0) : 0;
     const hasInlineBranchAfter = nextDepth > posDepth;
 
     if (attachments[i] && attachments[i].length > 0) {
       if (hasInlineBranchAfter) {
         // Delay attachments - output after inline branch closes back to this depth
-        // If metaIsSibling is not set, treat as sibling (separate branch)
         const processedAttachments = attachments[i].map((att) => {
-          // If metaIsSibling is already set, use it
           if (att.metaIsSibling !== undefined) {
             return att;
           }
-          // Otherwise, assume it's a sibling (separate branch with parentheses)
-          // This is the safe default - parentheses are explicit and clear
-          const cloned = { ...att, metaIsSibling: true };
-          return cloned;
+          return { ...att, metaIsSibling: true };
         });
         pendingAttachments.set(i, { depth: posDepth, attachments: processedAttachments });
       } else {
         // Output attachments immediately
         attachments[i].forEach((attachment) => {
-          // Check if this attachment should be rendered inline (no parentheses)
-          // If metaIsSibling is not set, assume it's NOT inline (regular sibling)
-          const isInline = attachment.metaIsSibling === false;
-          if (!isInline) {
-            parts.push('(');
-          }
-          parts.push(buildSMILES(attachment));
-          if (!isInline) {
-            parts.push(')');
-          }
+          emitAttachment(parts, attachment, buildSMILES);
         });
       }
     }
   });
 
   // Close any remaining open branches
-  while (currentDepth > 0) {
-    // Output non-sibling attachments BEFORE closing the branch
-    const toDeleteNonSibling = [];
-    const targetDepthNonSibling = currentDepth - 1;
-
-    pendingAttachments.forEach((data, attachPos) => {
-      if (data.depth === targetDepthNonSibling) {
-        const nonSiblings = data.attachments.filter((a) => a.metaIsSibling === false);
-
-        nonSiblings.forEach((attachment) => {
-          parts.push(buildSMILES(attachment));
-        });
-        // Keep only siblings for later - replace the entry instead of mutating
-        const remainingAttachments = data.attachments.filter((a) => a.metaIsSibling !== false);
-        pendingAttachments.set(attachPos, { depth: data.depth, attachments: remainingAttachments });
-
-        if (remainingAttachments.length === 0) {
-          toDeleteNonSibling.push(attachPos);
-        }
-      }
-    });
-
-    toDeleteNonSibling.forEach((pos) => pendingAttachments.delete(pos));
-
-    parts.push(')');
-    currentDepth -= 1;
-
-    // Output sibling attachments AFTER closing to this depth
-    const toDeleteSibling = [];
-    const targetDepthSibling = currentDepth;
-
-    pendingAttachments.forEach((data, attachPos) => {
-      if (data.depth === targetDepthSibling) {
-        data.attachments.forEach((attachment) => {
-          const isSibling = attachment.metaIsSibling !== false;
-
-          if (isSibling) {
-            parts.push('(');
-            parts.push(buildSMILES(attachment));
-            parts.push(')');
-          }
-        });
-        toDeleteSibling.push(attachPos);
-      }
-    });
-
-    toDeleteSibling.forEach((pos) => pendingAttachments.delete(pos));
-  }
+  closeBranchesCrossing(parts, depthRef, 0, pendingAttachments, buildSMILES);
 
   // Output any remaining pending attachments for depth 0 (after all branches closed)
-  // Use _isSibling flag to determine if parens are needed
   pendingAttachments.forEach((data) => {
     if (data.depth === 0) {
       data.attachments.forEach((attachment) => {
-        const isSibling = attachment.metaIsSibling !== false; // default to true for safety
-
+        const isSibling = attachment.metaIsSibling !== false;
         if (isSibling) {
           parts.push('(');
           parts.push(buildSMILES(attachment));
