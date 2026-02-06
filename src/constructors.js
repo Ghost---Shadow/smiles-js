@@ -4,356 +4,46 @@
  */
 
 import {
-  ASTNodeType,
   validateAtoms,
   validateSize,
   isRingNode,
 } from './ast.js';
 
-import { buildSMILES } from './codegen/index.js';
-import { decompile } from './decompiler.js';
-import { computeFusedRingPositions, applyRingBranchDepthsToFusedRing } from './layout/index.js';
 import {
-  ringAttach,
-  ringSubstitute,
-  ringSubstituteMultiple,
-  ringFuse,
-  ringConcat,
-  ringClone,
-  linearAttach,
-  linearBranch,
-  linearBranchAt,
-  linearConcat,
-  fusedRingAddRing,
-  fusedRingGetRing,
-  fusedRingSubstituteInRing,
-  fusedRingAttachToRing,
-  fusedRingRenumber,
-  fusedRingConcat,
-  moleculeAppend,
-  moleculePrepend,
-  moleculeConcat,
-  moleculeGetComponent,
-  moleculeReplaceComponent,
-} from './manipulation.js';
+  createRingNode,
+  createLinearNode,
+  createFusedRingNode,
+  createMoleculeNode,
+} from './node-creators.js';
 
-/**
- * Helper functions for immutable updates
- */
+// Re-export clone utilities
+export {
+  cloneAttachments,
+  cloneSubstitutions,
+  cloneComponents,
+  deepCloneRing,
+  deepCloneLinear,
+  deepCloneFusedRing,
+  deepCloneMolecule,
+} from './clone-utils.js';
 
-export function cloneAttachments(attachments) {
-  const cloned = {};
-  Object.entries(attachments).forEach(([pos, list]) => {
-    cloned[pos] = [...list];
-  });
-  return cloned;
-}
+// Re-export method attachers
+export {
+  getSmiles,
+  attachSmilesGetter,
+  attachRingMethods,
+  attachLinearMethods,
+  attachMoleculeMethods,
+  attachFusedRingMethods,
+} from './method-attachers.js';
 
-export function cloneSubstitutions(substitutions) {
-  return { ...substitutions };
-}
-
-export function cloneComponents(components) {
-  return [...components];
-}
-
-export function deepCloneRing(ring) {
-  return {
-    ...ring,
-    substitutions: cloneSubstitutions(ring.substitutions),
-    attachments: cloneAttachments(ring.attachments),
-    bonds: [...(ring.bonds || [])],
-  };
-}
-
-export function deepCloneLinear(linear) {
-  return {
-    ...linear,
-    atoms: [...linear.atoms],
-    bonds: [...linear.bonds],
-    attachments: cloneAttachments(linear.attachments || {}),
-  };
-}
-
-export function deepCloneFusedRing(fusedRing) {
-  return {
-    ...fusedRing,
-    rings: fusedRing.rings.map((r) => deepCloneRing(r)),
-  };
-}
-
-export function deepCloneMolecule(molecule) {
-  return {
-    ...molecule,
-    components: cloneComponents(molecule.components),
-  };
-}
-
-/**
- * SMILES getter function
- */
-
-export function getSmiles() {
-  return buildSMILES(this);
-}
-
-/**
- * Method attachment functions
- */
-
-// Attach smiles getter to all node types
-export function attachSmilesGetter(node) {
-  Object.defineProperty(node, 'smiles', {
-    get: getSmiles,
-    enumerable: true,
-    configurable: true,
-  });
-  return node;
-}
-
-// Attach manipulation methods to Ring nodes
-export function attachRingMethods(node) {
-  return Object.assign(node, {
-    attach(attachment, position, options) {
-      return ringAttach(this, attachment, position, options);
-    },
-    substitute(position, newAtom) {
-      return ringSubstitute(this, position, newAtom);
-    },
-    substituteMultiple(substitutionMap) {
-      return ringSubstituteMultiple(this, substitutionMap);
-    },
-    fuse(otherRing, offset) {
-      return ringFuse(this, otherRing, offset);
-    },
-    concat(other) {
-      return ringConcat(this, other);
-    },
-    clone() {
-      return ringClone(this);
-    },
-    toObject() {
-      const result = {
-        type: this.type,
-        atoms: this.atoms,
-        size: this.size,
-        ringNumber: this.ringNumber,
-        offset: this.offset,
-        substitutions: { ...this.substitutions },
-        attachments: {},
-        bonds: [...(this.bonds || [])],
-      };
-      Object.entries(this.attachments).forEach(([pos, attachmentList]) => {
-        result.attachments[pos] = attachmentList.map((a) => (a.toObject ? a.toObject() : a));
-      });
-      return result;
-    },
-    toCode(varName = 'ring') {
-      return decompile(this, { varName });
-    },
-  });
-}
-
-// Attach manipulation methods to Linear nodes
-export function attachLinearMethods(node) {
-  return Object.assign(node, {
-    attach(attachment, position) {
-      return linearAttach(this, attachment, position);
-    },
-    branch(branchPoint, ...branches) {
-      return linearBranch(this, branchPoint, ...branches);
-    },
-    branchAt(branchMap) {
-      return linearBranchAt(this, branchMap);
-    },
-    concat(other) {
-      return linearConcat(this, other);
-    },
-    clone() {
-      return deepCloneLinear(this);
-    },
-    toObject() {
-      const result = {
-        type: this.type,
-        atoms: [...this.atoms],
-        bonds: [...this.bonds],
-        attachments: {},
-      };
-      Object.entries(this.attachments).forEach(([pos, attachmentList]) => {
-        result.attachments[pos] = attachmentList.map((a) => (a.toObject ? a.toObject() : a));
-      });
-      return result;
-    },
-    toCode(varName = 'linear') {
-      return decompile(this, { varName });
-    },
-  });
-}
-
-// Attach manipulation methods to Molecule nodes
-export function attachMoleculeMethods(node) {
-  return Object.assign(node, {
-    append(component) {
-      return moleculeAppend(this, component);
-    },
-    prepend(component) {
-      return moleculePrepend(this, component);
-    },
-    concat(other) {
-      return moleculeConcat(this, other);
-    },
-    getComponent(index) {
-      return moleculeGetComponent(this, index);
-    },
-    replaceComponent(index, newComponent) {
-      return moleculeReplaceComponent(this, index, newComponent);
-    },
-    clone() {
-      return deepCloneMolecule(this);
-    },
-    toObject() {
-      return {
-        type: this.type,
-        components: this.components.map((c) => (c.toObject ? c.toObject() : c)),
-      };
-    },
-    toCode(varName = 'molecule') {
-      return decompile(this, { varName });
-    },
-  });
-}
-
-// Attach manipulation methods to FusedRing nodes
-export function attachFusedRingMethods(node) {
-  return Object.assign(node, {
-    addRing(ring, offset) {
-      return fusedRingAddRing(this, ring, offset);
-    },
-    getRing(ringNumber) {
-      return fusedRingGetRing(this, ringNumber);
-    },
-    substituteInRing(ringNumber, position, newAtom) {
-      return fusedRingSubstituteInRing(this, ringNumber, position, newAtom);
-    },
-    attachToRing(ringNumber, attachment, position) {
-      return fusedRingAttachToRing(this, ringNumber, attachment, position);
-    },
-    renumber(startNumber = 1) {
-      return fusedRingRenumber(this, startNumber);
-    },
-    concat(other) {
-      return fusedRingConcat(this, other);
-    },
-    clone() {
-      return deepCloneFusedRing(this);
-    },
-    toObject() {
-      return {
-        type: this.type,
-        rings: this.rings.map((r) => (r.toObject ? r.toObject() : {
-          type: r.type,
-          atoms: r.atoms,
-          size: r.size,
-          ringNumber: r.ringNumber,
-          offset: r.offset,
-          substitutions: { ...r.substitutions },
-          attachments: {},
-        })),
-      };
-    },
-    toCode(varName = 'fusedRing') {
-      return decompile(this, { varName });
-    },
-  });
-}
-
-/**
- * Internal factory functions
- */
-
-export function createRingNode(
-  atoms,
-  size,
-  ringNumber,
-  offset,
-  subs,
-  attachments,
-  bonds = [],
-  branchDepths = null,
-) {
-  const node = {
-    type: ASTNodeType.RING,
-    atoms,
-    size,
-    ringNumber,
-    offset,
-    substitutions: { ...subs },
-    attachments: { ...attachments },
-    bonds: [...bonds],
-  };
-  // branchDepths tracks which ring positions are inside branches
-  // Used for branch-crossing rings like C1CCC(CC1)(CC(=O)O)CN
-  if (branchDepths) {
-    node.metaBranchDepths = [...branchDepths];
-  }
-  attachSmilesGetter(node);
-  attachRingMethods(node);
-  return node;
-}
-
-export function createLinearNode(atoms, bonds, attachments = {}) {
-  const node = {
-    type: ASTNodeType.LINEAR,
-    atoms: [...atoms],
-    bonds: [...bonds],
-    attachments: { ...attachments },
-  };
-  attachSmilesGetter(node);
-  attachLinearMethods(node);
-  return node;
-}
-
-export function createFusedRingNode(rings, options = {}) {
-  // Create base node
-  const node = {
-    type: ASTNodeType.FUSED_RING,
-    rings: rings.map((r) => ({ ...r })),
-  };
-
-  // Store leading bond if provided (for connecting to previous component in molecule)
-  if (options.leadingBond) {
-    node.metaLeadingBond = options.leadingBond;
-  }
-
-  // Only compute position metadata if not already present from parser
-  // Parser-generated rings have metaPositions, API-created rings don't
-  // Also skip if explicitly requested via options
-  const hasParserPositions = node.rings.some((r) => r.metaPositions);
-  const skipComputation = options.skipPositionComputation || false;
-
-  if (!hasParserPositions && !skipComputation) {
-    // Compute interleaved position metadata for proper SMILES generation
-    // This is needed when rings are created via API (not parser)
-    computeFusedRingPositions(node);
-
-    // Apply branch depths from constituent rings if they have metaBranchDepths
-    applyRingBranchDepthsToFusedRing(node);
-  }
-
-  attachSmilesGetter(node);
-  attachFusedRingMethods(node);
-  return node;
-}
-
-export function createMoleculeNode(components) {
-  const node = {
-    type: ASTNodeType.MOLECULE,
-    components: [...components],
-  };
-  attachSmilesGetter(node);
-  attachMoleculeMethods(node);
-  return node;
-}
+// Re-export node creators
+export {
+  createRingNode,
+  createLinearNode,
+  createFusedRingNode,
+  createMoleculeNode,
+} from './node-creators.js';
 
 /**
  * Public constructor functions
