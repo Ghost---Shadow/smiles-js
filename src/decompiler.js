@@ -803,6 +803,10 @@ function decompileMolecule(molecule, indent, nextVar) {
   components.forEach((component) => {
     const { code: componentCode, finalVar } = decompileNodeInternal(component, indent, nextVar);
     lines.push(componentCode);
+    // Preserve metaLeadingBond on linear/ring components (e.g., '/' in ring/C=C/ring)
+    if (component.metaLeadingBond) {
+      lines.push(`${indent}${finalVar}.metaLeadingBond = '${component.metaLeadingBond}';`);
+    }
     componentFinalVars.push(finalVar);
   });
 

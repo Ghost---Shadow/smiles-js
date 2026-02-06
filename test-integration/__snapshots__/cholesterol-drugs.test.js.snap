@@ -1572,7 +1572,9 @@ export const v20 = v16.attach(v19, 3);
 export const v21 = Linear(['O']);
 export const v22 = v20.attach(v21, 4);
 export const v23 = Linear(['C', 'C'], ['=']);
+v23.metaLeadingBond = '/';
 export const v24 = Ring({ atoms: 'c', size: 6, leadingBond: '/' });
+v24.metaLeadingBond = '/';
 export const v25 = Molecule([v3, v22, v23, v24]);"
 `;
 

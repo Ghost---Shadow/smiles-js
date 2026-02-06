@@ -631,6 +631,11 @@ function buildRingGroupNodeWithContext(group, atoms, ringBoundaries) {
           false,
         );
 
+        // Preserve the leading bond (e.g., '/' in /C=C/) on the sequential linear node
+        if (firstSeqAtom.bond) {
+          seqLinearNode.metaLeadingBond = firstSeqAtom.bond;
+        }
+
         // Return a Molecule combining ring and sequential linear
         return Molecule([ringNode, seqLinearNode]);
       }
@@ -1072,7 +1077,12 @@ buildBranchWithRingsInternal = function buildBranchWithRings(atoms, all, rings, 
   // Flush remaining linear
   if (currentLinear.length > 0) {
     const lb = isBranch && components.length === 0;
-    components.push(buildLinearNodeSimpleInternal(currentLinear, allAtoms, ringBoundaries, lb));
+    const trailingLinear = buildLinearNodeSimpleInternal(currentLinear, allAtoms, ringBoundaries, lb);
+    // Preserve the leading bond on trailing linear components (e.g., '/' in ring/C=C/C)
+    if (components.length > 0 && currentLinear[0].bond) {
+      trailingLinear.metaLeadingBond = currentLinear[0].bond;
+    }
+    components.push(trailingLinear);
   }
 
   // Return appropriate node
@@ -1153,10 +1163,13 @@ function buildAST(atoms, ringBoundaries) {
       // Flush any pending linear chain
       if (currentLinear.length > 0) {
         const linNode = buildLinearNodeSimpleInternal(currentLinear, atoms, ringBoundaries, false);
-        const linearNode = linNode;
+        // Preserve the leading bond on linear components between rings (e.g., '/' in ring/C=C/ring)
+        if (components.length > 0 && currentLinear[0].bond) {
+          linNode.metaLeadingBond = currentLinear[0].bond;
+        }
         const linearPositions = new Set(currentLinear.map((a) => a.index));
         componentPositions.push({ componentIndex: components.length, positions: linearPositions });
-        components.push(linearNode);
+        components.push(linNode);
         currentLinear = [];
       }
 
@@ -1218,7 +1231,12 @@ function buildAST(atoms, ringBoundaries) {
 
   // Flush remaining linear chain
   if (currentLinear.length > 0) {
-    components.push(buildLinearNodeSimpleInternal(currentLinear, atoms, ringBoundaries, false));
+    const trailingLinear = buildLinearNodeSimpleInternal(currentLinear, atoms, ringBoundaries, false);
+    // Preserve the leading bond on trailing linear components (e.g., '/' in ring/C=C/C)
+    if (components.length > 0 && currentLinear[0].bond) {
+      trailingLinear.metaLeadingBond = currentLinear[0].bond;
+    }
+    components.push(trailingLinear);
   }
 
   // Return appropriate node type

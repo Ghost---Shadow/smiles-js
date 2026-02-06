@@ -32,9 +32,20 @@ export function buildSMILES(ast) {
  */
 export function buildMoleculeSMILES(molecule) {
   const parts = molecule.components.map((component, idx) => {
-    const smiles = buildSMILES(component);
-    // Check if component has a leading bond (connecting to previous component)
+    // Extract leading bond before building SMILES to prevent double-emission
+    // (buildRingSMILES also emits metaLeadingBond internally)
     const leadingBond = idx > 0 && component.metaLeadingBond ? component.metaLeadingBond : '';
+    const savedLeadingBond = component.metaLeadingBond;
+    if (leadingBond) {
+      delete component.metaLeadingBond;
+    }
+
+    const smiles = buildSMILES(component);
+
+    // Restore the leading bond
+    if (savedLeadingBond !== undefined) {
+      component.metaLeadingBond = savedLeadingBond;
+    }
 
     return leadingBond + smiles;
   });
