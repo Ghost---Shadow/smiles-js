@@ -54,11 +54,11 @@ export function codegenRoundTrip(smiles) {
   const code = ast.toCode('v');
 
   // Find the last variable name in the generated code
-  const varMatches = code.match(/export const (v\d+)/g);
+  const varMatches = code.match(/export (?:const|let) (v\d+)/g);
   if (!varMatches) {
     throw new Error('No variables found in generated code');
   }
-  const lastVar = varMatches[varMatches.length - 1].replace('export const ', '');
+  const lastVar = varMatches[varMatches.length - 1].replace(/export (?:const|let) /, '');
 
   // Strip 'export ' for evaluation (not supported in non-module context)
   const executableCode = code.replace(/^export /gm, '');

@@ -186,7 +186,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaBondMap = new Map();
     fused.metaSeqAtomAttachments = new Map();
     const code = decompile(fused);
-    expect(code).toContain('metaSequentialRings');
+    expect(code).toContain('addSequentialRings');
   });
 
   test('handles custom indent option', () => {
@@ -307,7 +307,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.metaSeqAtomAttachments = new Map();
     fused.metaBranchDepthMap.set(10, 0);
     const code = decompile(fused, { includeMetadata: true });
-    expect(code).toContain('metaSequentialRings');
+    expect(code).toContain('addSequentialRings');
   });
 
   test('decompiles fused ring that returns single ring early (line 277-279)', () => {
