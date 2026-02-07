@@ -21,6 +21,7 @@ Create ring structures with substitutions and attachments.
 | `substitutions` | `object` | `{}` | Position -> atom substitutions |
 | `attachments` | `object` | `{}` | Position -> attachment list |
 | `bonds` | `array` | `[]` | Bond types between atoms |
+| `branchDepths` | `number[]` | `null` | Per-atom branch depth (for rings that cross branch boundaries) |
 
 ```javascript
 // Simple benzene
@@ -225,14 +226,39 @@ const decorated = fused.attachToRing(1, Linear(['O']), 4);
 // Renumber rings
 const renumbered = fused.renumber(10);
 
-// Add sequential continuation rings
+// Add sequential continuation rings with depths and chain atoms
 const withSeq = fused.addSequentialRings([ring3, ring4], {
-  atomAttachments: { 25: [Linear(['O'], ['='])] }
+  depths: [1, 2],
+  chainAtoms: [
+    { atom: 'C', depth: 2, position: 'before' },
+    { atom: 'C', depth: 2, position: 'after', attachments: [Linear(['O'], ['='])] },
+  ]
 });
 
 // Add attachment to a sequential atom position
 const withAtt = fused.addSequentialAtomAttachment(25, Linear(['O']));
 ```
+
+#### `fusedRing.addSequentialRings(rings, options?)`
+
+Add continuation rings to a fused ring system. Computes all position metadata internally.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `rings` | `Ring[]` | Array of sequential Ring nodes to add |
+| `options.depths` | `number[]` | Per-ring branch depth (e.g., `[1, 2, 1, 2]`) |
+| `options.chainAtoms` | `object[]` | Standalone atoms between rings (see below) |
+| `options.atomAttachments` | `object` | Legacy: position → attachment list map |
+
+**chainAtoms entries:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `atom` | `string` | Atom symbol (e.g., `'C'`, `'N'`, `'O'`) |
+| `depth` | `number` | Branch depth for this atom |
+| `position` | `'before'` \| `'after'` | Whether the atom appears before or after rings at its depth |
+| `bond` | `string` | Optional bond type (e.g., `'='`, `'#'`) |
+| `attachments` | `object[]` | Optional array of nodes attached to this atom |
 
 ---
 
@@ -435,9 +461,6 @@ Some complex molecules may have minor notation differences during round-trip:
 
 **Impact**: Low - Structure is preserved, only notation differs.
 
-### toCode() Limitation
+### toCode() Generated Code
 
-The `.toCode()` method has a limitation with certain sequential continuation patterns in very complex nested structures. This does NOT affect:
-- Parsing SMILES -> AST
-- Serializing AST -> SMILES
-- Round-trip fidelity
+The `.toCode()` method generates JavaScript constructor code that reconstructs the molecule. For molecules with sequential continuation rings (e.g., Telmisartan), the generated code uses `addSequentialRings()` with `depths` and `chainAtoms` options to produce clean structural API calls with no raw metadata assignments.
