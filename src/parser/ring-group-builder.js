@@ -358,6 +358,7 @@ function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, at
   // If we only have 1 truly fused ring but have sequential rings, wrap in FusedRing
   if (rings.length === 1 && seqRingNodes.length > 0) {
     const fusedNode = createFusedRingNode([rings[0]]);
+    fusedNode.metaUseInterleavedCodegen = true;
     fusedNode.metaTotalAtoms = totalAtoms;
     fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
     fusedNode.metaSequentialRings = seqRingNodes;
@@ -393,6 +394,7 @@ function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, at
 
   // Multi-ring fused node
   const fusedNode = FusedRing(rings);
+  fusedNode.metaUseInterleavedCodegen = true;
   fusedNode.metaTotalAtoms = totalAtoms;
   fusedNode.metaAllPositions = [...allPositions].sort((a, b) => a - b);
   fusedNode.metaSequentialRings = seqRingNodes;

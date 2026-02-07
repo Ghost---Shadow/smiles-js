@@ -3,6 +3,13 @@
  * Handles non-interleaved fused rings using offset approach
  */
 
+import {
+  normalizeBranchDepths,
+  emitAttachment,
+  openBranches,
+  closeBranchesInterleaved,
+} from './branch-walker.js';
+
 /**
  * Build SMILES for simple (non-interleaved) fused rings using offset approach
  * @param {Object} fusedRing - FusedRing AST node
@@ -20,12 +27,14 @@ export function buildSimpleFusedRingSMILES(fusedRing, buildSMILES) {
   const atomSequence = new Array(maxEnd);
   const ringMarkers = [];
   const bondsBefore = new Map(); // position -> bond
+  const branchDepthAt = new Map(); // position -> branch depth
 
-  // Fill atom sequence with ring atoms, bonds, and attachments
+  // Fill atom sequence with ring atoms, bonds, attachments, and branch depths
   sortedRings.forEach((ring) => {
     const {
       offset, size, atoms, substitutions = {}, attachments = {}, ringNumber, bonds = [],
     } = ring;
+    const branchDepths = ring.metaBranchDepths || [];
 
     // Record ring opening and closing positions with closure bond
     const closureBond = bonds[size - 1] || null;
@@ -39,9 +48,10 @@ export function buildSimpleFusedRingSMILES(fusedRing, buildSMILES) {
       position: offset + size - 1,
       ringNumber,
       type: 'close',
+      openPosition: offset,
     });
 
-    // Place atoms, bonds, and attachments
+    // Place atoms, bonds, attachments, and branch depths
     Array.from({ length: size }, (_, idx) => idx).forEach((i) => {
       const pos = offset + i;
       const relativePos = i + 1; // 1-indexed position within the ring
@@ -54,6 +64,15 @@ export function buildSimpleFusedRingSMILES(fusedRing, buildSMILES) {
       // Add bond before this atom (for atoms after the first in the ring)
       if (i > 0 && bonds[i - 1] && !bondsBefore.has(pos)) {
         bondsBefore.set(pos, bonds[i - 1]);
+      }
+
+      // Add branch depth for this position (take max if multiple rings overlap)
+      if (branchDepths.length > 0) {
+        const depth = branchDepths[i] || 0;
+        const currentDepth = branchDepthAt.get(pos) || 0;
+        if (depth > currentDepth) {
+          branchDepthAt.set(pos, depth);
+        }
       }
 
       // Add attachments at this relative position (if any)
@@ -75,7 +94,97 @@ export function buildSimpleFusedRingSMILES(fusedRing, buildSMILES) {
     atomSequence[marker.position].markers.push(marker);
   });
 
-  // Build SMILES string using standard notation
+  // Check if any position has varying branch depths
+  const hasBranchDepths = branchDepthAt.size > 0
+    && [...branchDepthAt.values()].some((d) => d !== 0);
+
+  if (hasBranchDepths) {
+    return buildWithBranchDepths(atomSequence, bondsBefore, branchDepthAt, buildSMILES);
+  }
+
+  // Build SMILES string using standard notation (no branch depth handling needed)
+  return buildFlat(atomSequence, bondsBefore, buildSMILES);
+}
+
+/**
+ * Build SMILES for fused rings that have branch-crossing positions
+ */
+function buildWithBranchDepths(atomSequence, bondsBefore, branchDepthAt, buildSMILES) {
+  // Collect all valid positions in order
+  const positions = [];
+  atomSequence.forEach((entry, pos) => {
+    if (entry) positions.push(pos);
+  });
+
+  // Normalize branch depths
+  const normalizedDepths = normalizeBranchDepths(branchDepthAt, positions);
+
+  const parts = [];
+  const depthRef = { value: 0 };
+  const pendingAttachments = new Map();
+
+  positions.forEach((pos, idx) => {
+    const entry = atomSequence[pos];
+    const { atom, markers = [], attachments = [] } = entry;
+    const posDepth = normalizedDepths.get(pos) || 0;
+
+    // Handle branch depth changes
+    openBranches(parts, depthRef, posDepth);
+    closeBranchesInterleaved(parts, depthRef, posDepth, pendingAttachments, buildSMILES);
+
+    // Add bond before atom
+    if (idx > 0 && bondsBefore.has(pos)) {
+      parts.push(bondsBefore.get(pos));
+    }
+
+    if (atom) {
+      parts.push(atom);
+    }
+
+    // Ring markers: opens first, then closes (sorted by ring number)
+    const openMarkers = markers.filter((m) => m.type === 'open');
+    openMarkers.forEach((marker) => {
+      if (marker.closureBond) {
+        parts.push(marker.closureBond);
+      }
+      parts.push(marker.ringNumber.toString());
+    });
+
+    const closeMarkers = markers.filter((m) => m.type === 'close');
+    closeMarkers.sort((a, b) => a.ringNumber - b.ringNumber);
+    closeMarkers.forEach((marker) => {
+      parts.push(marker.ringNumber.toString());
+    });
+
+    // Check if there's an inline branch starting after this position
+    const nextPos = positions[idx + 1];
+    const nextDepth = nextPos !== undefined ? (normalizedDepths.get(nextPos) || 0) : 0;
+    const hasInlineBranchAfter = nextDepth > posDepth;
+
+    if (attachments.length > 0) {
+      if (hasInlineBranchAfter) {
+        if (!pendingAttachments.has(posDepth)) {
+          pendingAttachments.set(posDepth, []);
+        }
+        pendingAttachments.get(posDepth).push(...attachments);
+      } else {
+        attachments.forEach((attachment) => {
+          emitAttachment(parts, attachment, buildSMILES);
+        });
+      }
+    }
+  });
+
+  // Close any remaining open branches
+  closeBranchesInterleaved(parts, depthRef, 0, pendingAttachments, buildSMILES);
+
+  return parts.join('');
+}
+
+/**
+ * Build SMILES for fused rings without branch depth handling (flat case)
+ */
+function buildFlat(atomSequence, bondsBefore, buildSMILES) {
   const parts = [];
   atomSequence.forEach((entry, pos) => {
     if (!entry) return;
@@ -101,6 +210,7 @@ export function buildSimpleFusedRingSMILES(fusedRing, buildSMILES) {
     });
 
     const closeMarkers = markers.filter((m) => m.type === 'close');
+    closeMarkers.sort((a, b) => a.ringNumber - b.ringNumber);
     closeMarkers.forEach((marker) => {
       parts.push(marker.ringNumber.toString());
     });

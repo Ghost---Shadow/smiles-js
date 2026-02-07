@@ -213,7 +213,7 @@ export function buildRingSMILES(ring) {
 export function buildFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
 
-  // Check if we have position data for interleaved fused ring handling
+  // Use interleaved if we have position data (from parser or computeFusedRingPositions)
   const hasPositionData = rings.some((r) => r.metaPositions);
 
   if (hasPositionData && fusedRing.metaAllPositions) {

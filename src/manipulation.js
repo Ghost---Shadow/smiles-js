@@ -14,6 +14,7 @@ import {
   deepCloneRing,
 } from './constructors.js';
 import { validatePosition, isLinearNode, isMoleculeNode } from './ast.js';
+import { computeFusedRingPositions } from './layout/index.js';
 
 /**
  * Ring manipulation methods
@@ -240,7 +241,12 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
   const newRings = fusedRing.rings.map((r) => ({ ...r }));
   const newNode = createFusedRingNode(newRings, { skipPositionComputation: true });
 
-  // Copy existing metadata
+  // Copy interleaved codegen flag if present (parser-created nodes)
+  if (fusedRing.metaUseInterleavedCodegen) {
+    newNode.metaUseInterleavedCodegen = true;
+  }
+
+  // Copy existing metadata from the base fused ring
   newNode.metaAllPositions = [...(fusedRing.metaAllPositions || [])];
   newNode.metaTotalAtoms = fusedRing.metaTotalAtoms || 0;
   newNode.metaBranchDepthMap = new Map(fusedRing.metaBranchDepthMap || []);
@@ -258,40 +264,218 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
   // Store sequential rings
   newNode.metaSequentialRings = [...seqRings];
 
-  // Extend allPositions with sequential ring positions
+  // Determine the depth of each sequential ring.
+  // Priority: (1) explicit depths option, (2) ring's metaBranchDepths[0], (3) 0
+  const depths = options.depths || [];
+  const seqRingDepths = seqRings.map((ring, idx) => {
+    if (depths[idx] !== undefined) return depths[idx];
+    if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) return ring.metaBranchDepths[0];
+    return 0;
+  });
+
+  // Group sequential rings by depth, keeping input order within each depth group.
+  const depthGroups = new Map();
+  seqRings.forEach((ring, idx) => {
+    const depth = seqRingDepths[idx];
+    if (!depthGroups.has(depth)) depthGroups.set(depth, []);
+    depthGroups.get(depth).push({ ring, idx });
+  });
+  // Deeper rings appear first in allPositions (they're inside branches).
+  const sortedDepths = [...depthGroups.keys()].sort((a, b) => b - a);
+
+  // chainAtoms: optional array of {atom, bond?, depth} describing standalone atoms
+  // between sequential rings (not part of any ring structure).
+  // They are emitted before each depth group and after the deepest group.
+  const chainAtoms = options.chainAtoms || [];
+
+  // Index chain atoms by depth and position (before/after)
+  // Chain atoms at a given depth go: before-atoms, rings, after-atoms
+  const chainAtomsByDepth = new Map();
+  chainAtoms.forEach((ca) => {
+    const d = ca.depth !== undefined ? ca.depth : 0;
+    if (!chainAtomsByDepth.has(d)) chainAtomsByDepth.set(d, { before: [], after: [] });
+    const bucket = chainAtomsByDepth.get(d);
+    if (ca.position === 'before') bucket.before.push(ca);
+    else bucket.after.push(ca);
+  });
+
+  // Assign positions to sequential rings, ordered by depth (deepest first).
+  // Within each depth group, rings with overlapping offsets form fused sub-systems.
+  // We use computeFusedRingPositions to compute correct interleaved positions.
   let nextPos = newNode.metaTotalAtoms;
-  seqRings.forEach((seqRing) => {
-    const positions = [];
-    for (let i = 0; i < seqRing.size; i += 1) {
-      positions.push(nextPos);
-      newNode.metaAllPositions.push(nextPos);
-      newNode.metaBranchDepthMap.set(nextPos, 0);
 
-      const relativePos = i + 1;
-      if (seqRing.substitutions && seqRing.substitutions[relativePos]) {
-        newNode.metaAtomValueMap.set(nextPos, seqRing.substitutions[relativePos]);
-      }
-      if (i > 0 && seqRing.bonds && seqRing.bonds[i - 1]) {
-        newNode.metaBondMap.set(nextPos, seqRing.bonds[i - 1]);
-      }
+  // Track chain atom attachments (position → attachment nodes)
+  const chainAtomAttachments = new Map();
 
-      nextPos += 1;
+  // Helper to emit a chain atom
+  const emitChainAtom = (ca) => {
+    const pos = nextPos;
+    newNode.metaAllPositions.push(pos);
+    newNode.metaBranchDepthMap.set(pos, ca.depth !== undefined ? ca.depth : 0);
+    if (ca.atom && ca.atom !== 'C') {
+      newNode.metaAtomValueMap.set(pos, ca.atom);
     }
-    seqRing.metaPositions = positions;
-    seqRing.metaStart = positions[0];
-    seqRing.metaEnd = positions[positions.length - 1];
+    if (ca.bond) {
+      newNode.metaBondMap.set(pos, ca.bond);
+    }
+    if (ca.attachments && ca.attachments.length > 0) {
+      chainAtomAttachments.set(pos, ca.attachments);
+    }
+    nextPos += 1;
+  };
+
+  sortedDepths.forEach((depth) => {
+    const group = depthGroups.get(depth);
+
+    // Emit chain atoms that go BEFORE rings at this depth
+    const chainGroup = chainAtomsByDepth.get(depth);
+    if (chainGroup) {
+      chainGroup.before.forEach(emitChainAtom);
+    }
+
+    // Check if any rings in this depth group overlap (share atoms via offsets)
+    const hasOverlap = group.length >= 2 && group.some(({ ring: r }, i) => {
+      for (let j = i + 1; j < group.length; j += 1) {
+        const rj = group[j].ring;
+        const startA = r.offset || 0;
+        const endA = startA + r.size;
+        const startB = rj.offset || 0;
+        const endB = startB + rj.size;
+        if (startA < endB && startB < endA) return true;
+      }
+      return false;
+    });
+
+    if (hasOverlap && group.length >= 2) {
+      // Create a temporary fused ring from the sequential rings in this group
+      // and use computeFusedRingPositions to compute their interleaved positions.
+      const tempRings = group.map(({ ring: seqRing }) => createRingNode(
+        seqRing.atoms,
+        seqRing.size,
+        seqRing.ringNumber,
+        seqRing.offset || 0,
+        seqRing.substitutions || {},
+        seqRing.attachments || {},
+        seqRing.bonds || [],
+        null,
+      ));
+      const tempFused = createFusedRingNode(tempRings, { skipPositionComputation: true });
+      tempFused.rings = tempRings;
+      computeFusedRingPositions(tempFused);
+
+      // Map the temp fused ring's positions to global positions
+      const tempAllPos = tempFused.metaAllPositions || [];
+      const localToGlobal = new Map();
+      tempAllPos.forEach((localPos) => {
+        localToGlobal.set(localPos, nextPos);
+        newNode.metaAllPositions.push(nextPos);
+        const localDepth = tempFused.metaBranchDepthMap
+          ? (tempFused.metaBranchDepthMap.get(localPos) || 0) : 0;
+        newNode.metaBranchDepthMap.set(nextPos, depth + localDepth);
+        const atomVal = tempFused.metaAtomValueMap
+          ? tempFused.metaAtomValueMap.get(localPos) : undefined;
+        if (atomVal) newNode.metaAtomValueMap.set(nextPos, atomVal);
+        const bond = tempFused.metaBondMap
+          ? tempFused.metaBondMap.get(localPos) : undefined;
+        if (bond) newNode.metaBondMap.set(nextPos, bond);
+        nextPos += 1;
+      });
+
+      // Map each sequential ring's metaPositions to global
+      group.forEach(({ ring: seqRing }, gi) => {
+        const tempRing = tempFused.rings[gi];
+        const tempPositions = tempRing.metaPositions || [];
+        const globalPositions = tempPositions.map((lp) => localToGlobal.get(lp));
+        seqRing.metaPositions = globalPositions;
+        seqRing.metaStart = globalPositions[0];
+        seqRing.metaEnd = globalPositions[globalPositions.length - 1];
+      });
+
+      // Copy ring order map from temp fused ring
+      const tempRingOrderMap = tempFused.metaRingOrderMap || new Map();
+      tempRingOrderMap.forEach((ringNums, localPos) => {
+        const globalPos = localToGlobal.get(localPos);
+        if (globalPos !== undefined) {
+          newNode.metaRingOrderMap.set(globalPos, ringNums);
+        }
+      });
+    } else {
+      // No overlap: assign contiguous positions for each ring sequentially
+      group.forEach(({ ring: seqRing }) => {
+        const ringBranchDepths = seqRing.metaBranchDepths || [];
+        const positions = [];
+        const { substitutions = {}, bonds = [] } = seqRing;
+
+        for (let i = 0; i < seqRing.size; i += 1) {
+          positions.push(nextPos);
+          newNode.metaAllPositions.push(nextPos);
+          const atomDepth = ringBranchDepths.length > 0 ? ringBranchDepths[i] : depth;
+          newNode.metaBranchDepthMap.set(nextPos, atomDepth);
+          const relativePos = i + 1;
+          if (substitutions[relativePos]) {
+            newNode.metaAtomValueMap.set(nextPos, substitutions[relativePos]);
+          }
+          if (i > 0 && bonds[i - 1]) {
+            newNode.metaBondMap.set(nextPos, bonds[i - 1]);
+          }
+          nextPos += 1;
+        }
+
+        seqRing.metaPositions = positions;
+        seqRing.metaStart = positions[0];
+        seqRing.metaEnd = positions[positions.length - 1];
+      });
+    }
+
+    // Emit chain atoms that go AFTER rings at this depth
+    if (chainGroup) {
+      chainGroup.after.forEach(emitChainAtom);
+    }
+
+    // Handle legacy atomAttachments: create position entries for each attachment
+    // (Only used when chainAtoms are not provided)
+    if (options.atomAttachments && chainAtoms.length === 0) {
+      Object.entries(options.atomAttachments).forEach(([key, atts]) => {
+        const attDepth = options.atomAttachmentDepths
+          ? options.atomAttachmentDepths[key] : depth;
+        if (attDepth === depth) {
+          newNode.metaAllPositions.push(nextPos);
+          newNode.metaBranchDepthMap.set(nextPos, depth);
+          nextPos += 1;
+        }
+      });
+    }
+  });
+
+  // Emit chain atoms whose depths had no corresponding ring group.
+  // Walk remaining depths in descending order so deeper atoms come first.
+  const processedDepths = new Set(sortedDepths);
+  const remainingDepths = [...chainAtomsByDepth.keys()]
+    .filter((d) => !processedDepths.has(d))
+    .sort((a, b) => b - a);
+  remainingDepths.forEach((d) => {
+    const bucket = chainAtomsByDepth.get(d);
+    if (bucket) {
+      bucket.before.forEach(emitChainAtom);
+      bucket.after.forEach(emitChainAtom);
+    }
   });
 
   newNode.metaTotalAtoms = nextPos;
 
-  // Store seq atom attachments
+  // Store seq atom attachments from both sources:
+  // 1. options.atomAttachments (legacy/explicit position → attachments)
+  // 2. chainAtomAttachments (computed from chain atoms with attachments)
+  const seqAtomAtts = new Map();
   if (options.atomAttachments) {
-    newNode.metaSeqAtomAttachments = new Map(Object.entries(options.atomAttachments).map(
-      ([pos, atts]) => [Number(pos), atts],
-    ));
-  } else {
-    newNode.metaSeqAtomAttachments = new Map();
+    Object.entries(options.atomAttachments).forEach(([pos, atts]) => {
+      seqAtomAtts.set(Number(pos), atts);
+    });
   }
+  chainAtomAttachments.forEach((atts, pos) => {
+    seqAtomAtts.set(pos, atts);
+  });
+  newNode.metaSeqAtomAttachments = seqAtomAtts;
 
   return newNode;
 }
@@ -299,6 +483,11 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
 export function fusedRingAddSequentialAtomAttachment(fusedRing, position, attachment) {
   const newRings = fusedRing.rings.map((r) => ({ ...r }));
   const newNode = createFusedRingNode(newRings, { skipPositionComputation: true });
+
+  // Copy interleaved codegen flag if present (parser-created nodes)
+  if (fusedRing.metaUseInterleavedCodegen) {
+    newNode.metaUseInterleavedCodegen = true;
+  }
 
   // Copy all existing metadata
   newNode.metaAllPositions = [...(fusedRing.metaAllPositions || [])];
