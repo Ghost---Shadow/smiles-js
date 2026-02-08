@@ -4,8 +4,6 @@
 
 import { describe, it, expect } from 'bun:test';
 import { buildInterleavedFusedRingSMILES } from './interleaved-fused-ring.js';
-import { parse } from '../parser/index.js';
-import { buildSMILES } from './smiles-codegen-core.js';
 
 describe('Interleaved Fused Ring Builder', () => {
   describe('buildInterleavedFusedRingSMILES', () => {

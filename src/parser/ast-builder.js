@@ -39,9 +39,11 @@ function buildNodeFromAtoms(atomList, allAtoms, ringBoundaries, isBranch = false
   );
 
   if (containedRings.length > 0) {
+    // eslint-disable-next-line no-use-before-define
     return buildBranchWithRings(atomList, allAtoms, containedRings, ringBoundaries, isBranch);
   }
 
+  // eslint-disable-next-line no-use-before-define
   return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
 }
 
@@ -156,7 +158,13 @@ function buildBranchWithRings(atoms, all, rings, bounds, branch) {
       const groupIdx = atomToGroup.get(globalIdx);
       if (!processedGroups.has(groupIdx)) {
         const group = fusedGroups[groupIdx];
-        const ringNode = buildRingGroupNodeWithContext(group, allAtoms, ringBoundaries, buildNodeFromAtoms, buildLinearNodeSimple);
+        const ringNode = buildRingGroupNodeWithContext(
+          group,
+          allAtoms,
+          ringBoundaries,
+          buildNodeFromAtoms,
+          buildLinearNodeSimple,
+        );
         components.push(ringNode);
         processedGroups.add(groupIdx);
 
@@ -282,7 +290,13 @@ export function buildAST(atoms, ringBoundaries) {
 
       if (!processedGroups.has(groupIdx)) {
         const group = fusedGroups[groupIdx];
-        const ringNode = buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buildNodeFromAtoms, buildLinearNodeSimple);
+        const ringNode = buildRingGroupNodeWithContext(
+          group,
+          atoms,
+          ringBoundaries,
+          buildNodeFromAtoms,
+          buildLinearNodeSimple,
+        );
 
         const groupPositions = new Set();
         group.forEach((ring) => {

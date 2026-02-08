@@ -359,6 +359,7 @@ describe('Ring Utils', () => {
 
   describe('collectRingPath', () => {
     it('should collect simple ring path', () => {
+      // eslint-disable-next-line global-require
       const { collectRingPath } = require('./ring-utils.js');
       const atoms = [
         {
@@ -377,6 +378,7 @@ describe('Ring Utils', () => {
     });
 
     it('should skip inner fused rings', () => {
+      // eslint-disable-next-line global-require
       const { collectRingPath } = require('./ring-utils.js');
       const atoms = Array.from({ length: 10 }, (_, i) => ({
         index: i,
@@ -392,6 +394,7 @@ describe('Ring Utils', () => {
     });
 
     it('should handle ring entering deep branch', () => {
+      // eslint-disable-next-line global-require
       const { collectRingPath } = require('./ring-utils.js');
       const atoms = [
         {
@@ -413,6 +416,7 @@ describe('Ring Utils', () => {
     });
 
     it('should exclude atoms not in ring path branch', () => {
+      // eslint-disable-next-line global-require
       const { collectRingPath } = require('./ring-utils.js');
       const atoms = [
         {
@@ -434,6 +438,7 @@ describe('Ring Utils', () => {
     });
 
     it('should handle missing atoms in range', () => {
+      // eslint-disable-next-line global-require
       const { collectRingPath } = require('./ring-utils.js');
       const atoms = [
         {

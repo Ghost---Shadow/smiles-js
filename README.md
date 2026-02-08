@@ -64,7 +64,7 @@ console.log(benzene.smiles);  // c1ccccc1
 
 // Add methyl group to make toluene
 const methyl = Linear(['C']);
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 console.log(toluene.smiles);  // c1(C)ccccc1
 
 // Create pyridine via substitution

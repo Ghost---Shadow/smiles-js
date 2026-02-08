@@ -51,8 +51,8 @@ export function attachSmilesGetter(node) {
 // Attach manipulation methods to Ring nodes
 export function attachRingMethods(node) {
   return Object.assign(node, {
-    attach(attachment, position, options) {
-      return ringAttach(this, attachment, position, options);
+    attach(position, attachment, options) {
+      return ringAttach(this, position, attachment, options);
     },
     substitute(position, newAtom) {
       return ringSubstitute(this, position, newAtom);
@@ -60,8 +60,8 @@ export function attachRingMethods(node) {
     substituteMultiple(substitutionMap) {
       return ringSubstituteMultiple(this, substitutionMap);
     },
-    fuse(otherRing, offset) {
-      return ringFuse(this, otherRing, offset);
+    fuse(offset, otherRing) {
+      return ringFuse(this, offset, otherRing);
     },
     concat(other) {
       return ringConcat(this, other);
@@ -94,8 +94,8 @@ export function attachRingMethods(node) {
 // Attach manipulation methods to Linear nodes
 export function attachLinearMethods(node) {
   return Object.assign(node, {
-    attach(attachment, position) {
-      return linearAttach(this, attachment, position);
+    attach(position, attachment) {
+      return linearAttach(this, position, attachment);
     },
     branch(branchPoint, ...branches) {
       return linearBranch(this, branchPoint, ...branches);
@@ -163,8 +163,8 @@ export function attachMoleculeMethods(node) {
 // Attach manipulation methods to FusedRing nodes
 export function attachFusedRingMethods(node) {
   return Object.assign(node, {
-    addRing(ring, offset) {
-      return fusedRingAddRing(this, ring, offset);
+    addRing(offset, ring) {
+      return fusedRingAddRing(this, offset, ring);
     },
     getRing(ringNumber) {
       return fusedRingGetRing(this, ringNumber);
@@ -172,8 +172,8 @@ export function attachFusedRingMethods(node) {
     substituteInRing(ringNumber, position, newAtom) {
       return fusedRingSubstituteInRing(this, ringNumber, position, newAtom);
     },
-    attachToRing(ringNumber, attachment, position) {
-      return fusedRingAttachToRing(this, ringNumber, attachment, position);
+    attachToRing(ringNumber, position, attachment) {
+      return fusedRingAttachToRing(this, ringNumber, position, attachment);
     },
     renumber(startNumber = 1) {
       return fusedRingRenumber(this, startNumber);

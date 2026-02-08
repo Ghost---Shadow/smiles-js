@@ -27,15 +27,18 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
   const innerRings = sortedRings.slice(1);
 
   // Build fusion graph
+  // eslint-disable-next-line no-use-before-define
   const fusionGraph = buildFusionGraph(sortedRings, innerRings, baseRing);
 
   // Classify inner rings
+  // eslint-disable-next-line no-use-before-define
   const classification = classifyInnerRings(innerRings, sortedRings, baseRing, fusionGraph);
   const {
     insideRings, extendingRings, startSharingRings, endpointRings, chainedRings, spiroRings,
   } = classification;
 
   // Build chained ring info
+  // eslint-disable-next-line no-use-before-define
   const chainedRingInfo = buildChainedRingInfo(chainedRings, sortedRings, fusionGraph);
 
   // Build lookup maps
@@ -60,6 +63,7 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
     innerRingData.set(ring, { positions: [], start: -1, end: -1 });
   });
 
+  // eslint-disable-next-line no-use-before-define
   const result = traverseBaseRing(
     baseRing,
     innerRingData,
@@ -72,7 +76,9 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
     spiroRingAtOffset,
   );
 
-  const { allPositions, baseRingPositions, branchDepthMap, totalAtoms } = result;
+  const {
+    allPositions, baseRingPositions, branchDepthMap, totalAtoms,
+  } = result;
 
   // Store position metadata
   sortedRings[0].metaPositions = baseRingPositions;
@@ -93,6 +99,7 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
   target.node.metaBranchDepthMap = branchDepthMap;
 
   // Build ring order map
+  // eslint-disable-next-line no-use-before-define
   const ringOrderMap = buildRingOrderMap(
     baseRing,
     innerRings,
@@ -104,6 +111,7 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
   target.node.metaRingOrderMap = ringOrderMap;
 
   // Build atom-level maps from ring data
+  // eslint-disable-next-line no-use-before-define
   const { atomValueMap, bondMap } = buildAtomLevelMaps(sortedRings);
   target.node.metaAtomValueMap = atomValueMap;
   target.node.metaBondMap = bondMap;
@@ -134,6 +142,7 @@ export function applyRingBranchDepthsToFusedRing(node) {
 
 // --- Internal helpers ---
 
+// eslint-disable-next-line no-unused-vars
 function buildFusionGraph(sortedRings, innerRings, baseRing) {
   const fusionGraph = new Map();
   for (let i = 0; i < sortedRings.length; i += 1) {
@@ -245,8 +254,16 @@ function buildChainedRingInfo(chainedRings, sortedRings, fusionGraph) {
 }
 
 function traverseStartSharing(
-  baseRing, startSharingRing, innerRingData, chainedRings, chainedRingInfo,
-  allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepth,
+  baseRing,
+  startSharingRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(startSharingRing);
   let currentPos = currentPosRef.value;
@@ -316,6 +333,7 @@ function traverseStartSharing(
 
         for (let cr = 0; cr < chainedRings.length; cr += 1) {
           const possibleNested = chainedRings[cr];
+          // eslint-disable-next-line no-continue
           if (possibleNested === chainedRingHere) continue;
           const info = chainedRingInfo.get(possibleNested);
           if (info && info.hostRing === chainedRingHere) {
@@ -370,7 +388,8 @@ function traverseStartSharing(
             }
 
             nestedData.end = currentPos - 1;
-            chainedData.end = nestedData.positions[1];
+            const [, chainedEndPos] = nestedData.positions;
+            chainedData.end = chainedEndPos;
             break;
           }
         } else {
@@ -406,12 +425,18 @@ function traverseStartSharing(
     data.end = currentPos - 1;
   }
 
+  // eslint-disable-next-line no-param-reassign
   currentPosRef.value = currentPos;
 }
 
 function traverseSpiro(
-  spiroRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-  currentPosRef, currentDepth,
+  spiroRing,
+  innerRingData,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(spiroRing);
   const spiroBranchDepths = spiroRing.metaBranchDepths || [];
@@ -433,12 +458,20 @@ function traverseSpiro(
   }
 
   data.end = data.positions[data.positions.length - 1];
+  // eslint-disable-next-line no-param-reassign
   currentPosRef.value = currentPos;
 }
 
 function traverseInside(
-  insideRing, innerRingData, chainedRings, chainedRingInfo,
-  allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepth,
+  insideRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(insideRing);
   let currentPos = currentPosRef.value;
@@ -484,12 +517,21 @@ function traverseInside(
   branchDepthMap.set(currentPos, currentDepth);
   currentPos += 1;
 
+  // eslint-disable-next-line no-param-reassign
   currentPosRef.value = currentPos;
 }
 
 function traverseExtending(
-  baseRing, extendingRing, innerRingData, chainedRings, chainedRingInfo,
-  allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef,
+  baseRing,
+  extendingRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepthRef,
 ) {
   const data = innerRingData.get(extendingRing);
   let currentPos = currentPosRef.value;
@@ -623,13 +665,20 @@ function traverseExtending(
     }
   }
 
+  // eslint-disable-next-line no-param-reassign
   currentPosRef.value = currentPos;
+  // eslint-disable-next-line no-param-reassign
   currentDepthRef.value = currentDepth;
 }
 
 function traverseEndpoint(
-  endpointRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-  currentPosRef, currentDepth,
+  endpointRing,
+  innerRingData,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(endpointRing);
   let currentPos = currentPosRef.value;
@@ -644,13 +693,20 @@ function traverseEndpoint(
   }
 
   data.end = currentPos - 1;
+  // eslint-disable-next-line no-param-reassign
   currentPosRef.value = currentPos;
 }
 
 function traverseBaseRing(
-  baseRing, innerRingData, chainedRings, chainedRingInfo,
-  insideRingAtOffset, extendingRingAtOffset, startSharingRingAtOffset,
-  endpointRingAtOffset, spiroRingAtOffset,
+  baseRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  insideRingAtOffset,
+  extendingRingAtOffset,
+  startSharingRingAtOffset,
+  endpointRingAtOffset,
+  spiroRingAtOffset,
 ) {
   const allPositions = [];
   const baseRingPositions = [];
@@ -669,32 +725,65 @@ function traverseBaseRing(
 
     if (startSharingRing) {
       traverseStartSharing(
-        baseRing, startSharingRing, innerRingData, chainedRings, chainedRingInfo,
-        allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef.value,
+        baseRing,
+        startSharingRing,
+        innerRingData,
+        chainedRings,
+        chainedRingInfo,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos = baseRing.size;
     } else if (spiroRing) {
       traverseSpiro(
-        spiroRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-        currentPosRef, currentDepthRef.value,
+        spiroRing,
+        innerRingData,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos += 1;
     } else if (insideRing) {
       traverseInside(
-        insideRing, innerRingData, chainedRings, chainedRingInfo,
-        allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef.value,
+        insideRing,
+        innerRingData,
+        chainedRings,
+        chainedRingInfo,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos += 2;
     } else if (extendingRing) {
       traverseExtending(
-        baseRing, extendingRing, innerRingData, chainedRings, chainedRingInfo,
-        allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef,
+        baseRing,
+        extendingRing,
+        innerRingData,
+        chainedRings,
+        chainedRingInfo,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef,
       );
       basePos = baseRing.size;
     } else if (endpointRing) {
       traverseEndpoint(
-        endpointRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-        currentPosRef, currentDepthRef.value,
+        endpointRing,
+        innerRingData,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos += endpointRing.size;
     } else {
@@ -714,7 +803,14 @@ function traverseBaseRing(
   };
 }
 
-function buildRingOrderMap(baseRing, innerRings, innerRingData, totalAtoms, chainedRings, endpointRings) {
+function buildRingOrderMap(
+  baseRing,
+  innerRings,
+  innerRingData,
+  totalAtoms,
+  chainedRings,
+  endpointRings,
+) {
   const ringOrderMap = new Map();
   const closePositions = new Map();
 

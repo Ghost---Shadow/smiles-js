@@ -84,7 +84,7 @@ log('3️⃣  Methoxy groups:          2x', methoxyGroup1.smiles);
 // Sulfoxide linker
 const sulfoxideLinker = Linear(['S', 'C']);
 const sulfinylOxygen = Linear(['O'], ['=']);
-const sulfoxide = sulfoxideLinker.attach(sulfinylOxygen, 1);
+const sulfoxide = sulfoxideLinker.attach(1, sulfinylOxygen);
 log('4️⃣  Sulfoxide linker:       ', sulfoxide.smiles);
 
 // Dimethoxymethylpyridine

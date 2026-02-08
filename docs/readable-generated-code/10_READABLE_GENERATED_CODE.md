@@ -11,7 +11,7 @@ export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v3 = v2.substitute(2, 'N');
 export const v4 = v3.substitute(5, 'N');
 export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null] });
-export const v6 = v4.fuse(v5, 2);
+export const v6 = v4.fuse(2, v5);
 
 // Unreadable garbage - what is any of this?
 v6.rings[0].metaPositions = [3, 4, 5, 10, 11];
@@ -102,7 +102,7 @@ export const v1 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v2 = v1.substitute(2, 'N');
 export const v3 = v2.substitute(5, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null] });
-export const v5 = v3.fuse(v4, 2);
+export const v5 = v3.fuse(2, v4);
 v5.rings[0].metaPositions = [3, 4, 5, 10, 11];
 v5.rings[0].metaStart = 3;
 v5.rings[0].metaEnd = 11;
@@ -119,7 +119,7 @@ export const v1 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v2 = v1.substitute(2, 'N');
 export const v3 = v2.substitute(5, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null] });
-export const v5 = v3.fuse(v4, 2);
+export const v5 = v3.fuse(2, v4);
 ```
 
 That's it. The `fuse()` method (and `FusedRing()` constructor) would call `layout()` internally, computing all the metadata automatically.
@@ -127,14 +127,14 @@ That's it. The `fuse()` method (and `FusedRing()` constructor) would call `layou
 For cases with sequential rings, we'd need a new API method:
 
 ```javascript
-export const v5 = v3.fuse(v4, 2);
+export const v5 = v3.fuse(2, v4);
 export const v6 = Ring({ atoms: 'C', size: 5, ringNumber: 5, bonds: ['=', null, '=', null, null] });
 export const v7 = v6.substitute(2, 'N');
 export const v8 = v7.substitute(5, 'N');
 export const v9 = v5.addSequentialRing(v8);
 
 // Or alternatively, pass sequential rings at construction time:
-export const v5 = v3.fuse(v4, 2, {
+export const v5 = v3.fuse(2, v4, {
   sequentialRings: [v8, v10, v11, v12],
   sequentialAtomAttachments: { 25: [v13] }
 });
@@ -212,7 +212,7 @@ export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v3 = v2.substitute(2, 'N');
 export const v4 = v3.substitute(5, 'N');
 export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 1, 1, 2, 2] });
-export const v6 = v4.fuse(v5, 2);
+export const v6 = v4.fuse(2, v5);
 
 export const v7 = Ring({ atoms: 'C', size: 5, ringNumber: 5, bonds: ['=', null, '=', null, null] });
 export const v8 = v7.substitute(2, 'N');

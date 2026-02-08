@@ -159,6 +159,7 @@ describe('Branch Utils', () => {
         branchAtom,
       ];
       const processed = new Set();
+      // eslint-disable-next-line global-require
       const { collectBranchChain } = require('./branch-utils.js');
       const result = collectBranchChain(branchAtom, allAtoms, processed);
 
@@ -183,6 +184,7 @@ describe('Branch Utils', () => {
         },
       ];
       const processed = new Set();
+      // eslint-disable-next-line global-require
       const { collectBranchChain } = require('./branch-utils.js');
       const result = collectBranchChain(branchAtom, allAtoms, processed);
 
@@ -206,6 +208,7 @@ describe('Branch Utils', () => {
         },
       ];
       const processed = new Set();
+      // eslint-disable-next-line global-require
       const { collectBranchChain } = require('./branch-utils.js');
       const result = collectBranchChain(branchAtom, allAtoms, processed);
 
@@ -229,6 +232,7 @@ describe('Branch Utils', () => {
         },
       ];
       const processed = new Set();
+      // eslint-disable-next-line global-require
       const { collectBranchChain } = require('./branch-utils.js');
       const result = collectBranchChain(branchAtom, allAtoms, processed);
 
@@ -246,6 +250,7 @@ describe('Branch Utils', () => {
         branchAtom,
       ];
       const processed = new Set();
+      // eslint-disable-next-line global-require
       const { collectBranchChain } = require('./branch-utils.js');
       const result = collectBranchChain(branchAtom, allAtoms, processed);
 
@@ -256,6 +261,7 @@ describe('Branch Utils', () => {
   describe('buildExcludedPositions', () => {
     it('should return fusedGroupPositions when provided', () => {
       const fusedGroupPositions = new Set([1, 2, 3]);
+      // eslint-disable-next-line global-require
       const { buildExcludedPositions } = require('./branch-utils.js');
       const result = buildExcludedPositions(fusedGroupPositions, [], []);
 
@@ -269,6 +275,7 @@ describe('Branch Utils', () => {
         { branchDepth: 0, positions: [3, 4, 5] },
         { branchDepth: 1, positions: [6, 7] },
       ];
+      // eslint-disable-next-line global-require
       const { buildExcludedPositions } = require('./branch-utils.js');
       const result = buildExcludedPositions(null, ringAtoms, ringBoundaries);
 
@@ -280,6 +287,7 @@ describe('Branch Utils', () => {
     });
 
     it('should handle empty ringAtoms', () => {
+      // eslint-disable-next-line global-require
       const { buildExcludedPositions } = require('./branch-utils.js');
       const result = buildExcludedPositions(null, [], []);
 

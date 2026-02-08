@@ -4,9 +4,14 @@ import { Ring, FusedRing } from '../constructors.js';
 
 describe('layout atom-level maps', () => {
   test('computes metaAtomValueMap for API-created fused ring with substitution', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
     const ring2 = Ring({
-      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+      atoms: 'C',
+      size: 6,
+      ringNumber: 2,
+      offset: 3,
       substitutions: { 4: 'N' },
     });
     const fused = FusedRing([ring1, ring2]);
@@ -18,9 +23,14 @@ describe('layout atom-level maps', () => {
   });
 
   test('computes metaBondMap for API-created fused ring with bonds', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
     const ring2 = Ring({
-      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+      atoms: 'C',
+      size: 6,
+      ringNumber: 2,
+      offset: 3,
       bonds: ['', '=', '', '', ''],
     });
     const fused = FusedRing([ring1, ring2]);
@@ -38,8 +48,12 @@ describe('layout atom-level maps', () => {
   });
 
   test('API-created fused ring produces both maps', () => {
-    const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'c', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaAtomValueMap).toBeInstanceOf(Map);
@@ -47,8 +61,12 @@ describe('layout atom-level maps', () => {
   });
 
   test('metaRingOrderMap is computed for API-created fused rings', () => {
-    const ring1 = Ring({ atoms: 'c', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'c', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'c', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     expect(fused.metaRingOrderMap).toBeInstanceOf(Map);

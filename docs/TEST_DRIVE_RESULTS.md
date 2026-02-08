@@ -215,8 +215,8 @@ const molecule2 = Ring({ atoms: 'c', size: 6 });
 ```javascript
 const propylChain = Linear(['C', 'C', 'C']);
 const benzeneRing = Ring({ atoms: 'c', size: 6 });
-const isopropylGroup = propylChain.attach(methylGroup, 2);
-const phenylAmide = benzeneRing.attach(amideLinker, 1);
+const isopropylGroup = propylChain.attach(2, methylGroup);
+const phenylAmide = benzeneRing.attach(1, amideLinker);
 ```
 
 ---

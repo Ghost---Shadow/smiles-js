@@ -12,6 +12,7 @@ import {
 
 // Helper to call decompileNode (satisfies no-loop-func rule)
 function decompileChildNode(node, indent, nextVar) {
+  // eslint-disable-next-line no-use-before-define
   return decompileNode(node, indent, nextVar);
 }
 
@@ -122,11 +123,11 @@ function generateAttachmentCode(ring, indent, nextVar, initialVar) {
         const newVar = nextVar();
         const isSibling = attachment.metaIsSibling;
         if (isSibling === true) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos}, { sibling: true });`);
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { sibling: true });`);
         } else if (isSibling === false) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos}, { sibling: false });`);
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { sibling: false });`);
         } else {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos});`);
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar});`);
         }
         currentVar = newVar;
       });
@@ -193,12 +194,13 @@ function decompileLinear(linear, indent, nextVar) {
   if (Object.keys(linear.attachments).length > 0) {
     Object.entries(linear.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
+        // eslint-disable-next-line no-use-before-define
         const attachRes = decompileNode(attachment, indent, nextVar);
         const { code: aCode, finalVar: aFinalVar } = attachRes;
         lines.push(aCode);
 
         const newVar = nextVar();
-        lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
+        lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${aFinalVar});`);
         currentVar = newVar;
       });
     });
@@ -208,43 +210,297 @@ function decompileLinear(linear, indent, nextVar) {
 }
 
 /**
- * Decompile a simple FusedRing node (no sequential rings/branch structure)
+ * Check if a fused ring needs the interleaved codegen path.
+ * Returns true if the offset-based simple codegen cannot represent the ring topology.
+ * Checks: (1) computed offsets cover all positions, (2) overlap between adjacent rings
+ * from offsets matches the actual shared positions from metaPositions.
+ */
+function needsInterleavedCodegen(fusedRing) {
+  const allPositions = fusedRing.metaAllPositions;
+  if (!allPositions || allPositions.length === 0) return false;
+
+  const posToIndex = new Map();
+  allPositions.forEach((pos, idx) => { posToIndex.set(pos, idx); });
+
+  // Compute offsets from positions
+  const offsets = fusedRing.rings.map((ring) => {
+    const positions = ring.metaPositions;
+    if (!positions || positions.length === 0) return ring.offset || 0;
+    return posToIndex.get(positions[0]) || 0;
+  });
+
+  // Check 1: If the max extent from offsets doesn't match total positions,
+  // the ring topology can't be represented by offsets alone
+  const maxEnd = Math.max(...offsets.map((o, i) => o + fusedRing.rings[i].size));
+  if (maxEnd !== allPositions.length) return true;
+
+  // Check 2: For each pair of rings, verify that the overlap predicted by offsets
+  // matches the actual shared positions from metaPositions.
+  // When offsets predict N shared atoms but the parser saw M shared atoms (N !== M),
+  // the simple codegen will produce a structurally different ring system.
+  for (let i = 0; i < fusedRing.rings.length; i += 1) {
+    const ringA = fusedRing.rings[i];
+    const posA = ringA.metaPositions;
+    if (posA && posA.length > 0) {
+      const setA = new Set(posA);
+
+      for (let j = i + 1; j < fusedRing.rings.length; j += 1) {
+        const ringB = fusedRing.rings[j];
+        const posB = ringB.metaPositions;
+        if (posB && posB.length > 0) {
+          // Count actual shared positions between rings
+          const actualOverlap = posB.filter((p) => setA.has(p)).length;
+
+          // Predict overlap from offsets: two rings overlap if their offset ranges intersect
+          const startA = offsets[i];
+          const endA = offsets[i] + ringA.size;
+          const startB = offsets[j];
+          const endB = offsets[j] + ringB.size;
+          const overlapStart = Math.max(startA, startB);
+          const overlapEnd = Math.min(endA, endB);
+          const predictedOverlap = Math.max(0, overlapEnd - overlapStart);
+
+          if (predictedOverlap !== actualOverlap) return true;
+        }
+      }
+    }
+  }
+
+  // Check 3: At positions where multiple rings close, verify the parser's ring closure
+  // order matches ascending ring number (which is what the simple codegen produces).
+  // If not, the simple path will produce different SMILES.
+  const ringOrderMap = fusedRing.metaRingOrderMap;
+  if (ringOrderMap) {
+    // Build a set of closing positions per ring from offsets
+    const closePositions = new Map(); // offset-position → [ringNumbers]
+    fusedRing.rings.forEach((ring, idx) => {
+      const closePos = offsets[idx] + ring.size - 1;
+      if (!closePositions.has(closePos)) closePositions.set(closePos, []);
+      closePositions.get(closePos).push(ring.ringNumber);
+    });
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const [, ringNums] of closePositions) {
+      if (ringNums.length >= 2) {
+        // Simple codegen sorts ascending
+        const simpleOrder = [...ringNums].sort((a, b) => a - b);
+        // Check if parser's ring order at this position differs
+        // Find the corresponding parser position for this offset-position
+        const offsetPos = [...closePositions.keys()]
+          .find((k) => closePositions.get(k) === ringNums);
+        const parserPos = allPositions[offsetPos];
+        const parserOrder = ringOrderMap.get(parserPos);
+        if (parserOrder) {
+          // Extract only close markers (ring numbers that appear at the END of ring traversal)
+          const closeRingNums = parserOrder.filter((rn) => ringNums.includes(rn));
+          // Deduplicate while preserving order (a ring number appears twice = open+close)
+          const seen = new Map(); // rn -> count
+          closeRingNums.forEach((rn) => {
+            const count = (seen.get(rn) || 0) + 1;
+            seen.set(rn, count);
+            // The second occurrence is the close marker
+            if (count === 2 || !ringNums.includes(rn)) {
+              // Actually just check: is the last occurrence's order different from ascending?
+            }
+          });
+          // Simpler: just check if the ring numbers at this position, when sorted ascending,
+          // produce the same last-occurrence order as the parser
+          const lastOccurrence = [];
+          const rnCount = new Map();
+          parserOrder.forEach((rn) => {
+            if (!ringNums.includes(rn)) return;
+            rnCount.set(rn, (rnCount.get(rn) || 0) + 1);
+          });
+          // Ring numbers that appear only once at a close position are close markers
+          // Ring numbers that appear twice have both open and close
+          parserOrder.forEach((rn) => {
+            if (!ringNums.includes(rn)) return;
+            const total = rnCount.get(rn) || 0;
+            if (total === 1) {
+              // Single occurrence = close marker
+              if (!lastOccurrence.includes(rn)) lastOccurrence.push(rn);
+            }
+          });
+          if (lastOccurrence.length >= 2) {
+            const matches = lastOccurrence.every((rn, i) => rn === simpleOrder[i]);
+            if (!matches) return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Compute correct offsets for rings from their metaPositions and the fused ring's metaAllPositions.
+ * Converts parser-created position-based rings into offset-based rings for the simple codegen.
+ */
+function computeOffsetsFromPositions(fusedRing) {
+  const allPositions = fusedRing.metaAllPositions;
+  if (!allPositions || allPositions.length === 0) return null;
+
+  const posToIndex = new Map();
+  allPositions.forEach((pos, idx) => { posToIndex.set(pos, idx); });
+
+  return fusedRing.rings.map((ring) => {
+    const positions = ring.metaPositions;
+    if (!positions || positions.length === 0) return ring.offset;
+    const firstPos = positions[0];
+    return posToIndex.get(firstPos) || 0;
+  });
+}
+
+/**
+ * Compute which ring positions are shared between rings in the fused system.
+ * Returns a Map of ringIdx → Set of 1-indexed positions that are owned by a prior ring.
+ */
+function computeSharedPositions(fusedRing) {
+  const sharedPositions = new Map();
+  const claimedPositions = new Set();
+
+  fusedRing.rings.forEach((ring, ringIdx) => {
+    const shared = new Set();
+    const positions = ring.metaPositions || [];
+
+    if (positions.length > 0) {
+      positions.forEach((pos, i) => {
+        if (claimedPositions.has(pos)) {
+          shared.add(i + 1); // 1-indexed ring-relative position
+        } else {
+          claimedPositions.add(pos);
+        }
+      });
+    } else {
+      // For API-created rings without metaPositions, use offset-based overlap
+      const offset = ring.offset || 0;
+      for (let i = 0; i < ring.size; i += 1) {
+        const absPos = offset + i;
+        if (claimedPositions.has(absPos)) {
+          shared.add(i + 1);
+        } else {
+          claimedPositions.add(absPos);
+        }
+      }
+    }
+
+    sharedPositions.set(ringIdx, shared);
+  });
+
+  return sharedPositions;
+}
+
+/**
+ * Decompile a FusedRing node using only structural API calls (no metadata).
+ * Emits .fuse() for the first pair and .addRing() for subsequent rings.
+ * The resulting code goes through the simple codegen path (offset-based).
  */
 function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
   const lines = [];
   const ringFinalVars = [];
 
-  // Create individual rings with their substitutions and attachments
-  fusedRing.rings.forEach((ring) => {
-    const { code: ringCode, finalVar: ringFinalVar } = decompileRing(ring, indent, nextVar);
-    lines.push(ringCode);
-    ringFinalVars.push(ringFinalVar);
+  // Compute correct offsets from parser positions (if available)
+  const computedOffsets = computeOffsetsFromPositions(fusedRing);
+
+  // Assign ring numbers, allowing reuse when rings don't overlap in offset space.
+  // The parser reuses ring numbers (e.g., ring 1 closes then a later ring also uses 1).
+  // This is valid SMILES as long as the ring markers don't overlap.
+  const ringNumberOverrides = fusedRing.rings.map((ring, idx) => {
+    const offset = computedOffsets ? computedOffsets[idx] : (ring.offset || 0);
+    return { ringNumber: ring.ringNumber, start: offset, end: offset + ring.size - 1 };
   });
-
-  // Check for leading bond (bond connecting to previous component)
-  const leadingBond = fusedRing.metaLeadingBond;
-
-  // Fuse rings together
-  const finalVar = nextVar();
-  if (fusedRing.rings.length === 2) {
-    const ring1 = ringFinalVars[0];
-    const ring2 = ringFinalVars[1];
-    const { offset } = fusedRing.rings[1];
-    if (leadingBond) {
-      lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset}, { leadingBond: '${leadingBond}' });`);
-    } else {
-      lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset});`);
-    }
-  } else {
-    const ringsStr = ringFinalVars.join(', ');
-    if (leadingBond) {
-      lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { leadingBond: '${leadingBond}' });`);
-    } else {
-      lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}]);`);
+  // Check for ring number conflicts (same ring number used by overlapping rings)
+  for (let i = 0; i < ringNumberOverrides.length; i += 1) {
+    const ri = ringNumberOverrides[i];
+    for (let j = i + 1; j < ringNumberOverrides.length; j += 1) {
+      const rj = ringNumberOverrides[j];
+      if (ri.ringNumber === rj.ringNumber) {
+        // Conflict only if the rings overlap in offset space
+        const overlaps = ri.start <= rj.end && rj.start <= ri.end;
+        if (overlaps) {
+          // Find a free ring number for ring j
+          const usedNums = new Set(ringNumberOverrides.map((r) => r.ringNumber));
+          let num = 1;
+          while (usedNums.has(num)) num += 1;
+          rj.ringNumber = num;
+        }
+      }
     }
   }
 
-  return { code: lines.join('\n'), finalVar };
+  // Compute which positions are shared (to avoid duplicating attachments/substitutions)
+  const sharedPositions = computeSharedPositions(fusedRing);
+
+  // Decompile individual rings with substitutions and attachments
+  fusedRing.rings.forEach((ring, ringIdx) => {
+    const overrideOffset = computedOffsets ? computedOffsets[ringIdx] : null;
+    const overrideRingNumber = ringNumberOverrides[ringIdx].ringNumber !== ring.ringNumber
+      ? ringNumberOverrides[ringIdx].ringNumber : null;
+
+    const effectiveRing = { ...ring };
+    if (overrideOffset !== null) effectiveRing.offset = overrideOffset;
+    if (overrideRingNumber !== null) effectiveRing.ringNumber = overrideRingNumber;
+
+    // Filter out substitutions and attachments on shared positions
+    const shared = sharedPositions.get(ringIdx) || new Set();
+    if (shared.size > 0) {
+      const filteredSubs = {};
+      Object.entries(ring.substitutions || {}).forEach(([pos, atom]) => {
+        if (!shared.has(Number(pos))) filteredSubs[pos] = atom;
+      });
+      effectiveRing.substitutions = filteredSubs;
+
+      const filteredAtts = {};
+      Object.entries(ring.attachments || {}).forEach(([pos, attList]) => {
+        if (!shared.has(Number(pos))) filteredAtts[pos] = attList;
+      });
+      effectiveRing.attachments = filteredAtts;
+    }
+
+    const varName = nextVar();
+    const { optionsStr } = buildRingOptions(effectiveRing, { includeBranchDepths: true });
+    lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+
+    const {
+      lines: subLines, currentVar: subVar,
+    } = generateSubstitutionCode(effectiveRing, indent, nextVar, varName);
+    lines.push(...subLines);
+
+    const {
+      lines: attLines, currentVar: attVar,
+    } = generateAttachmentCode(effectiveRing, indent, nextVar, subVar);
+    lines.push(...attLines);
+
+    ringFinalVars.push(attVar);
+  });
+
+  const leadingBond = fusedRing.metaLeadingBond;
+
+  // Single-ring FusedRing — just return the ring directly
+  if (fusedRing.rings.length === 1) {
+    return { code: lines.join('\n'), finalVar: ringFinalVars[0] };
+  }
+
+  // Fuse first two rings, then .addRing() for the rest
+  const offset1 = computedOffsets ? computedOffsets[1] : fusedRing.rings[1].offset;
+  let currentFusedVar = nextVar();
+
+  if (leadingBond) {
+    lines.push(`${indent}const ${currentFusedVar} = ${ringFinalVars[0]}.fuse(${offset1}, ${ringFinalVars[1]}, { leadingBond: '${leadingBond}' });`);
+  } else {
+    lines.push(`${indent}const ${currentFusedVar} = ${ringFinalVars[0]}.fuse(${offset1}, ${ringFinalVars[1]});`);
+  }
+
+  // Chain .addRing() for rings 3+
+  for (let i = 2; i < fusedRing.rings.length; i += 1) {
+    const offset = computedOffsets ? computedOffsets[i] : fusedRing.rings[i].offset;
+    const newVar = nextVar();
+    lines.push(`${indent}const ${newVar} = ${currentFusedVar}.addRing(${offset}, ${ringFinalVars[i]});`);
+    currentFusedVar = newVar;
+  }
+
+  return { code: lines.join('\n'), finalVar: currentFusedVar };
 }
 
 /**
@@ -293,14 +549,28 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     ringVars.push({ var: attResult.currentVar, ring });
   });
 
-  // Fuse the base rings
+  // Decompile seqAtomAttachments BEFORE fuse so their vars are declared early
   const hasSeqRings = sequentialRings.length > 0;
+  const seqAtomAttachmentVarEntries = [];
+  if (!hasSeqRings && seqAtomAttachments.size > 0) {
+    seqAtomAttachments.forEach((attachments, pos) => {
+      const attVars = [];
+      attachments.forEach((att) => {
+        const attResult = decompileChildNode(att, indent, nextVar);
+        lines.push(attResult.code);
+        attVars.push(attResult.finalVar);
+      });
+      seqAtomAttachmentVarEntries.push(`[${pos}, [${attVars.join(', ')}]]`);
+    });
+  }
+
+  // Fuse the base rings
   let fusedVar;
   if (fusedRing.rings.length === 2) {
     fusedVar = nextVar();
     const decl = hasSeqRings ? 'let' : 'const';
     const { offset } = fusedRing.rings[1];
-    lines.push(`${indent}${decl} ${fusedVar} = ${ringVars[0].var}.fuse(${ringVars[1].var}, ${offset});`);
+    lines.push(`${indent}${decl} ${fusedVar} = ${ringVars[0].var}.fuse(${offset}, ${ringVars[1].var});`);
   } else if (fusedRing.rings.length >= 3) {
     fusedVar = nextVar();
     const decl = hasSeqRings ? 'let' : 'const';
@@ -310,11 +580,121 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     // Single ring wrapped in FusedRing — use raw metadata since there's no
     // public API to create a single-ring FusedRing
     fusedVar = ringVars[0].var;
-    return decompileComplexFusedRingSingleRing(fusedRing, fusedVar, sequentialRings, seqAtomAttachments, lines, indent, nextVar);
+    // eslint-disable-next-line no-use-before-define
+    return decompileComplexFusedRingSingleRing(
+      fusedRing,
+      fusedVar,
+      sequentialRings,
+      seqAtomAttachments,
+      lines,
+      indent,
+      nextVar,
+    );
   }
 
-  // Step 2: Decompile sequential rings and emit .addSequentialRings()
+  // Step 2: Decompile sequential rings with computed offsets and depths
   if (hasSeqRings) {
+    // Compute depth and offset for each sequential ring from parser metadata
+    const allPositions = fusedRing.metaAllPositions || [];
+    const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
+    const allRingPositions = new Set();
+    fusedRing.rings.forEach((r) => (r.metaPositions || []).forEach((p) => allRingPositions.add(p)));
+    sequentialRings.forEach((r) => (r.metaPositions || []).forEach((p) => allRingPositions.add(p)));
+
+    // Compute per-ring depth from the ring's first position in the branch depth map
+    const seqDepths = sequentialRings.map((ring) => {
+      const positions = ring.metaPositions || [];
+      if (positions.length > 0) return branchDepthMap.get(positions[0]) || 0;
+      if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
+        return ring.metaBranchDepths[0];
+      }
+      return 0;
+    });
+
+    // Group by depth to compute within-group offsets
+    const depthGroups = new Map();
+    sequentialRings.forEach((ring, idx) => {
+      const depth = seqDepths[idx];
+      if (!depthGroups.has(depth)) depthGroups.set(depth, []);
+      depthGroups.get(depth).push({ ring, idx });
+    });
+
+    // Compute within-group offsets based on metaPositions
+    depthGroups.forEach((group) => {
+      if (group.length <= 1) return; // Single ring in group: offset 0 (default)
+      // Find the minimum position across all rings in this group
+      let minPos = Infinity;
+      group.forEach(({ ring }) => {
+        const positions = ring.metaPositions || [];
+        if (positions.length > 0) minPos = Math.min(minPos, positions[0]);
+      });
+      // Set offset relative to the group's minimum position
+      group.forEach(({ ring }) => {
+        const positions = ring.metaPositions || [];
+        if (positions.length > 0) {
+          // eslint-disable-next-line no-param-reassign
+          ring.offset = positions[0] - minPos;
+        }
+      });
+    });
+
+    // Identify standalone atoms (in allPositions but not in any ring)
+    const chainAtomEntries = [];
+    const seqStartPos = Math.min(...sequentialRings.flatMap((r) => r.metaPositions || []));
+    const seqEndPos = Math.max(...sequentialRings.flatMap((r) => r.metaPositions || []));
+    const atomValueMap = fusedRing.metaAtomValueMap || new Map();
+    const bondMap = fusedRing.metaBondMap || new Map();
+
+    // Walk allPositions to find standalone atoms in the sequential section
+    allPositions.forEach((pos) => {
+      if (pos < seqStartPos && !allRingPositions.has(pos)) {
+        // Chain atom before first sequential ring
+        const atom = atomValueMap.get(pos) || 'C';
+        const depth = branchDepthMap.get(pos) || 0;
+        const bond = bondMap.get(pos) || null;
+        const entry = { atom, depth, position: 'before' };
+        if (bond) entry.bond = bond;
+        // Check for seqAtomAttachments at this position
+        if (seqAtomAttachments.has(pos)) {
+          entry.attachmentPos = pos;
+        }
+        chainAtomEntries.push(entry);
+      } else if (pos > seqEndPos && !allRingPositions.has(pos)) {
+        // Chain atom after all sequential rings — use the depth to determine group
+        const atom = atomValueMap.get(pos) || 'C';
+        const depth = branchDepthMap.get(pos) || 0;
+        const bond = bondMap.get(pos) || null;
+        const entry = { atom, depth, position: 'after' };
+        if (bond) entry.bond = bond;
+        if (seqAtomAttachments.has(pos)) {
+          entry.attachmentPos = pos;
+        }
+        chainAtomEntries.push(entry);
+      } else if (!allRingPositions.has(pos) && pos >= seqStartPos && pos <= seqEndPos) {
+        // Chain atom between sequential rings
+        const atom = atomValueMap.get(pos) || 'C';
+        const depth = branchDepthMap.get(pos) || 0;
+        const bond = bondMap.get(pos) || null;
+        // Determine if before or after based on whether it precedes or follows
+        // the rings at this depth
+        const sameDepthRings = [];
+        depthGroups.forEach((group, d) => {
+          if (d === depth) sameDepthRings.push(...group);
+        });
+        const firstRingPos = sameDepthRings.length > 0
+          ? Math.min(...sameDepthRings.flatMap(({ ring: r }) => r.metaPositions || []))
+          : pos;
+        const posType = pos < firstRingPos ? 'before' : 'after';
+        const entry = { atom, depth, position: posType };
+        if (bond) entry.bond = bond;
+        if (seqAtomAttachments.has(pos)) {
+          entry.attachmentPos = pos;
+        }
+        chainAtomEntries.push(entry);
+      }
+    });
+
+    // Decompile sequential rings
     const seqRingVars = [];
     sequentialRings.forEach((ring) => {
       const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
@@ -330,81 +710,118 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
       seqRingVars.push(attResult.currentVar);
     });
 
-    // Step 3: Decompile seq atom attachments for the addSequentialRings options
-    let atomAttachmentsStr = '';
-    if (seqAtomAttachments.size > 0) {
-      const attEntries = [];
-      seqAtomAttachments.forEach((attachments, pos) => {
+    // Decompile chain atom attachments
+    chainAtomEntries.forEach((entry) => {
+      if (entry.attachmentPos !== undefined) {
+        const attachments = seqAtomAttachments.get(entry.attachmentPos) || [];
         const attVars = [];
         attachments.forEach((att) => {
           const attResult = decompileChildNode(att, indent, nextVar);
           lines.push(attResult.code);
           attVars.push(attResult.finalVar);
         });
-        attEntries.push(`${pos}: [${attVars.join(', ')}]`);
-      });
-      atomAttachmentsStr = `, { atomAttachments: { ${attEntries.join(', ')} } }`;
-    }
-
-    // Emit .addSequentialRings() call
-    const seqRingsStr = seqRingVars.join(', ');
-    lines.push(`${indent}${fusedVar} = ${fusedVar}.addSequentialRings([${seqRingsStr}]${atomAttachmentsStr});`);
-  }
-
-  // Set all metadata AFTER addSequentialRings (which creates a new node),
-  // so the final mutable assignments land on the correct object
-  fusedRing.rings.forEach((ring, ringIdx) => {
-    const positions = ring.metaPositions || [];
-    if (positions.length > 0) {
-      lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaPositions = [${positions.join(', ')}];`);
-      lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaStart = ${ring.metaStart};`);
-      lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaEnd = ${ring.metaEnd};`);
-    }
-  });
-
-  // Set sequential ring position metadata (overwrite addSequentialRings' computed positions)
-  if (hasSeqRings) {
-    sequentialRings.forEach((seqRing, seqIdx) => {
-      const seqPositions = seqRing.metaPositions || [];
-      if (seqPositions.length > 0) {
-        lines.push(`${indent}${fusedVar}.metaSequentialRings[${seqIdx}].metaPositions = [${seqPositions.join(', ')}];`);
-        lines.push(`${indent}${fusedVar}.metaSequentialRings[${seqIdx}].metaStart = ${seqRing.metaStart};`);
-        lines.push(`${indent}${fusedVar}.metaSequentialRings[${seqIdx}].metaEnd = ${seqRing.metaEnd};`);
+        // eslint-disable-next-line no-param-reassign
+        entry.attachmentVars = attVars;
       }
     });
-  }
 
-  const allPositions = fusedRing.metaAllPositions || [];
-  const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
-  const atomValueMap = fusedRing.metaAtomValueMap || new Map();
-  const bondMap = fusedRing.metaBondMap || new Map();
+    // Build the addSequentialRings options
+    const optionParts = [];
 
-  if (allPositions.length > 0) {
-    lines.push(`${indent}${fusedVar}.metaAllPositions = [${allPositions.join(', ')}];`);
-  }
-  if (branchDepthMap.size > 0) {
-    lines.push(`${indent}${fusedVar}.metaBranchDepthMap = ${formatMapCode(branchDepthMap)};`);
-  }
-  if (atomValueMap.size > 0) {
-    lines.push(`${indent}${fusedVar}.metaAtomValueMap = ${formatMapCode(atomValueMap)};`);
-  }
-  if (bondMap.size > 0) {
-    const nonNullBonds = new Map();
-    bondMap.forEach((value, key) => { if (value !== null) nonNullBonds.set(key, value); });
-    if (nonNullBonds.size > 0) {
-      lines.push(`${indent}${fusedVar}.metaBondMap = ${formatMapCode(nonNullBonds)};`);
+    // depths array
+    const depthsStr = `[${seqDepths.join(', ')}]`;
+    optionParts.push(`depths: ${depthsStr}`);
+
+    // chainAtoms array (only if there are chain atoms)
+    if (chainAtomEntries.length > 0) {
+      const chainParts = chainAtomEntries.map((entry) => {
+        const parts = [`atom: '${entry.atom}'`, `depth: ${entry.depth}`, `position: '${entry.position}'`];
+        if (entry.bond) parts.push(`bond: '${entry.bond}'`);
+        if (entry.attachmentVars && entry.attachmentVars.length > 0) {
+          parts.push(`attachments: [${entry.attachmentVars.join(', ')}]`);
+        }
+        return `{ ${parts.join(', ')} }`;
+      });
+      optionParts.push(`chainAtoms: [${chainParts.join(', ')}]`);
     }
+
+    const seqRingsStr = seqRingVars.join(', ');
+    const optionsStr = optionParts.length > 0 ? `, { ${optionParts.join(', ')} }` : '';
+    lines.push(`${indent}${fusedVar} = ${fusedVar}.addSequentialRings([${seqRingsStr}]${optionsStr});`);
+  } else {
+    // Non-sequential interleaved fused ring: emit metadata so codegen
+    // can reconstruct the exact parser positions (fuse()/FusedRing() may
+    // compute different positions than the parser did)
+    fusedRing.rings.forEach((ring, ringIdx) => {
+      const positions = ring.metaPositions || [];
+      if (positions.length > 0) {
+        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaPositions = [${positions.join(', ')}];`);
+        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaStart = ${ring.metaStart};`);
+        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaEnd = ${ring.metaEnd};`);
+      }
+    });
+
+    const allPositions = fusedRing.metaAllPositions || [];
+    const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
+    const atomValueMap = fusedRing.metaAtomValueMap || new Map();
+    const bondMap = fusedRing.metaBondMap || new Map();
+
+    if (allPositions.length > 0) {
+      lines.push(`${indent}${fusedVar}.metaAllPositions = [${allPositions.join(', ')}];`);
+    }
+    if (branchDepthMap.size > 0) {
+      lines.push(`${indent}${fusedVar}.metaBranchDepthMap = ${formatMapCode(branchDepthMap)};`);
+    }
+    if (atomValueMap.size > 0) {
+      lines.push(`${indent}${fusedVar}.metaAtomValueMap = ${formatMapCode(atomValueMap)};`);
+    }
+    if (bondMap.size > 0) {
+      const nonNullBonds = new Map();
+      bondMap.forEach((value, key) => { if (value !== null) nonNullBonds.set(key, value); });
+      if (nonNullBonds.size > 0) {
+        lines.push(`${indent}${fusedVar}.metaBondMap = ${formatMapCode(nonNullBonds)};`);
+      }
+    }
+    const ringOrderMap = fusedRing.metaRingOrderMap;
+    if (ringOrderMap && ringOrderMap.size > 0) {
+      const entries = [];
+      ringOrderMap.forEach((value, key) => {
+        entries.push(`[${key}, [${value.join(', ')}]]`);
+      });
+      lines.push(`${indent}${fusedVar}.metaRingOrderMap = new Map([${entries.join(', ')}]);`);
+    }
+  }
+
+  // Emit leading bond if present
+  if (fusedRing.metaLeadingBond) {
+    lines.push(`${indent}${fusedVar}.metaLeadingBond = '${fusedRing.metaLeadingBond}';`);
+  }
+
+  // Emit seqAtomAttachments map using pre-decompiled attachment vars (non-seq-ring case)
+  if (seqAtomAttachmentVarEntries.length > 0) {
+    lines.push(`${indent}${fusedVar}.metaSeqAtomAttachments = new Map([${seqAtomAttachmentVarEntries.join(', ')}]);`);
   }
 
   return { code: lines.join('\n'), finalVar: fusedVar };
 }
 
 // Handle single-ring FusedRing case with raw metadata (no public API for single-ring FusedRing)
-function decompileComplexFusedRingSingleRing(fusedRing, fusedVar, sequentialRings, seqAtomAttachments, lines, indent, nextVar) {
+function decompileComplexFusedRingSingleRing(
+  fusedRing,
+  fusedVar,
+  sequentialRings,
+  seqAtomAttachments,
+  lines,
+  indent,
+  nextVar,
+) {
   const allPositions = fusedRing.metaAllPositions || [];
   const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
   const atomValueMap = fusedRing.metaAtomValueMap || new Map();
   const bondMap = fusedRing.metaBondMap || new Map();
+
+  // Mark as using interleaved codegen (parser-created)
+  lines.push(`${indent}${fusedVar}.metaUseInterleavedCodegen = true;`);
 
   // Set ring position metadata directly on the ring variable
   const ring = fusedRing.rings[0];
@@ -476,419 +893,23 @@ function decompileComplexFusedRingSingleRing(fusedRing, fusedVar, sequentialRing
 }
 
 /**
- * Check if fused ring has sequential linear atoms (atoms outside of ring positions)
- */
-function hasSequentialLinearAtoms(fusedRing) {
-  const allPositions = fusedRing.metaAllPositions || [];
-  if (allPositions.length === 0) return false;
-
-  // Get all positions covered by the rings
-  const ringPositions = new Set();
-  fusedRing.rings.forEach((ring) => {
-    (ring.metaPositions || []).forEach((pos) => ringPositions.add(pos));
-  });
-
-  // Check if there are positions not covered by rings
-  return allPositions.some((pos) => !ringPositions.has(pos));
-}
-
-/**
- * Find sequential linear atoms that follow ring positions and add them as ring attachments
- * Handles multiple sequential atoms at varying branch depths
- */
-function injectSequentialAtomsAsAttachments(fusedRing, indent, nextVar) {
-  const allPositions = fusedRing.metaAllPositions || [];
-  const atomValueMap = fusedRing.metaAtomValueMap || new Map();
-  const bondMap = fusedRing.metaBondMap || new Map();
-  const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
-
-  // Get all ring positions with their info
-  const ringPositionToRing = new Map();
-  fusedRing.rings.forEach((ring) => {
-    (ring.metaPositions || []).forEach((pos, idx) => {
-      ringPositionToRing.set(pos, { ring, idx });
-    });
-  });
-
-  // Find sequential atoms (positions not in any ring)
-  const seqPositions = allPositions.filter((pos) => !ringPositionToRing.has(pos));
-
-  const lines = [];
-  const injectedVars = new Map(); // ringIdx -> Map(position -> varName)
-
-  // Process each sequential position
-  seqPositions.forEach((seqPos) => {
-    const posIdx = allPositions.indexOf(seqPos);
-    if (posIdx <= 0) return;
-
-    const seqDepth = branchDepthMap.get(seqPos) || 0;
-    const atomValue = atomValueMap.get(seqPos) || 'C';
-    const bond = bondMap.get(seqPos);
-
-    // Create a Linear node for this atom
-    const linearVar = nextVar();
-    if (bond) {
-      lines.push(`${indent}const ${linearVar} = Linear(['${atomValue}'], ['${bond}']);`);
-    } else {
-      lines.push(`${indent}const ${linearVar} = Linear(['${atomValue}']);`);
-    }
-    // Mark as inline continuation (not a sibling branch)
-    lines.push(`${indent}${linearVar}.metaIsSibling = false;`);
-
-    // Find the ring position to attach to
-    // Look backwards for a ring position at the same depth or the nearest ring position
-    // that is a valid attachment point
-    let attachInfo = null;
-    for (let i = posIdx - 1; i >= 0; i -= 1) {
-      const checkPos = allPositions[i];
-      const checkDepth = branchDepthMap.get(checkPos) || 0;
-      const ringInfo = ringPositionToRing.get(checkPos);
-
-      if (ringInfo && checkDepth === seqDepth) {
-        // Found a ring position at the same depth
-        attachInfo = ringInfo;
-        break;
-      }
-      if (ringInfo && checkDepth < seqDepth) {
-        // Crossed to a shallower depth without finding same-depth ring position
-        // This sequential position should be attached as a sibling
-        // Find the last ring position at the target depth
-        for (let j = i; j >= 0; j -= 1) {
-          const innerPos = allPositions[j];
-          const innerDepth = branchDepthMap.get(innerPos) || 0;
-          const innerRingInfo = ringPositionToRing.get(innerPos);
-          if (innerRingInfo && innerDepth === seqDepth) {
-            attachInfo = innerRingInfo;
-            break;
-          }
-        }
-        break;
-      }
-    }
-
-    if (attachInfo) {
-      const ringIdx = fusedRing.rings.indexOf(attachInfo.ring);
-      const attachPosition = attachInfo.idx + 1; // 1-indexed
-
-      if (!injectedVars.has(ringIdx)) {
-        injectedVars.set(ringIdx, new Map());
-      }
-      injectedVars.get(ringIdx).set(attachPosition, linearVar);
-    }
-  });
-
-  return { lines, injectedVars };
-}
-
-/**
- * Decompile a FusedRing node with injected sequential atoms
- */
-function decompileFusedRingWithInjection(fusedRing, indent, nextVar) {
-  const lines = [];
-  const ringFinalVars = [];
-
-  // Pre-create linear nodes for sequential atoms
-  const { lines: injectionLines, injectedVars } = injectSequentialAtomsAsAttachments(
-    fusedRing,
-    indent,
-    nextVar,
-  );
-  lines.push(...injectionLines);
-
-  // Create individual rings with their substitutions and attachments
-  fusedRing.rings.forEach((ring, ringIdx) => {
-    const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
-    const varName = nextVar();
-    lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
-
-    // Add substitutions
-    const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
-    lines.push(...subResult.lines);
-    let { currentVar } = subResult;
-
-    // Add regular attachments from the ring
-    if (Object.keys(ring.attachments).length > 0) {
-      Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
-        attachmentList.forEach((attachment) => {
-          const attachResult = decompileNode(attachment, indent, nextVar);
-          const { code: aCode, finalVar: aFinalVar } = attachResult;
-          lines.push(aCode);
-
-          const newVar = nextVar();
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
-          currentVar = newVar;
-        });
-      });
-    }
-
-    // Add injected sequential atom attachments
-    const injectedForRing = injectedVars.get(ringIdx);
-    if (injectedForRing) {
-      injectedForRing.forEach((linearVar, position) => {
-        const newVar = nextVar();
-        lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${linearVar}, ${position});`);
-        currentVar = newVar;
-      });
-    }
-
-    ringFinalVars.push(currentVar);
-  });
-
-  // Check for leading bond (bond connecting to previous component)
-  const leadingBond = fusedRing.metaLeadingBond;
-
-  // Fuse rings together
-  const finalVar = nextVar();
-  if (fusedRing.rings.length === 2) {
-    const ring1 = ringFinalVars[0];
-    const ring2 = ringFinalVars[1];
-    const { offset } = fusedRing.rings[1];
-    if (leadingBond) {
-      lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset}, { leadingBond: '${leadingBond}' });`);
-    } else {
-      lines.push(`${indent}const ${finalVar} = ${ring1}.fuse(${ring2}, ${offset});`);
-    }
-  } else {
-    const ringsStr = ringFinalVars.join(', ');
-    if (leadingBond) {
-      lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { leadingBond: '${leadingBond}' });`);
-    } else {
-      lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}]);`);
-    }
-  }
-
-  return { code: lines.join('\n'), finalVar };
-}
-
-/**
- * Decompile an interleaved fused ring using FusedRing constructor
- * For patterns like C2C3CCCC3C(OC2)C where ring3 is nested within ring2
- *
- * For interleaved patterns, we do NOT decompile substitutions or attachments on individual rings.
- * Instead, all atom values (including substitutions and attachments) are already encoded in the
- * metaAtomValueMap and will be used during SMILES generation.
- */
-function decompileInterleavedFusedRing(fusedRing, indent, nextVar) {
-  const lines = [];
-  const ringVars = [];
-
-  // Create individual rings with metadata preserved (WITHOUT substitutions or attachments)
-  fusedRing.rings.forEach((ring) => {
-    // Build ring with basic options only
-    const options = {
-      atoms: `'${ring.atoms}'`,
-      size: ring.size,
-    };
-
-    if (ring.ringNumber !== 1) {
-      options.ringNumber = ring.ringNumber;
-    }
-
-    if (ring.offset !== 0) {
-      options.offset = ring.offset;
-    }
-
-    // Include bonds if present
-    const bonds = ring.bonds || [];
-    const hasNonNullBonds = bonds.some((b) => b !== null);
-    if (hasNonNullBonds) {
-      options.bonds = `[${formatBondsArray(bonds)}]`;
-    }
-
-    // Include branchDepths
-    if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
-      const firstDepth = ring.metaBranchDepths[0];
-      const hasVaryingDepths = ring.metaBranchDepths.some((d) => d !== firstDepth);
-      if (hasVaryingDepths) {
-        options.branchDepths = `[${ring.metaBranchDepths.join(', ')}]`;
-      }
-    }
-
-    const optionsStr = Object.entries(options)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(', ');
-
-    const varName = nextVar();
-    lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
-
-    // Preserve metaPositions, metaStart, metaEnd
-    const positions = ring.metaPositions || [];
-    if (positions.length > 0) {
-      lines.push(`${indent}${varName}.metaPositions = [${positions.join(', ')}];`);
-      lines.push(`${indent}${varName}.metaStart = ${ring.metaStart};`);
-      lines.push(`${indent}${varName}.metaEnd = ${ring.metaEnd};`);
-    }
-
-    // Preserve attachments (needed for codegen to know about sibling attachments)
-    if (Object.keys(ring.attachments).length > 0) {
-      const attEntries = [];
-      Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
-        const attListCode = attachmentList.map((att) => {
-          const attCode = decompileChildNode(att, '', nextVar);
-          const codeLines = attCode.code.split('\n').filter((line) => line.trim());
-
-          // If the attachment decompilation produced multiple lines, we need to output
-          // ALL lines, then use the final variable
-          if (codeLines.length > 1) {
-            // Output all lines
-            codeLines.forEach((line) => {
-              lines.push(indent + line);
-            });
-            // Use the finalVar from the decompilation
-            return attCode.finalVar;
-          }
-
-          // Single line - extract just the constructor call, removing export/const/variable name
-          const match = attCode.code.match(/= (.+);?$/);
-          if (match) {
-            return match[1].replace(/;$/, '');
-          }
-          return `Linear(['${att.atoms?.[0] || 'C'}'])`;
-        });
-        attEntries.push(`${pos}: [${attListCode.join(', ')}]`);
-      });
-      lines.push(`${indent}${varName}.attachments = { ${attEntries.join(', ')} };`);
-    }
-
-    ringVars.push(varName);
-  });
-
-  // Pre-decompile seq atom attachments BEFORE creating FusedRing
-  // so child variables are declared before the main FusedRing variable
-  let seqAttCode = null;
-  if (fusedRing.metaSeqAtomAttachments && fusedRing.metaSeqAtomAttachments.size > 0) {
-    const seqAttEntries = [];
-    fusedRing.metaSeqAtomAttachments.forEach((attachments, pos) => {
-      const attVars = [];
-      attachments.forEach((att) => {
-        const attResult = decompileChildNode(att, indent, nextVar);
-        lines.push(attResult.code);
-        attVars.push(attResult.finalVar);
-      });
-      seqAttEntries.push(`[${pos}, [${attVars.join(', ')}]]`);
-    });
-    seqAttCode = seqAttEntries;
-  }
-
-  // Create FusedRing with skipPositionComputation option
-  const finalVar = nextVar();
-  const ringsStr = ringVars.join(', ');
-  const leadingBond = fusedRing.metaLeadingBond;
-
-  if (leadingBond) {
-    lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { leadingBond: '${leadingBond}', skipPositionComputation: true });`);
-  } else {
-    lines.push(`${indent}const ${finalVar} = FusedRing([${ringsStr}], { skipPositionComputation: true });`);
-  }
-
-  // Preserve FusedRing-level metadata
-  if (fusedRing.metaTotalAtoms) {
-    lines.push(`${indent}${finalVar}.metaTotalAtoms = ${fusedRing.metaTotalAtoms};`);
-  }
-  if (fusedRing.metaAllPositions && fusedRing.metaAllPositions.length > 0) {
-    lines.push(`${indent}${finalVar}.metaAllPositions = [${fusedRing.metaAllPositions.join(', ')}];`);
-  }
-  if (fusedRing.metaSequentialRings) {
-    lines.push(`${indent}${finalVar}.metaSequentialRings = [];`);
-  }
-  if (fusedRing.metaBranchDepthMap && fusedRing.metaBranchDepthMap.size > 0) {
-    lines.push(`${indent}${finalVar}.metaBranchDepthMap = ${formatMapCode(fusedRing.metaBranchDepthMap)};`);
-  }
-  if (fusedRing.metaParentIndexMap && fusedRing.metaParentIndexMap.size > 0) {
-    lines.push(`${indent}${finalVar}.metaParentIndexMap = ${formatMapCode(fusedRing.metaParentIndexMap)};`);
-  }
-  if (fusedRing.metaAtomValueMap && fusedRing.metaAtomValueMap.size > 0) {
-    lines.push(`${indent}${finalVar}.metaAtomValueMap = ${formatMapCode(fusedRing.metaAtomValueMap)};`);
-  }
-  if (fusedRing.metaBondMap && fusedRing.metaBondMap.size > 0) {
-    lines.push(`${indent}${finalVar}.metaBondMap = ${formatMapCode(fusedRing.metaBondMap)};`);
-  }
-  if (fusedRing.metaRingOrderMap && fusedRing.metaRingOrderMap.size > 0) {
-    const entries = [];
-    fusedRing.metaRingOrderMap.forEach((value, key) => {
-      entries.push(`[${key}, [${value.join(', ')}]]`);
-    });
-    lines.push(`${indent}${finalVar}.metaRingOrderMap = new Map([${entries.join(', ')}]);`);
-  }
-  if (fusedRing.metaSeqAtomAttachments) {
-    if (seqAttCode) {
-      lines.push(`${indent}${finalVar}.metaSeqAtomAttachments = new Map([${seqAttCode.join(', ')}]);`);
-    } else {
-      lines.push(`${indent}${finalVar}.metaSeqAtomAttachments = new Map();`);
-    }
-  }
-
-  return { code: lines.join('\n'), finalVar };
-}
-
-/**
- * Check if a fused ring has interleaved pattern (rings nested within each other)
- * Example: C2C3CCCC3C(OC2)C where ring3 is fully nested within ring2
- *
- * Sequential pattern: C1=CC2CCCCC2C1
- *   Ring1 branchDepths: [0, 0, 0, 0, 0] - all at same depth
- *   Ring2 branchDepths: [0, 0, 0, 0, 0, 0] - all at same depth
- *   .fuse() API works correctly
- *
- * Interleaved pattern: C2C3CCCC3C(OC2)C
- *   Ring2 branchDepths: [0, 0, 0, 0, 1, 1] - crosses branch boundary
- *   Ring3 branchDepths: [0, 0, 0, 0, 0] - all at same depth
- *   .fuse() API fails - need FusedRing constructor
- *
- * The key indicator is varying branch depths in ANY ring
- */
-function isInterleavedFusedRing(fusedRing) {
-  // Check if any ring has varying branch depths
-  for (const ring of fusedRing.rings) {
-    if (!ring.metaBranchDepths || ring.metaBranchDepths.length === 0) continue;
-
-    const firstDepth = ring.metaBranchDepths[0];
-    const hasVaryingDepths = ring.metaBranchDepths.some((d) => d !== firstDepth);
-
-    if (hasVaryingDepths) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
  * Decompile a FusedRing node
+ *
+ * Routes to the appropriate decompiler based on the complexity:
+ * - Sequential rings or interleaved codegen → preserves metadata (needs it for correct SMILES)
+ * - Everything else → structural API calls only (no metadata)
  */
 function decompileFusedRing(fusedRing, indent, nextVar) {
   const seqRings = fusedRing.metaSequentialRings;
   const hasSeqRings = seqRings && seqRings.length > 0;
-  const isInterleaved = isInterleavedFusedRing(fusedRing);
-  const hasSeqLinear = hasSequentialLinearAtoms(fusedRing);
+  const isInterleaved = needsInterleavedCodegen(fusedRing);
 
-  // Check if this is a complex parsed structure (not a simple manual .fuse())
-  // Complex structures have metaRingOrderMap which tracks which rings contribute to each position
-  const isComplexParsed = fusedRing.metaRingOrderMap && fusedRing.metaRingOrderMap.size > 0;
-
-  // Use complex decompilation if there are sequential rings
-  if (hasSeqRings) {
+  // Use complex decompilation for sequential rings or genuinely interleaved fused rings
+  if (hasSeqRings || isInterleaved) {
     return decompileComplexFusedRing(fusedRing, indent, nextVar);
   }
 
-  // Use FusedRing constructor for interleaved patterns (check BEFORE sequential linear)
-  // Interleaved patterns may have sequential positions (sibling attachments) but should
-  // use the interleaved decompiler which handles them via metadata
-  if (isInterleaved) {
-    return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
-  }
-
-  // If this is a complex parsed structure with ring order metadata, use interleaved decompiler
-  // This handles complex fused rings like steroids where rings share atoms
-  if (isComplexParsed) {
-    return decompileInterleavedFusedRing(fusedRing, indent, nextVar);
-  }
-
-  // Use injection approach for fused rings with sequential linear atoms but no sequential rings
-  if (hasSeqLinear) {
-    return decompileFusedRingWithInjection(fusedRing, indent, nextVar);
-  }
-
+  // Everything else goes through the simple path (no metadata)
   return decompileSimpleFusedRing(fusedRing, indent, nextVar);
 }
 
@@ -910,6 +931,7 @@ function decompileMolecule(molecule, indent, nextVar) {
   // produces the right SMILES without needing attachToRing
   const componentFinalVars = [];
   components.forEach((component) => {
+    // eslint-disable-next-line no-use-before-define
     const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
     lines.push(componentCode);
     // Preserve metaLeadingBond on linear/ring components (e.g., '/' in ring/C=C/ring)

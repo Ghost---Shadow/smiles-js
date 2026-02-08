@@ -20,15 +20,19 @@ import { buildSimpleFusedRingSMILES } from './simple-fused-ring.js';
  */
 export function buildSMILES(ast) {
   if (isMoleculeNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
     return buildMoleculeSMILES(ast);
   }
   if (isFusedRingNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
     return buildFusedRingSMILES(ast);
   }
   if (isRingNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
     return buildRingSMILES(ast);
   }
   if (isLinearNode(ast)) {
+    // eslint-disable-next-line no-use-before-define
     return buildLinearSMILES(ast);
   }
   throw new Error(`Unknown AST node type: ${ast?.type}`);
@@ -46,6 +50,7 @@ export function buildMoleculeSMILES(molecule) {
     const leadingBond = idx > 0 && component.metaLeadingBond ? component.metaLeadingBond : '';
     const savedLeadingBond = component.metaLeadingBond;
     if (leadingBond) {
+      // eslint-disable-next-line no-param-reassign
       delete component.metaLeadingBond;
     }
 
@@ -53,6 +58,7 @@ export function buildMoleculeSMILES(molecule) {
 
     // Restore the leading bond
     if (savedLeadingBond !== undefined) {
+      // eslint-disable-next-line no-param-reassign
       component.metaLeadingBond = savedLeadingBond;
     }
 
@@ -72,7 +78,8 @@ export function buildLinearSMILES(linear) {
 
   // Bond array format varies:
   // - Branch: bonds.length === atoms.length, bonds[i] is bond BEFORE atoms[i]
-  // - Main chain: bonds.length === atoms.length - 1, bonds[i] is bond BETWEEN atoms[i] and atoms[i+1]
+  // - Main chain: bonds.length === atoms.length - 1,
+  //   bonds[i] is bond BETWEEN atoms[i] and atoms[i+1]
   const isBranchFormat = bonds.length === atoms.length;
 
   atoms.forEach((atom, i) => {
@@ -82,12 +89,10 @@ export function buildLinearSMILES(linear) {
       if (bonds[i]) {
         parts.push(bonds[i]);
       }
-    } else {
+    } else if (i > 0 && bonds[i - 1]) {
       // Main chain format: bonds[i] is bond between atoms[i] and atoms[i+1]
       // So for atoms[i], we need bonds[i-1]
-      if (i > 0 && bonds[i - 1]) {
-        parts.push(bonds[i - 1]);
-      }
+      parts.push(bonds[i - 1]);
     }
 
     // Add atom
@@ -213,7 +218,7 @@ export function buildRingSMILES(ring) {
 export function buildFusedRingSMILES(fusedRing) {
   const { rings } = fusedRing;
 
-  // Check if we have position data for interleaved fused ring handling
+  // Use interleaved if we have position data (from parser or computeFusedRingPositions)
   const hasPositionData = rings.some((r) => r.metaPositions);
 
   if (hasPositionData && fusedRing.metaAllPositions) {
@@ -223,4 +228,3 @@ export function buildFusedRingSMILES(fusedRing) {
   // Fall back to offset-based approach for simple fused rings
   return buildSimpleFusedRingSMILES(fusedRing, buildSMILES);
 }
-

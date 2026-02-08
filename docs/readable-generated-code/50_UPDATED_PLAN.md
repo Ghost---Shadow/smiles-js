@@ -165,7 +165,7 @@ For the simple path, the decompiler emits:
 const v1 = Ring({ atoms: 'C', size: 5, bonds: [...], branchDepths: [...] });
 const v2 = v1.substitute(2, 'N');
 const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, ... });
-const v4 = v2.fuse(v3, 2);
+const v4 = v2.fuse(2, v3);
 ```
 
 No meta. The `branchDepths` option on Ring is structural (it's an input to the constructor, not computed metadata).
@@ -210,7 +210,7 @@ export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v3 = v2.substitute(2, 'N');
 export const v4 = v3.substitute(5, 'N');
 export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 1, 1, 2, 2] });
-export const v6 = v4.fuse(v5, 2);
+export const v6 = v4.fuse(2, v5);
 // sequential rings become attachments or are added via addSequentialRings
 // ...
 // NO META LINES

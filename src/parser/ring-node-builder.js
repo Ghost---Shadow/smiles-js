@@ -40,6 +40,7 @@ export function buildNodeFromAtoms(
     // If this branch contains exactly one complete ring and nothing else, build it as a ring
     if (containedRings.length === 1 && atomIndices.size === containedRings[0].positions.length) {
       const ring = containedRings[0];
+      // eslint-disable-next-line no-use-before-define
       return buildSingleRingNodeWithContext(
         ring,
         allAtoms,
@@ -49,9 +50,11 @@ export function buildNodeFromAtoms(
       );
     }
     // Otherwise fall back to linear (for complex cases with rings + extra atoms)
+    // eslint-disable-next-line no-use-before-define
     return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
   }
 
+  // eslint-disable-next-line no-use-before-define
   return buildLinearNodeSimple(atomList, allAtoms, ringBoundaries, isBranch);
 }
 

@@ -4,9 +4,6 @@
 
 import { describe, it, expect } from 'bun:test';
 import { buildBranchCrossingRingSMILES } from './branch-crossing-ring.js';
-import { Linear } from '../constructors.js';
-import { parse } from '../parser/index.js';
-import { buildSMILES } from './smiles-codegen-core.js';
 
 describe('Branch Crossing Ring Builder', () => {
   describe('buildBranchCrossingRingSMILES', () => {

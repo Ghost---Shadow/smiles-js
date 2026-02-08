@@ -21,6 +21,7 @@ Create ring structures with substitutions and attachments.
 | `substitutions` | `object` | `{}` | Position -> atom substitutions |
 | `attachments` | `object` | `{}` | Position -> attachment list |
 | `bonds` | `array` | `[]` | Bond types between atoms |
+| `branchDepths` | `number[]` | `null` | Per-atom branch depth (for rings that cross branch boundaries) |
 
 ```javascript
 // Simple benzene
@@ -61,7 +62,7 @@ const propene = Linear(['C', 'C', 'C'], [null, '=']);
 // Ethanol with hydroxyl
 const ethyl = Linear(['C', 'C']);
 const hydroxyl = Linear(['O']);
-const ethanol = ethyl.attach(hydroxyl, 2);
+const ethanol = ethyl.attach(2, hydroxyl);
 ```
 
 ### `FusedRing(rings)`
@@ -107,7 +108,7 @@ All manipulation methods are **immutable** -- they return new nodes and never mo
 const benzene = Ring({ atoms: 'c', size: 6 });
 
 // Attach substituent at position
-const toluene = benzene.attach(Linear(['C']), 1);
+const toluene = benzene.attach(1, Linear(['C']));
 
 // Substitute atom at position
 const pyridine = benzene.substitute(5, 'n');
@@ -117,20 +118,20 @@ const triazine = benzene.substituteMultiple({ 1: 'n', 3: 'n', 5: 'n' });
 
 // Fuse with another ring (offset = shared atom count)
 const ring2 = Ring({ atoms: 'C', size: 6 });
-const naphthalene = benzene.fuse(ring2, 2);
+const naphthalene = benzene.fuse(2, ring2);
 
 // Clone
 const benzeneClone = benzene.clone();
 ```
 
-#### `ring.attach(attachment, position, options?)`
+#### `ring.attach(position, attachment, options?)`
 
 Attach a node to the ring at a 1-indexed position.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `attachment` | `object` | Node to attach |
 | `position` | `number` | 1-indexed ring position |
+| `attachment` | `object` | Node to attach |
 | `options.sibling` | `boolean` | If set, marks the attachment as sibling (true) or inline (false) |
 
 #### `ring.substitute(position, newAtom)`
@@ -141,7 +142,7 @@ Replace the atom at position with a different atom symbol.
 
 Replace multiple atoms. `substitutionMap` is `{ position: atomSymbol }`.
 
-#### `ring.fuse(otherRing, offset, options?)`
+#### `ring.fuse(offset, otherRing, options?)`
 
 Fuse this ring with another ring. `offset` is how many positions into this ring the other ring starts.
 
@@ -156,7 +157,7 @@ const butane = Linear(['C', 'C', 'C', 'C']);
 
 // Attach branch at position
 const methyl = Linear(['C']);
-const branched = butane.attach(methyl, 2);
+const branched = butane.attach(2, methyl);
 
 // Concatenate chains
 const hexane = butane.concat(Linear(['C', 'C']));
@@ -168,7 +169,7 @@ const isobutane = butane.branchAt({ 2: methyl });
 const decorated = butane.branch(2, methyl, Linear(['O']));
 ```
 
-#### `linear.attach(attachment, position)`
+#### `linear.attach(position, attachment)`
 
 Attach a node at a 1-indexed position.
 
@@ -208,10 +209,10 @@ const combined = mol.concat(Molecule([Ring({ atoms: 'c', size: 6 })]));
 ### FusedRing Methods
 
 ```javascript
-const fused = ring1.fuse(ring2, 4);
+const fused = ring1.fuse(4, ring2);
 
 // Add another ring to the fused system
-const triple = fused.addRing(ring3, 8);
+const triple = fused.addRing(8, ring3);
 
 // Get a specific ring by number
 const r = fused.getRing(1);
@@ -220,19 +221,44 @@ const r = fused.getRing(1);
 const modified = fused.substituteInRing(1, 3, 'N');
 
 // Attach to a specific ring
-const decorated = fused.attachToRing(1, Linear(['O']), 4);
+const decorated = fused.attachToRing(1, 4, Linear(['O']));
 
 // Renumber rings
 const renumbered = fused.renumber(10);
 
-// Add sequential continuation rings
+// Add sequential continuation rings with depths and chain atoms
 const withSeq = fused.addSequentialRings([ring3, ring4], {
-  atomAttachments: { 25: [Linear(['O'], ['='])] }
+  depths: [1, 2],
+  chainAtoms: [
+    { atom: 'C', depth: 2, position: 'before' },
+    { atom: 'C', depth: 2, position: 'after', attachments: [Linear(['O'], ['='])] },
+  ]
 });
 
 // Add attachment to a sequential atom position
 const withAtt = fused.addSequentialAtomAttachment(25, Linear(['O']));
 ```
+
+#### `fusedRing.addSequentialRings(rings, options?)`
+
+Add continuation rings to a fused ring system. Computes all position metadata internally.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `rings` | `Ring[]` | Array of sequential Ring nodes to add |
+| `options.depths` | `number[]` | Per-ring branch depth (e.g., `[1, 2, 1, 2]`) |
+| `options.chainAtoms` | `object[]` | Standalone atoms between rings (see below) |
+| `options.atomAttachments` | `object` | Legacy: position → attachment list map |
+
+**chainAtoms entries:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `atom` | `string` | Atom symbol (e.g., `'C'`, `'N'`, `'O'`) |
+| `depth` | `number` | Branch depth for this atom |
+| `position` | `'before'` \| `'after'` | Whether the atom appears before or after rings at its depth |
+| `bond` | `string` | Optional bond type (e.g., `'='`, `'#'`) |
+| `attachments` | `object[]` | Optional array of nodes attached to this atom |
 
 ---
 
@@ -363,7 +389,7 @@ import {
 } from 'smiles-js/manipulation';
 
 const benzene = Ring({ atoms: 'c', size: 6 });
-const toluene = ringAttach(benzene, Linear(['C']), 1);
+const toluene = ringAttach(benzene, 1, Linear(['C']));
 ```
 
 ---
@@ -395,7 +421,7 @@ import RDKit from '@rdkit/rdkit';
 // Build molecule programmatically
 const benzene = Ring({ atoms: 'c', size: 6 });
 const methyl = Linear(['C']);
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 
 // Use with RDKit
 const rdkit = await RDKit.load();
@@ -435,9 +461,6 @@ Some complex molecules may have minor notation differences during round-trip:
 
 **Impact**: Low - Structure is preserved, only notation differs.
 
-### toCode() Limitation
+### toCode() Generated Code
 
-The `.toCode()` method has a limitation with certain sequential continuation patterns in very complex nested structures. This does NOT affect:
-- Parsing SMILES -> AST
-- Serializing AST -> SMILES
-- Round-trip fidelity
+The `.toCode()` method generates JavaScript constructor code that reconstructs the molecule. For molecules with sequential continuation rings (e.g., Telmisartan), the generated code uses `addSequentialRings()` with `depths` and `chainAtoms` options to produce clean structural API calls with no raw metadata assignments.

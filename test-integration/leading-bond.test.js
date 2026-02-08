@@ -73,8 +73,8 @@ describe('Leading Bond Tests', () => {
       atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-',
     });
 
-    const withFirst = ring1.attach(ring2, 3);
-    const withBoth = withFirst.attach(ring3, 4);
+    const withFirst = ring1.attach(3, ring2);
+    const withBoth = withFirst.attach(4, ring3);
 
     const { smiles } = withBoth;
     expect(smiles).toContain('-c2ccccc2');

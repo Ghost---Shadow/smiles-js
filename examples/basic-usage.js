@@ -46,13 +46,13 @@ log('\n=== Ring Attachments ===\n');
 
 // Create toluene (benzene with methyl group)
 const methyl = Linear(['C']);
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 log('Toluene:', toluene.smiles);
 // Output: c1(C)ccccc1
 
 // Multiple attachments
 const ethyl = Linear(['C', 'C']);
-const ethylbenzene = benzene.attach(ethyl, 1);
+const ethylbenzene = benzene.attach(1, ethyl);
 log('Ethylbenzene:', ethylbenzene.smiles);
 // Output: c1(CC)ccccc1
 
@@ -95,7 +95,7 @@ log('Naphthalene:', naphthalene.smiles);
 // Output: C1CC2CCCCC2CC1
 
 // Alternative: Use fuse method
-const naphthalene2 = ring1.fuse(ring2, 2);
+const naphthalene2 = ring1.fuse(2, ring2);
 log('Naphthalene (via fuse):', naphthalene2.smiles);
 // Output: C1CC2CCCCC2CC1
 
@@ -125,7 +125,7 @@ log('\n=== Chaining Operations ===\n');
 const molecule = Ring({ atoms: 'c', size: 6 })
   .substitute(1, 'n')
   .substitute(3, 'n')
-  .attach(Linear(['C']), 2);
+  .attach(2, Linear(['C']));
 
 log('Complex molecule:', molecule.smiles);
 // Output: n1c(C)nccc1
@@ -159,5 +159,5 @@ const pyrimidine = Ring({ atoms: 'C', size: 6 })
   .substitute(1, 'N')
   .substitute(3, 'N');
 
-const fusedCore = imidazole.fuse(pyrimidine, 3);
+const fusedCore = imidazole.fuse(3, pyrimidine);
 log('Fused heterocycle:', fusedCore.smiles);

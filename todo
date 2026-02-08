@@ -1,6 +1,6 @@
-standardize API to use (4, group) instead of (group, 4)
 repeat
 mirror
 HOSE integration
 vscode error only on .smiles.js files
 automate deploying to gh-pages
+automate tests and coverage badges in README

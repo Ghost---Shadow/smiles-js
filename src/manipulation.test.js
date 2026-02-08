@@ -5,7 +5,7 @@ describe('Ring.attach()', () => {
   test('attaches a linear chain to a ring', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
     const methyl = Linear(['C']);
-    const toluene = benzene.attach(methyl, 1);
+    const toluene = benzene.attach(1, methyl);
 
     expect(toluene.attachments[1]).toHaveLength(1);
     expect(toluene.attachments[1][0].type).toBe('linear');
@@ -15,7 +15,7 @@ describe('Ring.attach()', () => {
   test('returns a new ring without modifying original', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
     const methyl = Linear(['C']);
-    const toluene = benzene.attach(methyl, 1);
+    const toluene = benzene.attach(1, methyl);
 
     expect(benzene.attachments).toEqual({});
     expect(toluene.attachments[1]).toHaveLength(1);
@@ -25,7 +25,7 @@ describe('Ring.attach()', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
     const methyl1 = Linear(['C']);
     const methyl2 = Linear(['C']);
-    const result = benzene.attach(methyl1, 1).attach(methyl2, 1);
+    const result = benzene.attach(1, methyl1).attach(1, methyl2);
 
     expect(result.attachments[1]).toHaveLength(2);
   });
@@ -34,8 +34,8 @@ describe('Ring.attach()', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
     const methyl = Linear(['C']);
 
-    expect(() => benzene.attach(methyl, 0)).toThrow('Position must be an integer between 1 and 6');
-    expect(() => benzene.attach(methyl, 7)).toThrow('Position must be an integer between 1 and 6');
+    expect(() => benzene.attach(0, methyl)).toThrow('Position must be an integer between 1 and 6');
+    expect(() => benzene.attach(7, methyl)).toThrow('Position must be an integer between 1 and 6');
   });
 });
 
@@ -89,7 +89,7 @@ describe('Ring.substituteMultiple()', () => {
     const methyl = Linear(['C']);
     const result = benzene
       .substituteMultiple({ 1: 'n', 3: 'n' })
-      .attach(methyl, 2);
+      .attach(2, methyl);
 
     expect(result.substitutions).toEqual({ 1: 'n', 3: 'n' });
     expect(result.attachments[2]).toHaveLength(1);
@@ -100,7 +100,7 @@ describe('Ring.fuse()', () => {
   test('fuses two rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const naphthalene = ring1.fuse(ring2, 2);
+    const naphthalene = ring1.fuse(2, ring2);
 
     expect(naphthalene.type).toBe('fused_ring');
     expect(naphthalene.rings).toHaveLength(2);
@@ -135,7 +135,7 @@ describe('Linear.attach()', () => {
   test('attaches a linear chain to a linear chain', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const methyl = Linear(['C']);
-    const branched = propyl.attach(methyl, 2);
+    const branched = propyl.attach(2, methyl);
 
     expect(branched.attachments[2]).toHaveLength(1);
     expect(branched.attachments[2][0].type).toBe('linear');
@@ -144,7 +144,7 @@ describe('Linear.attach()', () => {
   test('returns a new linear without modifying original', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const methyl = Linear(['C']);
-    const branched = propyl.attach(methyl, 2);
+    const branched = propyl.attach(2, methyl);
 
     expect(propyl.attachments).toEqual({});
     expect(branched.attachments[2]).toHaveLength(1);
@@ -154,7 +154,7 @@ describe('Linear.attach()', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const methyl1 = Linear(['C']);
     const methyl2 = Linear(['C']);
-    const result = propyl.attach(methyl1, 2).attach(methyl2, 2);
+    const result = propyl.attach(2, methyl1).attach(2, methyl2);
 
     expect(result.attachments[2]).toHaveLength(2);
   });
@@ -163,8 +163,8 @@ describe('Linear.attach()', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const methyl = Linear(['C']);
 
-    expect(() => propyl.attach(methyl, 0)).toThrow('Position must be an integer between 1 and 3');
-    expect(() => propyl.attach(methyl, 4)).toThrow('Position must be an integer between 1 and 3');
+    expect(() => propyl.attach(0, methyl)).toThrow('Position must be an integer between 1 and 3');
+    expect(() => propyl.attach(4, methyl)).toThrow('Position must be an integer between 1 and 3');
   });
 });
 
@@ -267,7 +267,7 @@ describe('Linear.clone()', () => {
   test('creates a deep clone', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const methyl = Linear(['C']);
-    const branched = propyl.attach(methyl, 2);
+    const branched = propyl.attach(2, methyl);
     const cloned = branched.clone();
 
     expect(cloned).toEqual(branched);
@@ -280,10 +280,10 @@ describe('FusedRing methods', () => {
   test('addRing() adds a ring to fused system', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const ring3 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-    const expanded = fusedRing.addRing(ring3, 8);
+    const expanded = fusedRing.addRing(8, ring3);
 
     expect(expanded.rings).toHaveLength(3);
     expect(expanded.rings[2].size).toBe(5);
@@ -293,7 +293,7 @@ describe('FusedRing methods', () => {
   test('getRing() retrieves ring by number', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const retrieved = fusedRing.getRing(2);
 
@@ -304,7 +304,7 @@ describe('FusedRing methods', () => {
   test('getRing() returns undefined for non-existent ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const retrieved = fusedRing.getRing(99);
 
@@ -314,7 +314,7 @@ describe('FusedRing methods', () => {
   test('substituteInRing() throws for non-existent ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     expect(() => fusedRing.substituteInRing(99, 3, 'N')).toThrow('Ring 99 not found in fused ring system');
   });
@@ -322,7 +322,7 @@ describe('FusedRing methods', () => {
   test('substituteInRing() substitutes in specific ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const modified = fusedRing.substituteInRing(2, 3, 'N');
 
@@ -333,10 +333,10 @@ describe('FusedRing methods', () => {
   test('attachToRing() attaches to specific ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const methyl = Linear(['C']);
-    const modified = fusedRing.attachToRing(2, methyl, 3);
+    const modified = fusedRing.attachToRing(2, 3, methyl);
 
     expect(modified.rings[1].attachments[3]).toHaveLength(1);
     expect(fusedRing.rings[1].attachments).toEqual({});
@@ -345,7 +345,7 @@ describe('FusedRing methods', () => {
   test('renumber() renumbers rings sequentially', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 5 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 7 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const renumbered = fusedRing.renumber();
 
@@ -356,7 +356,7 @@ describe('FusedRing methods', () => {
   test('renumber() with custom start number', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const renumbered = fusedRing.renumber(10);
 
@@ -367,7 +367,7 @@ describe('FusedRing methods', () => {
   test('concat() creates molecule', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const methyl = Linear(['C']);
     const molecule = fusedRing.concat(methyl);
@@ -379,7 +379,7 @@ describe('FusedRing methods', () => {
   test('clone() creates deep copy', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fusedRing = ring1.fuse(ring2, 2);
+    const fusedRing = ring1.fuse(2, ring2);
 
     const cloned = fusedRing.clone();
 

@@ -3,8 +3,12 @@ import { Ring, FusedRing, Linear } from './constructors.js';
 
 describe('addSequentialRings', () => {
   test('adds sequential rings to a fused ring', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
@@ -18,8 +22,12 @@ describe('addSequentialRings', () => {
   });
 
   test('extends allPositions to include sequential ring positions', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const originalPositionCount = fused.metaAllPositions.length;
@@ -30,8 +38,12 @@ describe('addSequentialRings', () => {
   });
 
   test('preserves existing ring metadata', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const originalRing1Positions = [...fused.rings[0].metaPositions];
@@ -42,8 +54,12 @@ describe('addSequentialRings', () => {
   });
 
   test('supports atomAttachments option', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
@@ -56,8 +72,12 @@ describe('addSequentialRings', () => {
   });
 
   test('returns immutable result', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
@@ -71,8 +91,12 @@ describe('addSequentialRings', () => {
 
 describe('addSequentialAtomAttachment', () => {
   test('adds attachment to sequential atom position', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
@@ -85,8 +109,12 @@ describe('addSequentialAtomAttachment', () => {
   });
 
   test('accumulates multiple attachments at same position', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
@@ -101,8 +129,12 @@ describe('addSequentialAtomAttachment', () => {
   });
 
   test('returns immutable result', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
     const fused = FusedRing([ring1, ring2]);
 
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
