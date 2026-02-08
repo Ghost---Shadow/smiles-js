@@ -42,7 +42,7 @@ log('2. Pyrazole ring:', pyrazole.smiles);
 
 // Methyl on pyrazole nitrogen
 const methylSubstituent = Linear(['C']);
-const nMethylPyrazole = pyrazole.attach(methylSubstituent, 3);
+const nMethylPyrazole = pyrazole.attach(3, methylSubstituent);
 log('3. N-methyl pyrazole:', nMethylPyrazole.smiles);
 
 // Fused pyrimidine ring
@@ -57,13 +57,13 @@ log('5. Piperazine ring:', piperazine.smiles);
 
 // N-ethyl group on piperazine
 const ethyl = Linear(['C', 'C']);
-const nEthylPiperazine = piperazine.attach(ethyl, 4);
+const nEthylPiperazine = piperazine.attach(4, ethyl);
 log('6. N-ethyl piperazine:', nEthylPiperazine.smiles);
 
 // Ethyl ester group
 const esterLinker = Linear(['C', 'O', 'C', 'C']);
 const carbonylOxygen = Linear(['O'], ['=']);
-const ethylEster = esterLinker.attach(carbonylOxygen, 1);
+const ethylEster = esterLinker.attach(1, carbonylOxygen);
 log('7. Ethyl ester:', ethylEster.smiles);
 
 log();

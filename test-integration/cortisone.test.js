@@ -101,7 +101,7 @@ describe('Cortisone - Divide and Conquer', () => {
     const { Ring } = require('../src/constructors.js');
     const v1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
     const v2 = Ring({ atoms: 'C', size: 9, ringNumber: 2 });
-    const fused = v1.fuse(v2, 0);
+    const fused = v1.fuse(0, v2);
 
     console.log('\n=== Root Cause Analysis (FIXED) ===');
     console.log('Ring 0 metaPositions:', fused.rings[0].metaPositions);

@@ -67,10 +67,10 @@ exports[`Acetaminophen Integration Test parses acetaminophen 1`] = `
 exports[`Acetaminophen Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'N']);
 export const v2 = Linear(['O'], ['=']);
-export const v3 = v1.attach(v2, 2);
+export const v3 = v1.attach(2, v2);
 export const v4 = Ring({ atoms: 'c', size: 6 });
 export const v5 = Linear(['O']);
-export const v6 = v4.attach(v5, 4);
+export const v6 = v4.attach(4, v5);
 export const v7 = Molecule([v3, v6]);"
 `;
 
@@ -145,9 +145,9 @@ exports[`Phenacetin Integration Test parses phenacetin 1`] = `
 exports[`Phenacetin Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'N']);
 export const v2 = Linear(['O'], ['=']);
-export const v3 = v1.attach(v2, 2);
+export const v3 = v1.attach(2, v2);
 export const v4 = Ring({ atoms: 'c', size: 6 });
 export const v5 = Linear(['O', 'C', 'C']);
-export const v6 = v4.attach(v5, 4);
+export const v6 = v4.attach(4, v5);
 export const v7 = Molecule([v3, v6]);"
 `;

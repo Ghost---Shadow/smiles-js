@@ -45,7 +45,7 @@ log();
 log('5. Fused Ring System:');
 const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
 const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-const fusedRing = ring1.fuse(ring2, 2);
+const fusedRing = ring1.fuse(2, ring2);
 log('Code:');
 log(fusedRing.toCode('naphthalene'));
 log();

@@ -64,24 +64,28 @@ describe('Decompiler - Linear', () => {
 describe('Decompiler - FusedRing', () => {
   test('decompiles fused ring system', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 2,
+    });
     const fusedRing = rawFusedRing([ring1, ring2]);
 
     const code = decompile(fusedRing);
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 10 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
-export const v3 = v1.fuse(v2, 2);`);
+export const v3 = v1.fuse(2, v2);`);
   });
 
   test('uses toCode() method', () => {
     const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fusedRing = rawFusedRing([ring1, ring2]);
 
     const code = decompile(fusedRing);
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export const v3 = v1.fuse(v2, 1);`);
+export const v3 = v1.fuse(1, v2);`);
   });
 });
 
@@ -142,7 +146,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles ring with attachments', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     const methyl = Linear(['C']);
-    const attached = ring.attach(methyl, 1);
+    const attached = ring.attach(1, methyl);
     const code = decompile(attached);
     expect(code).toContain('.attach(');
   });
@@ -150,7 +154,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles linear with attachments', () => {
     const chain = Linear(['C', 'C', 'C']);
     const branch = Linear(['N']);
-    const attached = chain.attach(branch, 2);
+    const attached = chain.attach(2, branch);
     const code = decompile(attached);
     expect(code).toContain('.attach(');
   });
@@ -158,7 +162,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles simple fused ring without leadingBond (2 rings)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
   });
@@ -186,7 +190,7 @@ describe('Decompiler - Advanced Features', () => {
     ring2.metaStart = 6;
     ring2.metaEnd = 11;
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
     fused.metaBranchDepthMap = new Map();
@@ -216,7 +220,9 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles simple fused ring with leadingBond (2 rings)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fused = rawFusedRing([ring1, ring2]);
     fused.metaLeadingBond = '=';
     const code = decompile(fused);
@@ -225,8 +231,12 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles simple fused ring with leadingBond (3+ rings)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 2,
+    });
     const fused = rawFusedRing([ring1, ring2, ring3]);
     fused.metaLeadingBond = '=';
     const code = decompile(fused);
@@ -235,8 +245,12 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles simple fused ring without leadingBond (3+ rings)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 2,
+    });
     const fused = rawFusedRing([ring1, ring2, ring3]);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -245,7 +259,9 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles fused ring without sequential rings via simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fused = rawFusedRing([ring1, ring2]);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -262,7 +278,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles fused ring where single ring returns early', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     fused.metaSequentialRings = [];
     fused.rings = [ring1];
     const code = decompile(fused);
@@ -288,7 +304,7 @@ describe('Decompiler - Advanced Features', () => {
     seqRing.metaPositions = [10, 11, 12, 13, 14];
     seqRing.metaStart = 10;
     seqRing.metaEnd = 14;
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     fused.metaSequentialRings = [seqRing];
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
     fused.metaBranchDepthMap = new Map();
@@ -310,7 +326,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles simple fused ring with 2 rings and no leadingBond (line 547)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     delete fused.leadingBond;
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -319,7 +335,9 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles fused ring with empty sequential rings via simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fused = rawFusedRing([ring1, ring2]);
     fused.metaSequentialRings = [];
     const code = decompile(fused);
@@ -330,7 +348,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles ring with simple leadingBond (line 206)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     fused.metaLeadingBond = '=';
     fused.metaSequentialRings = [];
     fused.metaAllPositions = [];
@@ -340,8 +358,12 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles simple FusedRing with leadingBond (line 231)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 2,
+    });
     const fused = rawFusedRing([ring1, ring2, ring3]);
     fused.metaLeadingBond = '#';
     const code = decompile(fused);
@@ -359,8 +381,12 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles 3+ ring FusedRing via simple path with addRing', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 2 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 2,
+    });
     const fused = rawFusedRing([ring1, ring2, ring3]);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -370,7 +396,9 @@ describe('Decompiler - Advanced Features', () => {
 
   test('decompiles fused ring with extra metadata via simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fused = rawFusedRing([ring1, ring2]);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -380,7 +408,7 @@ describe('Decompiler - Advanced Features', () => {
   test('decompiles simple fused ring with 2 rings no leadingBond (line 547)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     delete fused.metaLeadingBond;
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -390,7 +418,7 @@ describe('Decompiler - Advanced Features', () => {
   test('covers decompileChildNode helper (line 17)', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     const methyl = Linear(['C']);
-    const attached = ring.attach(methyl, 1);
+    const attached = ring.attach(1, methyl);
     const code = decompile(attached);
     expect(code).toContain('.attach(');
   });
@@ -571,8 +599,8 @@ describe('Decompiler - Advanced Features', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     const branch1 = Linear(['N']);
     const branch2 = Linear(['O']);
-    const withAttach = ring.attach(branch1, 2);
-    const withBoth = withAttach.attach(branch2, 4);
+    const withAttach = ring.attach(2, branch1);
+    const withBoth = withAttach.attach(4, branch2);
     const code = decompile(withBoth);
     expect(code).toContain('.attach(');
   });
@@ -580,7 +608,7 @@ describe('Decompiler - Advanced Features', () => {
   test('covers simple fused with injection no leadingBond (line 547)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     fused.metaBranchDepthMap = new Map([[12, 0]]);
     fused.metaAtomValueMap = new Map([[12, 'N']]);
@@ -594,9 +622,9 @@ describe('Decompiler - Advanced Features', () => {
   test('covers injection with ring having attachments (lines 510-521)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const branch = Linear(['N']);
-    const ringWithAttach = ring1.attach(branch, 2);
+    const ringWithAttach = ring1.attach(2, branch);
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ringWithAttach.fuse(ring2, 1);
+    const fused = ringWithAttach.fuse(1, ring2);
     fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     fused.metaBranchDepthMap = new Map();
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
@@ -649,7 +677,7 @@ describe('Decompiler - Advanced Features', () => {
   test('covers fused ring with metadata but no seq rings via simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
     expect(code).not.toContain('Linear');
@@ -658,9 +686,9 @@ describe('Decompiler - Advanced Features', () => {
   test('covers injected ring with attachments (line 511-521)', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     const branch = Linear(['N']);
-    const attached = ring.attach(branch, 2);
+    const attached = ring.attach(2, branch);
     const methyl = Linear(['C']);
-    const withMore = attached.attach(methyl, 4);
+    const withMore = attached.attach(4, methyl);
     const code = decompile(withMore);
     expect(code).toContain('.attach(');
   });
@@ -673,7 +701,9 @@ describe('Decompiler - Advanced Features', () => {
 
   test('covers fused ring ignores injection metadata via simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fused = rawFusedRing([ring1, ring2]);
     const code = decompile(fused);
     expect(code).toContain('.fuse(');
@@ -682,7 +712,9 @@ describe('Decompiler - Advanced Features', () => {
 
   test('covers leadingBond on simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
     const fused = rawFusedRing([ring1, ring2]);
     fused.metaLeadingBond = '=';
     const code = decompile(fused);

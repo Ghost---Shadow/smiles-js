@@ -77,7 +77,7 @@ describe('SMILES Codegen Core', () => {
       const ring1 = Ring({ atoms: 'C', size: 6 });
       const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
       ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-      const fused = ring1.fuse(ring2, 1);
+      const fused = ring1.fuse(1, ring2);
       fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       const smiles = buildFusedRingSMILES(fused);
       expect(smiles).toBeTruthy();
@@ -86,7 +86,7 @@ describe('SMILES Codegen Core', () => {
     it('should fall back to simple approach without position data', () => {
       const ring1 = Ring({ atoms: 'C', size: 6 });
       const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-      const fused = ring1.fuse(ring2, 1);
+      const fused = ring1.fuse(1, ring2);
       const smiles = buildFusedRingSMILES(fused);
       expect(smiles).toBeTruthy();
     });
@@ -130,7 +130,7 @@ describe('SMILES Codegen Core', () => {
     it('should dispatch to correct handler for FusedRing', () => {
       const ring1 = Ring({ atoms: 'C', size: 6 });
       const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-      const fused = ring1.fuse(ring2, 1);
+      const fused = ring1.fuse(1, ring2);
       const smiles = buildSMILES(fused);
       expect(smiles).toBeTruthy();
     });

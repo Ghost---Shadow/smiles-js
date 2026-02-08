@@ -94,9 +94,9 @@ export const v4 = v3.substitute(4, 'N');
 export const v5 = v4.substitute(5, 'N');
 export const v6 = Linear(['C', 'F']);
 export const v7 = Linear(['F']);
-export const v8 = v6.attach(v7, 1);
+export const v8 = v6.attach(1, v7);
 export const v9 = Linear(['F']);
-export const v10 = v8.attach(v9, 1);
+export const v10 = v8.attach(1, v9);
 export const v11 = Molecule([v1, v2, v5, v10]);"
 `;
 
@@ -245,7 +245,7 @@ export const v4 = v3.substitute(10, 'S');
 export const v5 = v4.substitute(11, 'O');
 export const v6 = Linear(['C', 'N']);
 export const v7 = Linear(['O'], ['=']);
-export const v8 = v6.attach(v7, 1);
+export const v8 = v6.attach(1, v7);
 export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
 export const v10 = v9.substitute(6, 'N');
 export const v11 = Molecule([v1, v5, v8, v10]);"
@@ -363,7 +363,7 @@ export const v4 = v3.substitute(3, 'N');
 export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, null, null, null, null] });
 export const v6 = v5.substitute(5, 'O');
 export const v7 = Linear(['C', 'C']);
-export const v8 = v6.attach(v7, 6);
+export const v8 = v6.attach(6, v7);
 export const v9 = Linear(['O'], ['=']);
 export const v10 = FusedRing([v2, v4, v8]);
 v10.rings[0].metaPositions = [2, 3, 4, 5, 6, 7];
@@ -499,14 +499,14 @@ exports[`Ketorolac Integration Test parses ketorolac 1`] = `
 exports[`Ketorolac Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['O', 'C']);
 export const v2 = Linear(['O'], ['=']);
-export const v3 = v1.attach(v2, 2);
+export const v3 = v1.attach(2, v2);
 export const v4 = Ring({ atoms: 'C', size: 5 });
 export const v5 = v4.substitute(4, 'N');
 export const v6 = Ring({ atoms: 'C', size: 5, ringNumber: 2, offset: 3, bonds: [null, '=', null, '=', null] });
-export const v7 = v5.fuse(v6, 3);
+export const v7 = v5.fuse(3, v6);
 export const v8 = Linear(['C']);
 export const v9 = Linear(['O'], ['=']);
-export const v10 = v8.attach(v9, 1);
+export const v10 = v8.attach(1, v9);
 export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
 export const v12 = Molecule([v3, v7, v10, v11]);"
 `;
@@ -621,14 +621,14 @@ exports[`Rofecoxib Integration Test parses rofecoxib 1`] = `
 exports[`Rofecoxib Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'S']);
 export const v2 = Linear(['O'], ['=']);
-export const v3 = v1.attach(v2, 2);
+export const v3 = v1.attach(2, v2);
 export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(v4, 2);
+export const v5 = v3.attach(2, v4);
 export const v6 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
 export const v7 = Ring({ atoms: 'C', size: 5, ringNumber: 2, bonds: ['=', null, null, null, null] });
 export const v8 = v7.substitute(4, 'O');
 export const v9 = Linear(['O'], ['=']);
-export const v10 = v8.attach(v9, 3);
+export const v10 = v8.attach(3, v9);
 export const v11 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
 export const v12 = Molecule([v5, v6, v10, v11]);"
 `;
@@ -740,9 +740,9 @@ export const v3 = v2.substitute(2, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null] });
 export const v5 = Linear(['S']);
 export const v6 = Linear(['O'], ['=']);
-export const v7 = v5.attach(v6, 1);
+export const v7 = v5.attach(1, v6);
 export const v8 = Linear(['O'], ['=']);
-export const v9 = v7.attach(v8, 1);
+export const v9 = v7.attach(1, v8);
 export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
 export const v11 = Molecule([v1, v3, v4, v9, v10]);"
 `;
@@ -837,7 +837,7 @@ exports[`Nabumetone Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'O']);
 export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 1, 1] });
 export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, null, null, '=', null], branchDepths: [0, 0, 0, 1, 1, 1] });
-export const v4 = v2.fuse(v3, 2);
+export const v4 = v2.fuse(2, v3);
 v4.rings[0].metaPositions = [2, 3, 4, 9, 10, 11];
 v4.rings[0].metaStart = 2;
 v4.rings[0].metaEnd = 11;
@@ -851,7 +851,7 @@ v4.metaBondMap = new Map([[3, '='], [5, '='], [9, '='], [11, '=']]);
 v4.metaRingOrderMap = new Map([[2, [1, 1]], [3, [1]], [4, [2, 2, 1]], [5, [2]], [6, [2]], [7, [2]], [8, [2]], [9, [2, 1]], [10, [1]], [11, [1]]]);
 export const v5 = Linear(['C', 'C', 'C', 'C']);
 export const v6 = Linear(['O'], ['=']);
-export const v7 = v5.attach(v6, 3);
+export const v7 = v5.attach(3, v6);
 export const v8 = Molecule([v1, v4, v7]);"
 `;
 
@@ -930,7 +930,7 @@ exports[`Oxaprozin Integration Test parses oxaprozin 1`] = `
 exports[`Oxaprozin Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Linear(['O', 'C', 'C', 'C']);
 export const v2 = Linear(['O'], ['=']);
-export const v3 = v1.attach(v2, 2);
+export const v3 = v1.attach(2, v2);
 export const v4 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null] });
 export const v5 = v4.substitute(2, 'N');
 export const v6 = v5.substitute(5, 'O');

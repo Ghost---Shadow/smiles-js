@@ -44,7 +44,7 @@ export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v3 = v2.substitute(2, 'N');
 export const v4 = v3.substitute(5, 'N');
 export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 1, 1, 2, 2] });
-export let v6 = v4.fuse(v5, 2);
+export let v6 = v4.fuse(2, v5);
 export const v7 = Ring({ atoms: 'C', size: 5, ringNumber: 5, bonds: ['=', null, '=', null, null] });
 export const v8 = v7.substitute(2, 'N');
 export const v9 = v8.substitute(5, 'N');
@@ -94,11 +94,11 @@ From these, it should be able to compute every metadata property the interleaved
 
 ### Step 3: Make `fuse()` produce metadata the interleaved codegen can use
 
-Same as Step 2 but for the base `.fuse()` call. When `v4.fuse(v5, 2)` is called, the resulting fused ring should have enough metadata for the interleaved codegen to work. Currently `computeFusedRingPositions` sets `metaPositions` on rings but doesn't set all the maps the interleaved codegen needs.
+Same as Step 2 but for the base `.fuse()` call. When `v4.fuse(2, v5)` is called, the resulting fused ring should have enough metadata for the interleaved codegen to work. Currently `computeFusedRingPositions` sets `metaPositions` on rings but doesn't set all the maps the interleaved codegen needs.
 
 Extend `computeFusedRingPositions` (or add a post-processing step) to also compute `metaAllPositions`, `metaBranchDepthMap`, `metaAtomValueMap`, `metaBondMap` from the structural ring data.
 
-**Outcome**: `v4.fuse(v5, 2)` returns a fused ring with complete metadata. The interleaved codegen works on it without any manual meta assignments.
+**Outcome**: `v4.fuse(2, v5)` returns a fused ring with complete metadata. The interleaved codegen works on it without any manual meta assignments.
 
 **Files**: `src/layout/index.js` or `src/node-creators.js`
 

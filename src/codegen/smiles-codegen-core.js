@@ -223,4 +223,3 @@ export function buildFusedRingSMILES(fusedRing) {
   // Fall back to offset-based approach for simple fused rings
   return buildSimpleFusedRingSMILES(fusedRing, buildSMILES);
 }
-

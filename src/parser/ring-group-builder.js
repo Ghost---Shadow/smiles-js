@@ -306,7 +306,9 @@ function buildMetadataMaps(positions, atoms) {
     atomValueMap.set(pos, atoms[pos].rawValue);
     bondMap.set(pos, atoms[pos].bond);
   });
-  return { branchDepthMap, parentIndexMap, atomValueMap, bondMap };
+  return {
+    branchDepthMap, parentIndexMap, atomValueMap, bondMap,
+  };
 }
 
 /**
@@ -414,9 +416,7 @@ function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, at
   });
   fusedNode.metaRingOrderMap = ringOrderMap;
 
-  fusedNode.metaSeqAtomAttachments = buildSeqAtomAttachments(
-    fusedNode, rings, seqRingNodes, atoms, ringBoundaries, buildNodeFromAtomsFn,
-  );
+  fusedNode.metaSeqAtomAttachments = buildSeqAtomAttachments(fusedNode, rings, seqRingNodes, atoms, ringBoundaries, buildNodeFromAtomsFn);
 
   return fusedNode;
 }
@@ -540,23 +540,17 @@ export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buil
 
   const { trulyFusedRings, sequentialRingsFromGroup } = separateFusedFromSequential(sortedGroup);
 
-  const { allPositions, allRingPositions, sequentialRings } = collectAllPositions(
-    trulyFusedRings, sequentialRingsFromGroup, group, atoms, ringBoundaries,
-  );
+  const { allPositions, allRingPositions, sequentialRings } = collectAllPositions(trulyFusedRings, sequentialRingsFromGroup, group, atoms, ringBoundaries);
 
   const totalAtoms = allPositions.size;
 
   const rings = trulyFusedRings.map((ring) => {
     const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
-    return buildSingleRingNodeWithContext(
-      ring, atoms, ringBoundaries, ringOffset, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn,
-    );
+    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, ringOffset, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn);
   });
 
   const seqRingNodes = sequentialRings.map(
-    (ring) => buildSingleRingNodeWithContext(
-      ring, atoms, ringBoundaries, 0, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn,
-    ),
+    (ring) => buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn),
   );
 
   return assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, atoms, ringBoundaries, buildNodeFromAtomsFn);

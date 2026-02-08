@@ -15,7 +15,7 @@ log('=== FusedRing Manipulation Examples ===\n');
 // Create a simple fused ring (naphthalene-like structure)
 const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
 const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-const naphthalene = ring1.fuse(ring2, 2);
+const naphthalene = ring1.fuse(2, ring2);
 
 log('Original fused ring:');
 log('  Type:', naphthalene.type);
@@ -28,7 +28,7 @@ log();
 // Add a third ring to the system
 log('=== addRing() - Expand the system ===');
 const ring3 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-const expanded = naphthalene.addRing(ring3, 8);
+const expanded = naphthalene.addRing(8, ring3);
 
 log('After adding ring 3:');
 log('  Rings:', expanded.rings.length);
@@ -48,7 +48,7 @@ log();
 // Attach to a specific ring
 log('=== attachToRing() - Attach to specific ring ===');
 const methyl = Linear(['C']);
-const withAttachment = naphthalene.attachToRing(2, methyl, 4);
+const withAttachment = naphthalene.attachToRing(2, 4, methyl);
 
 log('After attaching methyl to ring 2, position 4:');
 log('  Ring 2 has attachment:', Object.keys(withAttachment.rings[1].attachments).length > 0);
@@ -70,7 +70,7 @@ log();
 log('=== renumber() - Renumber rings sequentially ===');
 const ring4 = Ring({ atoms: 'C', size: 6, ringNumber: 5 });
 const ring5 = Ring({ atoms: 'C', size: 6, ringNumber: 7 });
-const messyNumbers = ring4.fuse(ring5, 2);
+const messyNumbers = ring4.fuse(2, ring5);
 
 log('Before renumbering:');
 log('  Ring numbers:', messyNumbers.rings.map((r) => r.ringNumber));
@@ -108,10 +108,10 @@ log();
 
 // Chaining operations
 log('=== Chaining Operations ===');
-const complex = ring1.fuse(ring2, 2)
+const complex = ring1.fuse(2, ring2)
   .substituteInRing(1, 5, 'N')
   .substituteInRing(2, 3, 'N')
-  .attachToRing(2, Linear(['C', 'C']), 4)
+  .attachToRing(2, 4, Linear(['C', 'C']))
   .renumber();
 
 log('After chaining multiple operations:');

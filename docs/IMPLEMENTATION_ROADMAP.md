@@ -78,7 +78,7 @@ console.log(propane.smiles); // 'CCC'
 ```javascript
 const benzene = Ring({ atoms: 'c', size: 6 });
 const methyl = Linear(['C']);
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 console.log(toluene.smiles); // 'c1c(C)cccc1' or equivalent
 ```
 
@@ -197,7 +197,7 @@ const triazine = benzene.substituteMultiple({ 1: 'n', 3: 'n', 5: 'n' });
 
 const ring1 = Ring({ atoms: 'C', size: 10 });
 const ring2 = Ring({ atoms: 'C', size: 6 });
-const naphthalene = ring1.fuse(ring2, 2);
+const naphthalene = ring1.fuse(2, ring2);
 ```
 
 ---
@@ -387,7 +387,7 @@ console.log(fragment.toCode());
 // Output:
 // const linear1 = Linear(['C'])
 // const ring1 = Ring({ atoms: 'c', size: 6 })
-// const ring2 = ring1.attach(linear1, 4)
+// const ring2 = ring1.attach(4, linear1)
 ```
 
 ---

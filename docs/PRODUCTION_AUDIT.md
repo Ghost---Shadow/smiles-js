@@ -53,7 +53,7 @@ CCC  ✅
 **Status**: COMPLETE
 **Verification**:
 ```bash
-$ node -e "import {Ring, Linear} from './src/index.js'; const benzene = Ring({ atoms: 'c', size: 6 }); const methyl = Linear(['C']); const toluene = benzene.attach(methyl, 1); console.log(toluene.smiles);"
+$ node -e "import {Ring, Linear} from './src/index.js'; const benzene = Ring({ atoms: 'c', size: 6 }); const methyl = Linear(['C']); const toluene = benzene.attach(1, methyl); console.log(toluene.smiles);"
 c1(C)ccccc1  ✅
 ```
 - `Ring.prototype.attach()` works
@@ -228,7 +228,7 @@ const ring1 = Ring({ atoms: 'c', size: 6 });  ✅
 $ node -e "import {parse} from './src/index.js'; const toluene = parse('c1ccc(C)cc1'); console.log(toluene.toCode());"
 const ring1 = Ring({ atoms: 'c', size: 6 });
 const ring2 = Linear(['C']);
-const ring3 = ring1.attach(ring2, 4);  ✅
+const ring3 = ring1.attach(4, ring2);  ✅
 ```
 - All AST node types decompile correctly
 - Substitutions generate method calls
@@ -296,25 +296,25 @@ Ran 457 tests across 25 files. [163.00ms]
 - [x] Molecule(components)
 
 ### Ring Manipulation API ✅
-- [x] ring.attach(attachment, position)
+- [x] ring.attach(position, attachment)
 - [x] ring.substitute(position, newAtom)
 - [x] ring.substituteMultiple(substitutionMap)
-- [x] ring.fuse(otherRing, offset)
+- [x] ring.fuse(offset, otherRing)
 - [x] ring.concat(other)
 - [x] ring.clone()
 
 ### Linear Manipulation API ✅
-- [x] linear.attach(attachment, atomIndex)
+- [x] linear.attach(atomIndex, attachment)
 - [x] linear.concat(other)
 - [x] linear.branch(branchPoint, ...branches)
 - [x] linear.branchAt(branchMap)
 - [x] linear.clone()
 
 ### FusedRing Manipulation API ✅
-- [x] fusedRing.addRing(ring, offset)
+- [x] fusedRing.addRing(offset, ring)
 - [x] fusedRing.getRing(ringNumber)
 - [x] fusedRing.substituteInRing(ringNumber, position, newAtom)
-- [x] fusedRing.attachToRing(ringNumber, attachment, position)
+- [x] fusedRing.attachToRing(ringNumber, position, attachment)
 - [x] fusedRing.renumber(startNumber)
 - [x] fusedRing.concat(other)
 - [x] fusedRing.clone()

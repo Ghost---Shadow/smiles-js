@@ -72,7 +72,9 @@ export function computeFusedRingPositions(fusedRingNodeParam) {
     spiroRingAtOffset,
   );
 
-  const { allPositions, baseRingPositions, branchDepthMap, totalAtoms } = result;
+  const {
+    allPositions, baseRingPositions, branchDepthMap, totalAtoms,
+  } = result;
 
   // Store position metadata
   sortedRings[0].metaPositions = baseRingPositions;
@@ -245,8 +247,16 @@ function buildChainedRingInfo(chainedRings, sortedRings, fusionGraph) {
 }
 
 function traverseStartSharing(
-  baseRing, startSharingRing, innerRingData, chainedRings, chainedRingInfo,
-  allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepth,
+  baseRing,
+  startSharingRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(startSharingRing);
   let currentPos = currentPosRef.value;
@@ -410,8 +420,13 @@ function traverseStartSharing(
 }
 
 function traverseSpiro(
-  spiroRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-  currentPosRef, currentDepth,
+  spiroRing,
+  innerRingData,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(spiroRing);
   const spiroBranchDepths = spiroRing.metaBranchDepths || [];
@@ -437,8 +452,15 @@ function traverseSpiro(
 }
 
 function traverseInside(
-  insideRing, innerRingData, chainedRings, chainedRingInfo,
-  allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepth,
+  insideRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(insideRing);
   let currentPos = currentPosRef.value;
@@ -488,8 +510,16 @@ function traverseInside(
 }
 
 function traverseExtending(
-  baseRing, extendingRing, innerRingData, chainedRings, chainedRingInfo,
-  allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef,
+  baseRing,
+  extendingRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepthRef,
 ) {
   const data = innerRingData.get(extendingRing);
   let currentPos = currentPosRef.value;
@@ -628,8 +658,13 @@ function traverseExtending(
 }
 
 function traverseEndpoint(
-  endpointRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-  currentPosRef, currentDepth,
+  endpointRing,
+  innerRingData,
+  allPositions,
+  baseRingPositions,
+  branchDepthMap,
+  currentPosRef,
+  currentDepth,
 ) {
   const data = innerRingData.get(endpointRing);
   let currentPos = currentPosRef.value;
@@ -648,9 +683,15 @@ function traverseEndpoint(
 }
 
 function traverseBaseRing(
-  baseRing, innerRingData, chainedRings, chainedRingInfo,
-  insideRingAtOffset, extendingRingAtOffset, startSharingRingAtOffset,
-  endpointRingAtOffset, spiroRingAtOffset,
+  baseRing,
+  innerRingData,
+  chainedRings,
+  chainedRingInfo,
+  insideRingAtOffset,
+  extendingRingAtOffset,
+  startSharingRingAtOffset,
+  endpointRingAtOffset,
+  spiroRingAtOffset,
 ) {
   const allPositions = [];
   const baseRingPositions = [];
@@ -669,32 +710,65 @@ function traverseBaseRing(
 
     if (startSharingRing) {
       traverseStartSharing(
-        baseRing, startSharingRing, innerRingData, chainedRings, chainedRingInfo,
-        allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef.value,
+        baseRing,
+        startSharingRing,
+        innerRingData,
+        chainedRings,
+        chainedRingInfo,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos = baseRing.size;
     } else if (spiroRing) {
       traverseSpiro(
-        spiroRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-        currentPosRef, currentDepthRef.value,
+        spiroRing,
+        innerRingData,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos += 1;
     } else if (insideRing) {
       traverseInside(
-        insideRing, innerRingData, chainedRings, chainedRingInfo,
-        allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef.value,
+        insideRing,
+        innerRingData,
+        chainedRings,
+        chainedRingInfo,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos += 2;
     } else if (extendingRing) {
       traverseExtending(
-        baseRing, extendingRing, innerRingData, chainedRings, chainedRingInfo,
-        allPositions, baseRingPositions, branchDepthMap, currentPosRef, currentDepthRef,
+        baseRing,
+        extendingRing,
+        innerRingData,
+        chainedRings,
+        chainedRingInfo,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef,
       );
       basePos = baseRing.size;
     } else if (endpointRing) {
       traverseEndpoint(
-        endpointRing, innerRingData, allPositions, baseRingPositions, branchDepthMap,
-        currentPosRef, currentDepthRef.value,
+        endpointRing,
+        innerRingData,
+        allPositions,
+        baseRingPositions,
+        branchDepthMap,
+        currentPosRef,
+        currentDepthRef.value,
       );
       basePos += endpointRing.size;
     } else {

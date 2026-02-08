@@ -212,7 +212,7 @@ describe('Ring Methods', () => {
   test('ring.attach() attaches a component', () => {
     const ring = Ring({ atoms: 'c', size: 6 });
     const attachment = Linear(['C', 'H']);
-    const result = ring.attach(attachment, 1);
+    const result = ring.attach(1, attachment);
 
     expect(result.attachments[1]).toBeDefined();
     expect(result.attachments[1]).toHaveLength(1);
@@ -235,7 +235,7 @@ describe('Ring Methods', () => {
   test('ring.fuse() fuses with another ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const result = ring1.fuse(ring2, 2);
+    const result = ring1.fuse(2, ring2);
 
     expect(result.type).toBe('fused_ring');
     expect(result.rings).toHaveLength(2);
@@ -258,7 +258,7 @@ describe('Ring Methods', () => {
       bonds: ['='],
     });
     const attachment = Linear(['C', 'H']);
-    const ringWithAttachments = ring.attach(attachment, 2);
+    const ringWithAttachments = ring.attach(2, attachment);
 
     const obj = ringWithAttachments.toObject();
 
@@ -297,7 +297,7 @@ describe('Linear Methods', () => {
   test('linear.attach() attaches a component', () => {
     const linear = Linear(['C', 'C', 'C']);
     const attachment = Linear(['O']);
-    const result = linear.attach(attachment, 1);
+    const result = linear.attach(1, attachment);
 
     expect(result.attachments[1]).toBeDefined();
     expect(result.attachments[1]).toHaveLength(1);
@@ -334,7 +334,7 @@ describe('Linear Methods', () => {
   test('linear.toObject() returns plain object', () => {
     const linear = Linear(['C', 'N'], ['=']);
     const attachment = Linear(['O']);
-    const linearWithAttachments = linear.attach(attachment, 1);
+    const linearWithAttachments = linear.attach(1, attachment);
 
     const obj = linearWithAttachments.toObject();
 
@@ -457,7 +457,7 @@ describe('FusedRing Methods', () => {
     const fused = FusedRing([ring1, ring2]);
     const ring3 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
 
-    const result = fused.addRing(ring3, 2);
+    const result = fused.addRing(2, ring3);
 
     expect(result.rings).toHaveLength(3);
   });
@@ -487,7 +487,7 @@ describe('FusedRing Methods', () => {
     const fused = FusedRing([ring1, ring2]);
     const attachment = Linear(['O']);
 
-    const result = fused.attachToRing(2, attachment, 1);
+    const result = fused.attachToRing(2, 1, attachment);
 
     expect(result.rings[1].attachments[1]).toHaveLength(1);
   });

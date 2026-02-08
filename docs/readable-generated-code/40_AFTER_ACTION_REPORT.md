@@ -30,7 +30,7 @@ export const v1 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null
 export const v2 = v1.substitute(2, 'N');
 export const v3 = v2.substitute(5, 'N');
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
-export const v5 = v3.fuse(v4, 2);
+export const v5 = v3.fuse(2, v4);
 ```
 
 Done. No meta. The `fuse()` call computes everything internally via `layout()`.
@@ -42,7 +42,7 @@ Done. No meta. The `fuse()` call computes everything internally via `layout()`.
 export const v1 = Linear(['C', 'C', 'C']);
 export const v2 = Ring({ atoms: 'C', size: 5, ... });
 // ...
-export let v6 = v4.fuse(v5, 2);
+export let v6 = v4.fuse(2, v5);
 // ...
 v6 = v6.addSequentialRings([v9, v10, v11, v12], { atomAttachments: { 25: [v13] } });
 
@@ -135,9 +135,9 @@ Not everything is bad. Simple molecules produce perfectly readable code:
 ```javascript
 export const v1 = Linear(['C', 'C', 'N']);
 export const v2 = Ring({ atoms: 'c', size: 6 });
-export const v3 = v2.attach(v1, 3);
+export const v3 = v2.attach(3, v1);
 export const v4 = Linear(['O']);
-export const v5 = v3.attach(v4, 1);
+export const v5 = v3.attach(1, v4);
 export const v6 = Molecule([v5]);
 ```
 

@@ -62,7 +62,7 @@ const propene = Linear(['C', 'C', 'C'], [null, '=']);
 // Ethanol with hydroxyl
 const ethyl = Linear(['C', 'C']);
 const hydroxyl = Linear(['O']);
-const ethanol = ethyl.attach(hydroxyl, 2);
+const ethanol = ethyl.attach(2, hydroxyl);
 ```
 
 ### `FusedRing(rings)`
@@ -108,7 +108,7 @@ All manipulation methods are **immutable** -- they return new nodes and never mo
 const benzene = Ring({ atoms: 'c', size: 6 });
 
 // Attach substituent at position
-const toluene = benzene.attach(Linear(['C']), 1);
+const toluene = benzene.attach(1, Linear(['C']));
 
 // Substitute atom at position
 const pyridine = benzene.substitute(5, 'n');
@@ -118,20 +118,20 @@ const triazine = benzene.substituteMultiple({ 1: 'n', 3: 'n', 5: 'n' });
 
 // Fuse with another ring (offset = shared atom count)
 const ring2 = Ring({ atoms: 'C', size: 6 });
-const naphthalene = benzene.fuse(ring2, 2);
+const naphthalene = benzene.fuse(2, ring2);
 
 // Clone
 const benzeneClone = benzene.clone();
 ```
 
-#### `ring.attach(attachment, position, options?)`
+#### `ring.attach(position, attachment, options?)`
 
 Attach a node to the ring at a 1-indexed position.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `attachment` | `object` | Node to attach |
 | `position` | `number` | 1-indexed ring position |
+| `attachment` | `object` | Node to attach |
 | `options.sibling` | `boolean` | If set, marks the attachment as sibling (true) or inline (false) |
 
 #### `ring.substitute(position, newAtom)`
@@ -142,7 +142,7 @@ Replace the atom at position with a different atom symbol.
 
 Replace multiple atoms. `substitutionMap` is `{ position: atomSymbol }`.
 
-#### `ring.fuse(otherRing, offset, options?)`
+#### `ring.fuse(offset, otherRing, options?)`
 
 Fuse this ring with another ring. `offset` is how many positions into this ring the other ring starts.
 
@@ -157,7 +157,7 @@ const butane = Linear(['C', 'C', 'C', 'C']);
 
 // Attach branch at position
 const methyl = Linear(['C']);
-const branched = butane.attach(methyl, 2);
+const branched = butane.attach(2, methyl);
 
 // Concatenate chains
 const hexane = butane.concat(Linear(['C', 'C']));
@@ -169,7 +169,7 @@ const isobutane = butane.branchAt({ 2: methyl });
 const decorated = butane.branch(2, methyl, Linear(['O']));
 ```
 
-#### `linear.attach(attachment, position)`
+#### `linear.attach(position, attachment)`
 
 Attach a node at a 1-indexed position.
 
@@ -209,10 +209,10 @@ const combined = mol.concat(Molecule([Ring({ atoms: 'c', size: 6 })]));
 ### FusedRing Methods
 
 ```javascript
-const fused = ring1.fuse(ring2, 4);
+const fused = ring1.fuse(4, ring2);
 
 // Add another ring to the fused system
-const triple = fused.addRing(ring3, 8);
+const triple = fused.addRing(8, ring3);
 
 // Get a specific ring by number
 const r = fused.getRing(1);
@@ -221,7 +221,7 @@ const r = fused.getRing(1);
 const modified = fused.substituteInRing(1, 3, 'N');
 
 // Attach to a specific ring
-const decorated = fused.attachToRing(1, Linear(['O']), 4);
+const decorated = fused.attachToRing(1, 4, Linear(['O']));
 
 // Renumber rings
 const renumbered = fused.renumber(10);
@@ -389,7 +389,7 @@ import {
 } from 'smiles-js/manipulation';
 
 const benzene = Ring({ atoms: 'c', size: 6 });
-const toluene = ringAttach(benzene, Linear(['C']), 1);
+const toluene = ringAttach(benzene, 1, Linear(['C']));
 ```
 
 ---
@@ -421,7 +421,7 @@ import RDKit from '@rdkit/rdkit';
 // Build molecule programmatically
 const benzene = Ring({ atoms: 'c', size: 6 });
 const methyl = Linear(['C']);
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 
 // Use with RDKit
 const rdkit = await RDKit.load();

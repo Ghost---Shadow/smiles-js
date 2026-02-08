@@ -48,7 +48,7 @@ log();
 // Start with the central pyridine ring
 const isopropylGroup = Linear(['C', 'C']);
 const isopropylMethyl = Linear(['C']);
-const isopropyl = isopropylGroup.attach(isopropylMethyl, 2);
+const isopropyl = isopropylGroup.attach(2, isopropylMethyl);
 log('✓ Isopropyl substituent:', isopropyl.smiles);
 
 const pyridineCore = Ring({ atoms: 'c', size: 6 });
@@ -58,7 +58,7 @@ log('✓ Pyridine core:', pyridineWithNitrogens.smiles);
 // Carboxamide group
 const carboxamideLinker = Linear(['C', 'N']);
 const carboxamideCarbonyl = Linear(['O'], ['=']);
-const carboxamide = carboxamideLinker.attach(carboxamideCarbonyl, 1);
+const carboxamide = carboxamideLinker.attach(1, carboxamideCarbonyl);
 log('✓ Carboxamide group:', carboxamide.smiles);
 
 // Phenyl rings (benzyl groups)
@@ -74,7 +74,7 @@ log('✓ Thiazole heterocycle:', thiazoleWithSN.smiles);
 // Peptidomimetic backbone
 const ureaLinker = Linear(['N', 'C', 'N']);
 const ureaCarbonyl = Linear(['O'], ['=']);
-const urea = ureaLinker.attach(ureaCarbonyl, 2);
+const urea = ureaLinker.attach(2, ureaCarbonyl);
 log('✓ Urea linker:', urea.smiles);
 
 const hydroxylGroup = Linear(['O']);

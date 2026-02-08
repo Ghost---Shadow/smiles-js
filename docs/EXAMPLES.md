@@ -108,7 +108,7 @@ node docs/atorvastatin-named.js
 // Isopropyl group (substituent on pyrrole)
 const methyl1 = Linear(['C']);
 const ethyl = Linear(['C', 'C']);
-const isopropyl = ethyl.attach(methyl1, 2);
+const isopropyl = ethyl.attach(2, methyl1);
 
 // Central pyrrole ring (5-membered nitrogen heterocycle)
 const pyrroleRing = Ring({ atoms: 'c', size: 5 });
@@ -117,7 +117,7 @@ const pyrrole = pyrroleRing.substitute(5, 'n');
 // Dihydroxyheptanoic acid side chain (the "statin" pharmacophore)
 const heptanoicAcidChain = Linear(['C', 'C', 'C', 'C', 'C', 'C', 'C', 'O']);
 const hydroxyl1 = Linear(['O']);
-const statinSideChain = heptanoicAcidChain.attach(hydroxyl1, 3);
+const statinSideChain = heptanoicAcidChain.attach(3, hydroxyl1);
 ```
 
 ---

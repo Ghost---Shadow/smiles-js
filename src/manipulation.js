@@ -20,7 +20,7 @@ import { computeFusedRingPositions } from './layout/index.js';
  * Ring manipulation methods
  */
 
-export function ringAttach(ring, attachment, position, options = {}) {
+export function ringAttach(ring, position, attachment, options = {}) {
   validatePosition(position, ring.size);
 
   const updatedAttachments = cloneAttachments(ring.attachments);
@@ -87,7 +87,7 @@ export function ringSubstituteMultiple(ring, substitutionMap) {
   );
 }
 
-export function ringFuse(ring, otherRing, offset, options = {}) {
+export function ringFuse(ring, offset, otherRing, options = {}) {
   const ring1 = createRingNode(
     ring.atoms,
     ring.size,
@@ -125,7 +125,7 @@ export function ringClone(ring) {
  * Linear manipulation methods
  */
 
-export function linearAttach(linear, attachment, position) {
+export function linearAttach(linear, position, attachment) {
   if (position < 1 || position > linear.atoms.length) {
     throw new Error(`Position must be an integer between 1 and ${linear.atoms.length}`);
   }
@@ -147,7 +147,7 @@ export function linearBranch(linear, branchPoint, ...branches) {
   }
 
   return branches.reduce(
-    (result, branch) => linearAttach(result, branch, branchPoint),
+    (result, branch) => linearAttach(result, branchPoint, branch),
     linear,
   );
 }
@@ -181,7 +181,7 @@ export function linearConcat(linear, other) {
  * FusedRing manipulation methods
  */
 
-export function fusedRingAddRing(fusedRing, ring, offset) {
+export function fusedRingAddRing(fusedRing, offset, ring) {
   const newRings = fusedRing.rings.map((r) => ({ ...r }));
   const ringWithOffset = { ...ring, offset };
   newRings.push(ringWithOffset);
@@ -221,11 +221,11 @@ export function fusedRingSubstituteInRing(fusedRing, ringNumber, position, newAt
   );
 }
 
-export function fusedRingAttachToRing(fusedRing, ringNumber, attachment, position) {
+export function fusedRingAttachToRing(fusedRing, ringNumber, position, attachment) {
   return updateRingInFused(
     fusedRing,
     ringNumber,
-    (ring) => ringAttach(ring, attachment, position),
+    (ring) => ringAttach(ring, position, attachment),
   );
 }
 

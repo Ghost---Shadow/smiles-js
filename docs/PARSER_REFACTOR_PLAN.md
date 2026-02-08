@@ -780,10 +780,10 @@ FusedRing.prototype.substituteInRing = function(ringNumber, position, newAtom) {
   return replaceRingInFusedSystem(this, ringNumber, updatedRing);
 };
 
-FusedRing.prototype.attachToRing = function(ringNumber, attachment, position) {
+FusedRing.prototype.attachToRing = function(ringNumber, position, attachment) {
   // Attach to a specific ring in the fused system
   const targetRing = this.getRing(ringNumber);
-  const updatedRing = targetRing.attach(attachment, position);
+  const updatedRing = targetRing.attach(position, attachment);
   return replaceRingInFusedSystem(this, ringNumber, updatedRing);
 };
 
@@ -832,7 +832,7 @@ Linear.prototype.branchAt = function(branchMap) {
   // branchMap: { position: branch, ... }
   let result = this;
   for (const [position, branchStructure] of Object.entries(branchMap)) {
-    result = result.attach(branchStructure, position);
+    result = result.attach(position, branchStructure);
   }
   return result;
 };
@@ -943,7 +943,7 @@ const methyl = Linear(['C']);
 console.log(methyl.smiles);  // 'C'
 
 // Combined structures
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 console.log(toluene.smiles);  // 'c1ccccc1C' or 'c1c(C)cccc1' (depending on serialization)
 
 // Fused ring SMILES
@@ -964,7 +964,7 @@ console.log(ring1.smiles);  // 'c1ccccc1'
 const linear1 = Linear(['C']);
 console.log(linear1.smiles);  // 'C'
 
-const molecule1 = ring1.attach(linear1, 1);
+const molecule1 = ring1.attach(1, linear1);
 console.log(molecule1.smiles);  // 'c1c(C)cccc1' (toluene)
 
 // Chained operations with SMILES inspection at each step
@@ -978,7 +978,7 @@ const step2 = step1.substitute(3, 'n');
 console.log('Step 2:', step2.smiles);  // 'c1nccncc1'
 
 const branch = Linear(['C', 'C']);
-const final = step2.attach(branch, 5);
+const final = step2.attach(5, branch);
 console.log('Final:', final.smiles);  // 'c1nccnc(CC)c1'
 ```
 
@@ -1005,7 +1005,7 @@ console.log('Final:', final.smiles);  // 'c1nccnc(CC)c1'
 // Create benzene and add methyl group
 const benzene = Ring({ atoms: 'c', size: 6 });
 const methyl = Linear(['C']);
-const toluene = benzene.attach(methyl, 1);
+const toluene = benzene.attach(1, methyl);
 
 // Create pyridine via substitution
 const pyridine = benzene.substitute(1, 'n');
@@ -1016,7 +1016,7 @@ const triazine = benzene.substituteMultiple({ 1: 'n', 3: 'n', 5: 'n' });
 // Fuse two rings
 const ring1 = Ring({ atoms: 'C', size: 10 });
 const ring2 = Ring({ atoms: 'C', size: 6 });
-const naphthalene = ring1.fuse(ring2, 2);
+const naphthalene = ring1.fuse(2, ring2);
 
 // ============================================
 // FUSED RING MANIPULATION
@@ -1034,10 +1034,10 @@ const substituted = benzimidazole
   .substituteInRing(1, 7, 'n');
 
 // Attach to specific ring in fused system
-const withMethyl = benzimidazole.attachToRing(1, Linear(['C']), 1);
+const withMethyl = benzimidazole.attachToRing(1, 1, Linear(['C']));
 
 // Add another ring to the fused system
-const expandedSystem = naphthalene.addRing(Ring({ atoms: 'C', size: 5 }), 8);
+const expandedSystem = naphthalene.addRing(8, Ring({ atoms: 'C', size: 5 }));
 
 // ============================================
 // LINEAR CHAIN MANIPULATION
@@ -1082,12 +1082,12 @@ const phenyl2 = Ring({ atoms: 'C', size: 6 });
 const carboxyl = Linear(['C'], ['=O', '-O']);
 
 // Fluent chaining
-const phenylWithCarboxyl = phenyl2.attach(carboxyl, 6);
-const biphenyl = phenyl1.attach(phenylWithCarboxyl, 6);
+const phenylWithCarboxyl = phenyl2.attach(6, carboxyl);
+const biphenyl = phenyl1.attach(6, phenylWithCarboxyl);
 const connector = Linear(['C', 'C']);
 const sideChain = connector.concat(biphenyl);
 
-const coreWithSideChain = benzimidazoleCore.attachToRing(1, sideChain, 9);
+const coreWithSideChain = benzimidazoleCore.attachToRing(1, 9, sideChain);
 
 // Final assembly using Molecule
 const telmisartan = Molecule([
@@ -1476,7 +1476,7 @@ console.log(toluene.toCode());
 // Output:
 // const linear1 = Linear(['C'])
 // const ring1 = Ring({ atoms: 'c', size: 6 })
-// const ring2 = ring1.attach(linear1, 4)
+// const ring2 = ring1.attach(4, linear1)
 ```
 
 **Decompiler Options:**
@@ -1493,7 +1493,7 @@ const options = {
 Fragment('c1ccc(C)cc1').toCode(options);
 // Output:
 // const myLinear1 = Linear(['C'])
-// const myRing1 = Ring({ atoms: 'c', size: 6 }).attach(myLinear1, 4)
+// const myRing1 = Ring({ atoms: 'c', size: 6 }).attach(4, myLinear1)
 ```
 
 **Example Outputs:**
@@ -1507,7 +1507,7 @@ Fragment('c1ccccc1').toCode();
 Fragment('c1ccc(C)cc1').toCode();
 // const linear1 = Linear(['C'])
 // const ring1 = Ring({ atoms: 'c', size: 6 })
-// const ring2 = ring1.attach(linear1, 4)
+// const ring2 = ring1.attach(4, linear1)
 
 // Pyridine: c1cccnc1
 Fragment('c1cccnc1').toCode();
@@ -1530,9 +1530,9 @@ Fragment('CCCc1ccccc1').toCode();
 Fragment('C(C(C))c1ccccc1').toCode();
 // const linear1 = Linear(['C'])
 // const linear2 = Linear(['C'])
-// const linear3 = linear1.attach(linear2, 1)
+// const linear3 = linear1.attach(1, linear2)
 // const linear4 = Linear(['C'])
-// const linear5 = linear3.attach(linear4, 1)
+// const linear5 = linear3.attach(1, linear4)
 // const ring1 = Ring({ atoms: 'c', size: 6 })
 // const molecule1 = Molecule([linear5, ring1])
 ```

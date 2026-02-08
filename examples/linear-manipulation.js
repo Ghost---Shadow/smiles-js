@@ -24,7 +24,7 @@ log();
 // Attach a single branch
 log('=== attach() - Add single branch ===');
 const methyl = Linear(['C']);
-const branched = propyl.attach(methyl, 2);
+const branched = propyl.attach(2, methyl);
 
 log('After attaching methyl to position 2:');
 log('  Has attachment:', Object.keys(branched.attachments).length > 0);
@@ -35,7 +35,7 @@ log();
 // Attach multiple branches to same position
 log('=== attach() - Multiple branches at same position ===');
 const methyl2 = Linear(['C']);
-const doubleBranched = propyl.attach(methyl, 2).attach(methyl2, 2);
+const doubleBranched = propyl.attach(2, methyl).attach(2, methyl2);
 
 log('After attaching two methyls to position 2:');
 log('  Attachment count at position 2:', doubleBranched.attachments[2].length);
@@ -112,9 +112,9 @@ log();
 // Chaining operations
 log('=== Chaining Operations ===');
 const chained = Linear(['C', 'C', 'C', 'C'])
-  .attach(Linear(['C']), 2)
-  .attach(Linear(['C', 'C']), 3)
-  .attach(Linear(['C']), 3);
+  .attach(2, Linear(['C']))
+  .attach(3, Linear(['C', 'C']))
+  .attach(3, Linear(['C']));
 
 log('After chaining multiple attach operations:');
 log('  Positions with attachments:', Object.keys(chained.attachments));

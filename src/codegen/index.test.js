@@ -32,7 +32,7 @@ describe('Codegen Index', () => {
   it('should build SMILES for FusedRing', () => {
     const ring1 = Ring({ atoms: 'c', size: 6 });
     const ring2 = Ring({ atoms: 'c', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(ring2, 1);
+    const fused = ring1.fuse(1, ring2);
     const smiles = buildSMILES(fused);
     expect(smiles).toBeTruthy();
   });

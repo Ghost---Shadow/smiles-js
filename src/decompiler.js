@@ -122,11 +122,11 @@ function generateAttachmentCode(ring, indent, nextVar, initialVar) {
         const newVar = nextVar();
         const isSibling = attachment.metaIsSibling;
         if (isSibling === true) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos}, { sibling: true });`);
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { sibling: true });`);
         } else if (isSibling === false) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos}, { sibling: false });`);
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { sibling: false });`);
         } else {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${attachResult.finalVar}, ${pos});`);
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar});`);
         }
         currentVar = newVar;
       });
@@ -198,7 +198,7 @@ function decompileLinear(linear, indent, nextVar) {
         lines.push(aCode);
 
         const newVar = nextVar();
-        lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${aFinalVar}, ${pos});`);
+        lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${aFinalVar});`);
         currentVar = newVar;
       });
     });
@@ -478,16 +478,16 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
   let currentFusedVar = nextVar();
 
   if (leadingBond) {
-    lines.push(`${indent}const ${currentFusedVar} = ${ringFinalVars[0]}.fuse(${ringFinalVars[1]}, ${offset1}, { leadingBond: '${leadingBond}' });`);
+    lines.push(`${indent}const ${currentFusedVar} = ${ringFinalVars[0]}.fuse(${offset1}, ${ringFinalVars[1]}, { leadingBond: '${leadingBond}' });`);
   } else {
-    lines.push(`${indent}const ${currentFusedVar} = ${ringFinalVars[0]}.fuse(${ringFinalVars[1]}, ${offset1});`);
+    lines.push(`${indent}const ${currentFusedVar} = ${ringFinalVars[0]}.fuse(${offset1}, ${ringFinalVars[1]});`);
   }
 
   // Chain .addRing() for rings 3+
   for (let i = 2; i < fusedRing.rings.length; i += 1) {
     const offset = computedOffsets ? computedOffsets[i] : fusedRing.rings[i].offset;
     const newVar = nextVar();
-    lines.push(`${indent}const ${newVar} = ${currentFusedVar}.addRing(${ringFinalVars[i]}, ${offset});`);
+    lines.push(`${indent}const ${newVar} = ${currentFusedVar}.addRing(${offset}, ${ringFinalVars[i]});`);
     currentFusedVar = newVar;
   }
 
@@ -542,7 +542,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
 
   // Decompile seqAtomAttachments BEFORE fuse so their vars are declared early
   const hasSeqRings = sequentialRings.length > 0;
-  let seqAtomAttachmentVarEntries = [];
+  const seqAtomAttachmentVarEntries = [];
   if (!hasSeqRings && seqAtomAttachments.size > 0) {
     seqAtomAttachments.forEach((attachments, pos) => {
       const attVars = [];
@@ -561,7 +561,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     fusedVar = nextVar();
     const decl = hasSeqRings ? 'let' : 'const';
     const { offset } = fusedRing.rings[1];
-    lines.push(`${indent}${decl} ${fusedVar} = ${ringVars[0].var}.fuse(${ringVars[1].var}, ${offset});`);
+    lines.push(`${indent}${decl} ${fusedVar} = ${ringVars[0].var}.fuse(${offset}, ${ringVars[1].var});`);
   } else if (fusedRing.rings.length >= 3) {
     fusedVar = nextVar();
     const decl = hasSeqRings ? 'let' : 'const';
