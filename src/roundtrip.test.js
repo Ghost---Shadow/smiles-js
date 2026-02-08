@@ -47,11 +47,7 @@ describe('validateRoundTrip', () => {
   });
 
   it('should return stabilized status when second parse equals first but differs from original', () => {
-    let callCount = 0;
-    const spy = spyOn(parserModule, 'parse').mockImplementation((smiles) => {
-      callCount++;
-      return { smiles: 'NORMALIZED', type: 'linear' };
-    });
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => ({ smiles: 'NORMALIZED', type: 'linear' }));
 
     const result = validateRoundTrip('ORIGINAL');
 
@@ -68,8 +64,8 @@ describe('validateRoundTrip', () => {
 
   it('should return unstable status when second parse differs from first', () => {
     let callCount = 0;
-    const spy = spyOn(parserModule, 'parse').mockImplementation((smiles) => {
-      callCount++;
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => {
+      callCount += 1;
       if (callCount === 1) {
         return { smiles: 'FIRST', type: 'linear' };
       }
@@ -104,17 +100,13 @@ describe('parseWithValidation', () => {
   });
 
   it('should log warning for stabilized round-trip when not silent', () => {
-    let callCount = 0;
     const warnings = [];
     const logger = {
       warn: (...args) => { warnings.push(args.join(' ')); },
       error: (...args) => { warnings.push(args.join(' ')); },
     };
 
-    const spy = spyOn(parserModule, 'parse').mockImplementation((smiles) => {
-      callCount++;
-      return { smiles: 'NORMALIZED', type: 'linear' };
-    });
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => ({ smiles: 'NORMALIZED', type: 'linear' }));
 
     const ast = parseWithValidation('ORIGINAL', { logger });
 
@@ -129,12 +121,7 @@ describe('parseWithValidation', () => {
   });
 
   it('should throw in strict mode for stabilized round-trip', () => {
-    let callCount = 0;
-
-    const spy = spyOn(parserModule, 'parse').mockImplementation((smiles) => {
-      callCount++;
-      return { smiles: 'NORMALIZED', type: 'linear' };
-    });
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => ({ smiles: 'NORMALIZED', type: 'linear' }));
 
     expect(() => {
       parseWithValidation('ORIGINAL', { strict: true });
@@ -151,8 +138,8 @@ describe('parseWithValidation', () => {
       error: (...args) => { errors.push(args.join(' ')); },
     };
 
-    const spy = spyOn(parserModule, 'parse').mockImplementation((smiles) => {
-      callCount++;
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => {
+      callCount += 1;
       if (callCount === 1) {
         return { smiles: 'FIRST', type: 'linear' };
       }
@@ -175,8 +162,8 @@ describe('parseWithValidation', () => {
   it('should throw in strict mode for unstable round-trip', () => {
     let callCount = 0;
 
-    const spy = spyOn(parserModule, 'parse').mockImplementation((smiles) => {
-      callCount++;
+    const spy = spyOn(parserModule, 'parse').mockImplementation(() => {
+      callCount += 1;
       if (callCount === 1) {
         return { smiles: 'FIRST', type: 'linear' };
       }

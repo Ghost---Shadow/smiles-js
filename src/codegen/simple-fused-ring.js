@@ -99,10 +99,12 @@ export function buildSimpleFusedRingSMILES(fusedRing, buildSMILES) {
     && [...branchDepthAt.values()].some((d) => d !== 0);
 
   if (hasBranchDepths) {
+    // eslint-disable-next-line no-use-before-define
     return buildWithBranchDepths(atomSequence, bondsBefore, branchDepthAt, buildSMILES);
   }
 
   // Build SMILES string using standard notation (no branch depth handling needed)
+  // eslint-disable-next-line no-use-before-define
   return buildFlat(atomSequence, bondsBefore, buildSMILES);
 }
 

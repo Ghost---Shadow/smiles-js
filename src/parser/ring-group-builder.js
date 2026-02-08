@@ -17,7 +17,6 @@ import {
 } from '../constructors.js';
 import {
   ringsShareAtoms,
-  groupFusedRings,
   calculateOffset,
 } from './ring-utils.js';
 import {
@@ -208,7 +207,13 @@ function separateFusedFromSequential(sortedGroup) {
  * Walks branches to find sequential rings and continuation atoms beyond the fused ring core.
  * @returns {{ allPositions: Set, allRingPositions: Set, sequentialRings: Array }}
  */
-function collectAllPositions(trulyFusedRings, sequentialRingsFromGroup, group, atoms, ringBoundaries) {
+function collectAllPositions(
+  trulyFusedRings,
+  sequentialRingsFromGroup,
+  group,
+  atoms,
+  ringBoundaries,
+) {
   const allPositions = new Set();
   trulyFusedRings.forEach((ring) => {
     ring.positions.forEach((pos) => allPositions.add(pos));
@@ -314,7 +319,14 @@ function buildMetadataMaps(positions, atoms) {
 /**
  * Build attachments map for sequential continuation atoms (non-ring positions)
  */
-function buildSeqAtomAttachments(fusedNode, rings, seqRingNodes, atoms, ringBoundaries, buildNodeFromAtomsFn) {
+function buildSeqAtomAttachments(
+  fusedNode,
+  rings,
+  seqRingNodes,
+  atoms,
+  ringBoundaries,
+  buildNodeFromAtomsFn,
+) {
   const ringPositionsForAttachments = new Set();
   [...rings, ...seqRingNodes].forEach((r) => {
     (r.metaPositions || []).forEach((pos) => ringPositionsForAttachments.add(pos));
@@ -356,7 +368,15 @@ function buildSeqAtomAttachments(fusedNode, rings, seqRingNodes, atoms, ringBoun
 /**
  * Assemble a FusedRing node with all metadata from ring nodes and position data
  */
-function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, atoms, ringBoundaries, buildNodeFromAtomsFn) {
+function assembleFusedRingNode(
+  rings,
+  seqRingNodes,
+  allPositions,
+  totalAtoms,
+  atoms,
+  ringBoundaries,
+  buildNodeFromAtomsFn,
+) {
   // If we only have 1 truly fused ring but have sequential rings, wrap in FusedRing
   if (rings.length === 1 && seqRingNodes.length > 0) {
     const fusedNode = createFusedRingNode([rings[0]]);
@@ -416,7 +436,14 @@ function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, at
   });
   fusedNode.metaRingOrderMap = ringOrderMap;
 
-  fusedNode.metaSeqAtomAttachments = buildSeqAtomAttachments(fusedNode, rings, seqRingNodes, atoms, ringBoundaries, buildNodeFromAtomsFn);
+  fusedNode.metaSeqAtomAttachments = buildSeqAtomAttachments(
+    fusedNode,
+    rings,
+    seqRingNodes,
+    atoms,
+    ringBoundaries,
+    buildNodeFromAtomsFn,
+  );
 
   return fusedNode;
 }
@@ -425,7 +452,13 @@ function assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, at
  * Handle single-ring groups: detect sequential continuation rings/atoms
  * Returns a node if single-ring handling applies, or null to fall through to multi-ring logic
  */
-function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn) {
+function handleSingleRingGroup(
+  group,
+  atoms,
+  ringBoundaries,
+  buildNodeFromAtomsFn,
+  buildLinearNodeSimpleFn,
+) {
   const ring = group[0];
   const endAtom = atoms[ring.end];
 
@@ -449,7 +482,14 @@ function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsF
 
       if (nextRing && !group.some((g) => g.ringNumber === nextRing.ringNumber)) {
         const expandedGroup = [...group, nextRing];
-        return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
+        // eslint-disable-next-line no-use-before-define
+        return buildRingGroupNodeWithContext(
+          expandedGroup,
+          atoms,
+          ringBoundaries,
+          buildNodeFromAtomsFn,
+          buildLinearNodeSimpleFn,
+        );
       }
     }
   }
@@ -470,7 +510,15 @@ function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsF
       );
 
       if (isAttachmentToEarlierPosition) {
-        return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, null, buildNodeFromAtomsFn);
+        return buildSingleRingNodeWithContext(
+          ring,
+          atoms,
+          ringBoundaries,
+          0,
+          ring.ringNumber,
+          null,
+          buildNodeFromAtomsFn,
+        );
       }
 
       const nextRing = ringBoundaries.find(
@@ -480,7 +528,14 @@ function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsF
 
       if (nextRing) {
         const expandedGroup = [...group, nextRing];
-        return buildRingGroupNodeWithContext(expandedGroup, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
+        // eslint-disable-next-line no-use-before-define
+        return buildRingGroupNodeWithContext(
+          expandedGroup,
+          atoms,
+          ringBoundaries,
+          buildNodeFromAtomsFn,
+          buildLinearNodeSimpleFn,
+        );
       }
 
       // Sequential continuation with linear atoms
@@ -518,7 +573,15 @@ function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsF
   }
 
   // No sequential continuation - return a simple ring node
-  return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, null, buildNodeFromAtomsFn);
+  return buildSingleRingNodeWithContext(
+    ring,
+    atoms,
+    ringBoundaries,
+    0,
+    ring.ringNumber,
+    null,
+    buildNodeFromAtomsFn,
+  );
 }
 
 /**
@@ -526,32 +589,79 @@ function handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsF
  * @param {Array} group - Array of ring boundary objects
  * @param {Array} atoms - All atoms
  * @param {Array} ringBoundaries - All ring boundaries
- * @param {Function} buildNodeFromAtomsFn - Callback to build nodes from atom lists
- * @param {Function} buildLinearNodeSimpleFn - Callback to build simple linear nodes
+ * @param {Function} buildNodeFromAtomsFn - Callback
+ * @param {Function} buildLinearNodeSimpleFn - Callback
  */
-export function buildRingGroupNodeWithContext(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn) {
+export function buildRingGroupNodeWithContext(
+  group,
+  atoms,
+  ringBoundaries,
+  buildNodeFromAtomsFn,
+  buildLinearNodeSimpleFn,
+) {
   // Single-ring groups have special handling for sequential continuations
   if (group.length === 1) {
-    return handleSingleRingGroup(group, atoms, ringBoundaries, buildNodeFromAtomsFn, buildLinearNodeSimpleFn);
+    return handleSingleRingGroup(
+      group,
+      atoms,
+      ringBoundaries,
+      buildNodeFromAtomsFn,
+      buildLinearNodeSimpleFn,
+    );
   }
 
   const sortedGroup = [...group].sort((a, b) => a.start - b.start);
   const baseRing = sortedGroup[0];
 
-  const { trulyFusedRings, sequentialRingsFromGroup } = separateFusedFromSequential(sortedGroup);
+  const {
+    trulyFusedRings, sequentialRingsFromGroup,
+  } = separateFusedFromSequential(sortedGroup);
 
-  const { allPositions, allRingPositions, sequentialRings } = collectAllPositions(trulyFusedRings, sequentialRingsFromGroup, group, atoms, ringBoundaries);
+  const {
+    allPositions, allRingPositions, sequentialRings,
+  } = collectAllPositions(
+    trulyFusedRings,
+    sequentialRingsFromGroup,
+    group,
+    atoms,
+    ringBoundaries,
+  );
 
   const totalAtoms = allPositions.size;
 
   const rings = trulyFusedRings.map((ring) => {
-    const ringOffset = ring === baseRing ? 0 : calculateOffset(ring, baseRing);
-    return buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, ringOffset, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn);
+    const ringOffset = ring === baseRing
+      ? 0 : calculateOffset(ring, baseRing);
+    return buildSingleRingNodeWithContext(
+      ring,
+      atoms,
+      ringBoundaries,
+      ringOffset,
+      ring.ringNumber,
+      allRingPositions,
+      buildNodeFromAtomsFn,
+    );
   });
 
   const seqRingNodes = sequentialRings.map(
-    (ring) => buildSingleRingNodeWithContext(ring, atoms, ringBoundaries, 0, ring.ringNumber, allRingPositions, buildNodeFromAtomsFn),
+    (ring) => buildSingleRingNodeWithContext(
+      ring,
+      atoms,
+      ringBoundaries,
+      0,
+      ring.ringNumber,
+      allRingPositions,
+      buildNodeFromAtomsFn,
+    ),
   );
 
-  return assembleFusedRingNode(rings, seqRingNodes, allPositions, totalAtoms, atoms, ringBoundaries, buildNodeFromAtomsFn);
+  return assembleFusedRingNode(
+    rings,
+    seqRingNodes,
+    allPositions,
+    totalAtoms,
+    atoms,
+    ringBoundaries,
+    buildNodeFromAtomsFn,
+  );
 }

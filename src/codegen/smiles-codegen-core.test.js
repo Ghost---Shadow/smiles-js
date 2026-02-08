@@ -11,7 +11,7 @@ import {
   buildFusedRingSMILES,
 } from './smiles-codegen-core.js';
 import {
-  Ring, Linear, Molecule, FusedRing,
+  Ring, Linear, Molecule,
 } from '../constructors.js';
 
 describe('SMILES Codegen Core', () => {

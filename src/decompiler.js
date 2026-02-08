@@ -12,6 +12,7 @@ import {
 
 // Helper to call decompileNode (satisfies no-loop-func rule)
 function decompileChildNode(node, indent, nextVar) {
+  // eslint-disable-next-line no-use-before-define
   return decompileNode(node, indent, nextVar);
 }
 
@@ -193,6 +194,7 @@ function decompileLinear(linear, indent, nextVar) {
   if (Object.keys(linear.attachments).length > 0) {
     Object.entries(linear.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
+        // eslint-disable-next-line no-use-before-define
         const attachRes = decompileNode(attachment, indent, nextVar);
         const { code: aCode, finalVar: aFinalVar } = attachRes;
         lines.push(aCode);
@@ -239,27 +241,28 @@ function needsInterleavedCodegen(fusedRing) {
   for (let i = 0; i < fusedRing.rings.length; i += 1) {
     const ringA = fusedRing.rings[i];
     const posA = ringA.metaPositions;
-    if (!posA || posA.length === 0) continue;
-    const setA = new Set(posA);
+    if (posA && posA.length > 0) {
+      const setA = new Set(posA);
 
-    for (let j = i + 1; j < fusedRing.rings.length; j += 1) {
-      const ringB = fusedRing.rings[j];
-      const posB = ringB.metaPositions;
-      if (!posB || posB.length === 0) continue;
+      for (let j = i + 1; j < fusedRing.rings.length; j += 1) {
+        const ringB = fusedRing.rings[j];
+        const posB = ringB.metaPositions;
+        if (posB && posB.length > 0) {
+          // Count actual shared positions between rings
+          const actualOverlap = posB.filter((p) => setA.has(p)).length;
 
-      // Count actual shared positions between rings
-      const actualOverlap = posB.filter((p) => setA.has(p)).length;
+          // Predict overlap from offsets: two rings overlap if their offset ranges intersect
+          const startA = offsets[i];
+          const endA = offsets[i] + ringA.size;
+          const startB = offsets[j];
+          const endB = offsets[j] + ringB.size;
+          const overlapStart = Math.max(startA, startB);
+          const overlapEnd = Math.min(endA, endB);
+          const predictedOverlap = Math.max(0, overlapEnd - overlapStart);
 
-      // Predict overlap from offsets: two rings overlap if their offset ranges intersect
-      const startA = offsets[i];
-      const endA = offsets[i] + ringA.size;
-      const startB = offsets[j];
-      const endB = offsets[j] + ringB.size;
-      const overlapStart = Math.max(startA, startB);
-      const overlapEnd = Math.min(endA, endB);
-      const predictedOverlap = Math.max(0, overlapEnd - overlapStart);
-
-      if (predictedOverlap !== actualOverlap) return true;
+          if (predictedOverlap !== actualOverlap) return true;
+        }
+      }
     }
   }
 
@@ -276,50 +279,52 @@ function needsInterleavedCodegen(fusedRing) {
       closePositions.get(closePos).push(ring.ringNumber);
     });
 
+    // eslint-disable-next-line no-restricted-syntax
     for (const [, ringNums] of closePositions) {
-      if (ringNums.length < 2) continue;
-      // Simple codegen sorts ascending
-      const simpleOrder = [...ringNums].sort((a, b) => a - b);
-      // Check if parser's ring order at this position differs
-      // Find the corresponding parser position for this offset-position
-      const offsetPos = [...closePositions.keys()].find((k) => closePositions.get(k) === ringNums);
-      const parserPos = allPositions[offsetPos];
-      const parserOrder = ringOrderMap.get(parserPos);
-      if (parserOrder) {
-        // Extract only close markers (ring numbers that appear at the END of ring traversal)
-        const closeRingNums = parserOrder.filter((rn) => ringNums.includes(rn));
-        // Deduplicate while preserving order (a ring number appears twice = open+close)
-        const seen = new Map(); // rn → count
-        const parserCloseOrder = [];
-        closeRingNums.forEach((rn) => {
-          const count = (seen.get(rn) || 0) + 1;
-          seen.set(rn, count);
-          // The second occurrence is the close marker
-          if (count === 2 || !ringNums.includes(rn)) {
-            // Actually just check: is the last occurrence's order different from ascending?
+      if (ringNums.length >= 2) {
+        // Simple codegen sorts ascending
+        const simpleOrder = [...ringNums].sort((a, b) => a - b);
+        // Check if parser's ring order at this position differs
+        // Find the corresponding parser position for this offset-position
+        const offsetPos = [...closePositions.keys()]
+          .find((k) => closePositions.get(k) === ringNums);
+        const parserPos = allPositions[offsetPos];
+        const parserOrder = ringOrderMap.get(parserPos);
+        if (parserOrder) {
+          // Extract only close markers (ring numbers that appear at the END of ring traversal)
+          const closeRingNums = parserOrder.filter((rn) => ringNums.includes(rn));
+          // Deduplicate while preserving order (a ring number appears twice = open+close)
+          const seen = new Map(); // rn -> count
+          closeRingNums.forEach((rn) => {
+            const count = (seen.get(rn) || 0) + 1;
+            seen.set(rn, count);
+            // The second occurrence is the close marker
+            if (count === 2 || !ringNums.includes(rn)) {
+              // Actually just check: is the last occurrence's order different from ascending?
+            }
+          });
+          // Simpler: just check if the ring numbers at this position, when sorted ascending,
+          // produce the same last-occurrence order as the parser
+          const lastOccurrence = [];
+          const rnCount = new Map();
+          parserOrder.forEach((rn) => {
+            if (!ringNums.includes(rn)) return;
+            rnCount.set(rn, (rnCount.get(rn) || 0) + 1);
+          });
+          // Ring numbers that appear only once at a close position are close markers
+          // Ring numbers that appear twice have both open and close
+          parserOrder.forEach((rn) => {
+            if (!ringNums.includes(rn)) return;
+            const total = rnCount.get(rn) || 0;
+            if (total === 1) {
+              // Single occurrence = close marker
+              if (!lastOccurrence.includes(rn)) lastOccurrence.push(rn);
+            }
+          });
+          if (lastOccurrence.length >= 2) {
+            const matches = lastOccurrence.every((rn, i) => rn === simpleOrder[i]);
+            if (!matches) return true;
           }
-        });
-        // Simpler: just check if the ring numbers at this position, when sorted ascending,
-        // produce the same last-occurrence order as the parser
-        const lastOccurrence = [];
-        const rnCount = new Map();
-        parserOrder.forEach((rn) => {
-          if (!ringNums.includes(rn)) return;
-          rnCount.set(rn, (rnCount.get(rn) || 0) + 1);
-        });
-        // Ring numbers that appear only once at a close position are close markers
-        // Ring numbers that appear twice have both open and close
-        parserOrder.forEach((rn) => {
-          if (!ringNums.includes(rn)) return;
-          const total = rnCount.get(rn) || 0;
-          if (total === 1) {
-            // Single occurrence = close marker
-            if (!lastOccurrence.includes(rn)) lastOccurrence.push(rn);
-          }
-        });
-        if (lastOccurrence.length >= 2) {
-          const matches = lastOccurrence.every((rn, i) => rn === simpleOrder[i]);
-          if (!matches) return true;
         }
       }
     }
@@ -457,10 +462,14 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
     const { optionsStr } = buildRingOptions(effectiveRing, { includeBranchDepths: true });
     lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
 
-    const { lines: subLines, currentVar: subVar } = generateSubstitutionCode(effectiveRing, indent, nextVar, varName);
+    const {
+      lines: subLines, currentVar: subVar,
+    } = generateSubstitutionCode(effectiveRing, indent, nextVar, varName);
     lines.push(...subLines);
 
-    const { lines: attLines, currentVar: attVar } = generateAttachmentCode(effectiveRing, indent, nextVar, subVar);
+    const {
+      lines: attLines, currentVar: attVar,
+    } = generateAttachmentCode(effectiveRing, indent, nextVar, subVar);
     lines.push(...attLines);
 
     ringFinalVars.push(attVar);
@@ -571,7 +580,16 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     // Single ring wrapped in FusedRing — use raw metadata since there's no
     // public API to create a single-ring FusedRing
     fusedVar = ringVars[0].var;
-    return decompileComplexFusedRingSingleRing(fusedRing, fusedVar, sequentialRings, seqAtomAttachments, lines, indent, nextVar);
+    // eslint-disable-next-line no-use-before-define
+    return decompileComplexFusedRingSingleRing(
+      fusedRing,
+      fusedVar,
+      sequentialRings,
+      seqAtomAttachments,
+      lines,
+      indent,
+      nextVar,
+    );
   }
 
   // Step 2: Decompile sequential rings with computed offsets and depths
@@ -587,7 +605,9 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const seqDepths = sequentialRings.map((ring) => {
       const positions = ring.metaPositions || [];
       if (positions.length > 0) return branchDepthMap.get(positions[0]) || 0;
-      if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) return ring.metaBranchDepths[0];
+      if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
+        return ring.metaBranchDepths[0];
+      }
       return 0;
     });
 
@@ -612,6 +632,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
       group.forEach(({ ring }) => {
         const positions = ring.metaPositions || [];
         if (positions.length > 0) {
+          // eslint-disable-next-line no-param-reassign
           ring.offset = positions[0] - minPos;
         }
       });
@@ -663,9 +684,6 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
         const firstRingPos = sameDepthRings.length > 0
           ? Math.min(...sameDepthRings.flatMap(({ ring: r }) => r.metaPositions || []))
           : pos;
-        const lastRingPos = sameDepthRings.length > 0
-          ? Math.max(...sameDepthRings.flatMap(({ ring: r }) => r.metaPositions || []))
-          : pos;
         const posType = pos < firstRingPos ? 'before' : 'after';
         const entry = { atom, depth, position: posType };
         if (bond) entry.bond = bond;
@@ -702,6 +720,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
           lines.push(attResult.code);
           attVars.push(attResult.finalVar);
         });
+        // eslint-disable-next-line no-param-reassign
         entry.attachmentVars = attVars;
       }
     });
@@ -787,7 +806,15 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
 }
 
 // Handle single-ring FusedRing case with raw metadata (no public API for single-ring FusedRing)
-function decompileComplexFusedRingSingleRing(fusedRing, fusedVar, sequentialRings, seqAtomAttachments, lines, indent, nextVar) {
+function decompileComplexFusedRingSingleRing(
+  fusedRing,
+  fusedVar,
+  sequentialRings,
+  seqAtomAttachments,
+  lines,
+  indent,
+  nextVar,
+) {
   const allPositions = fusedRing.metaAllPositions || [];
   const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
   const atomValueMap = fusedRing.metaAtomValueMap || new Map();
@@ -904,6 +931,7 @@ function decompileMolecule(molecule, indent, nextVar) {
   // produces the right SMILES without needing attachToRing
   const componentFinalVars = [];
   components.forEach((component) => {
+    // eslint-disable-next-line no-use-before-define
     const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
     lines.push(componentCode);
     // Preserve metaLeadingBond on linear/ring components (e.g., '/' in ring/C=C/ring)

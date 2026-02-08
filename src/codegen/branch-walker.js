@@ -51,6 +51,7 @@ export function emitAttachment(parts, attachment, buildSMILES) {
 export function openBranches(parts, depthRef, targetDepth) {
   while (depthRef.value < targetDepth) {
     parts.push('(');
+    // eslint-disable-next-line no-param-reassign
     depthRef.value += 1;
   }
 }
@@ -66,9 +67,11 @@ export function openBranches(parts, depthRef, targetDepth) {
  * @param {Map} pendingAttachments - Map of depth -> attachment[] to emit on close
  * @param {Function} buildSMILES - SMILES builder function
  */
+// eslint-disable-next-line max-len
 export function closeBranchesInterleaved(parts, depthRef, targetDepth, pendingAttachments, buildSMILES) {
   while (depthRef.value > targetDepth) {
     parts.push(')');
+    // eslint-disable-next-line no-param-reassign
     depthRef.value -= 1;
 
     if (pendingAttachments.has(depthRef.value)) {
@@ -92,6 +95,7 @@ export function closeBranchesInterleaved(parts, depthRef, targetDepth, pendingAt
  * @param {Map} pendingAttachments - Map of position -> { depth, attachments } to emit on close
  * @param {Function} buildSMILES - SMILES builder function
  */
+// eslint-disable-next-line max-len
 export function closeBranchesCrossing(parts, depthRef, targetDepth, pendingAttachments, buildSMILES) {
   while (depthRef.value > targetDepth) {
     // Output non-sibling attachments BEFORE closing the branch (they're inside)
@@ -114,6 +118,7 @@ export function closeBranchesCrossing(parts, depthRef, targetDepth, pendingAttac
     toDeleteNonSibling.forEach((pos) => pendingAttachments.delete(pos));
 
     parts.push(')');
+    // eslint-disable-next-line no-param-reassign
     depthRef.value -= 1;
 
     // Output sibling attachments AFTER closing to this depth (they're outside)

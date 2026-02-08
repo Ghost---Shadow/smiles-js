@@ -184,7 +184,7 @@ describe('Parser Core - Edge Cases', () => {
 
   test('covers null atom check in ring path collection (line 123)', () => {
     const tokens = tokenize('C1CCCCC1');
-    const { atoms, ringBoundaries } = buildAtomList(tokens);
+    const { ringBoundaries } = buildAtomList(tokens);
     expect(ringBoundaries.length).toBe(1);
   });
 

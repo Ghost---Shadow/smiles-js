@@ -30,6 +30,7 @@ describe('Cortisone - Divide and Conquer', () => {
   });
 
   test('DEBUG: manual Ring construction - understanding offset and size', () => {
+    // eslint-disable-next-line global-require
     const { Ring } = require('../src/constructors.js');
 
     console.log('\n=== Understanding Ring Offset and Size ===');
@@ -64,12 +65,14 @@ describe('Cortisone - Divide and Conquer', () => {
     // For C12CCC CC1CCC2: ring 2 opens at atom 0 of ring 1, has 4 total atoms
     // But those 4 atoms are: shared atom 0, then 3 new atoms (6,7,8)
 
+    // eslint-disable-next-line no-unused-vars
     const r1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
 
     // The problem: fuse() is meant for rings that share an EDGE (2 atoms), not a single atom
     // For single-atom fusion like C12...1...2, we need a different approach
 
     // Let's see what the parser produces for comparison
+    // eslint-disable-next-line no-shadow, global-require
     const { parse } = require('../src/parser/index.js');
     const parsed = parse('C12CCCCC1CCC2');
     console.log('Parsed Ring 1: size=', parsed.rings[0].size, 'offset=', parsed.rings[0].offset);
@@ -98,6 +101,7 @@ describe('Cortisone - Divide and Conquer', () => {
     // - Lines 366-371 now handle single offset=0 inner ring
     // - Added startSharingRings classification for rings that share only starting atom
     // - Added traversal logic at lines 505-540 for start-sharing fusion
+    // eslint-disable-next-line global-require
     const { Ring } = require('../src/constructors.js');
     const v1 = Ring({ atoms: 'C', size: 6, ringNumber: 1 });
     const v2 = Ring({ atoms: 'C', size: 9, ringNumber: 2 });

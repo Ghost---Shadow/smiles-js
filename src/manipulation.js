@@ -386,8 +386,11 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
         const tempRing = tempFused.rings[gi];
         const tempPositions = tempRing.metaPositions || [];
         const globalPositions = tempPositions.map((lp) => localToGlobal.get(lp));
+        // eslint-disable-next-line no-param-reassign
         seqRing.metaPositions = globalPositions;
+        // eslint-disable-next-line no-param-reassign, prefer-destructuring
         seqRing.metaStart = globalPositions[0];
+        // eslint-disable-next-line no-param-reassign
         seqRing.metaEnd = globalPositions[globalPositions.length - 1];
       });
 
@@ -421,8 +424,11 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
           nextPos += 1;
         }
 
+        // eslint-disable-next-line no-param-reassign
         seqRing.metaPositions = positions;
+        // eslint-disable-next-line no-param-reassign, prefer-destructuring
         seqRing.metaStart = positions[0];
+        // eslint-disable-next-line no-param-reassign
         seqRing.metaEnd = positions[positions.length - 1];
       });
     }
@@ -435,6 +441,7 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
     // Handle legacy atomAttachments: create position entries for each attachment
     // (Only used when chainAtoms are not provided)
     if (options.atomAttachments && chainAtoms.length === 0) {
+      // eslint-disable-next-line no-unused-vars
       Object.entries(options.atomAttachments).forEach(([key, atts]) => {
         const attDepth = options.atomAttachmentDepths
           ? options.atomAttachmentDepths[key] : depth;
@@ -496,7 +503,8 @@ export function fusedRingAddSequentialAtomAttachment(fusedRing, position, attach
   newNode.metaAtomValueMap = new Map(fusedRing.metaAtomValueMap || []);
   newNode.metaBondMap = new Map(fusedRing.metaBondMap || []);
   newNode.metaRingOrderMap = new Map(fusedRing.metaRingOrderMap || []);
-  newNode.metaSequentialRings = fusedRing.metaSequentialRings ? [...fusedRing.metaSequentialRings] : [];
+  newNode.metaSequentialRings = fusedRing.metaSequentialRings
+    ? [...fusedRing.metaSequentialRings] : [];
 
   // Copy ring-level metadata
   fusedRing.rings.forEach((origRing, idx) => {

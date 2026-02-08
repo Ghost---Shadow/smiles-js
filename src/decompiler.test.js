@@ -664,7 +664,7 @@ describe('Decompiler - Advanced Features', () => {
     fused.rings[2].metaStart = ring3.metaStart;
     fused.rings[2].metaEnd = ring3.metaEnd;
     fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+    fused.metaAllPositions = Array.from({ length: 23 }, (_, i) => i);
     fused.metaBranchDepthMap = new Map();
     fused.metaAllPositions.forEach((i) => fused.metaBranchDepthMap.set(i, 0));
     fused.metaAtomValueMap = new Map();
