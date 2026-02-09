@@ -40,9 +40,14 @@ jobs:
       - name: Extract coverage percentage
         id: coverage
         run: |
-          TOTAL=$(grep -c '^DA:' coverage/lcov.info)
-          HIT=$(awk -F, '/^DA:/ && $2 > 0 { count++ } END { print count+0 }' coverage/lcov.info)
-          COV=$(awk "BEGIN { printf \"%.1f\", ($HIT/$TOTAL)*100 }")
+          LCOV=$(find . -name 'lcov.info' -not -path '*/node_modules/*' | head -1)
+          if [ -n "$LCOV" ]; then
+            TOTAL=$(grep -c '^DA:' "$LCOV")
+            HIT=$(awk -F, '/^DA:/ && $2 > 0 { count++ } END { print count+0 }' "$LCOV")
+            COV=$(awk "BEGIN { printf \"%.1f\", ($HIT/$TOTAL)*100 }")
+          else
+            COV="unknown"
+          fi
           echo "pct=$COV" >> $GITHUB_OUTPUT
 
       - name: Build minified bundle
