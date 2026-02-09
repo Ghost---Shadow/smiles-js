@@ -10,6 +10,8 @@
   },
   "scripts": {
     "test": "bun test",
+    "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage",
+    "coverage:summary": "bun run scripts/coverage-summary.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build": "bun build src/index.js src/common.js --outdir=dist --minify --format=esm --splitting"

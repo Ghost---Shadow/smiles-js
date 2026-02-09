@@ -26,31 +26,17 @@ jobs:
         run: bun run lint
         continue-on-error: true
 
-      - name: Run tests
-        run: bun test 2>&1 | tee test-output.txt
-
-      - name: Generate coverage
-        run: |
-          printf '[test]\ncoverageReporter = ["lcov"]\ncoverageDir = "coverage"\n' > bunfig.toml
-          bun test --coverage
-          echo "=== Coverage dir ===" && ls -la coverage/ || echo "No coverage dir"
-          echo "=== Find lcov ===" && find . -name 'lcov*' -not -path '*/node_modules/*' || echo "No lcov files"
+      - name: Run tests with coverage
+        run: bun test --coverage 2>&1 | tee test-output.txt
 
       - name: Extract test and coverage
         id: tests
         run: |
           PASS=$(grep -oP '\d+ pass' test-output.txt | grep -oP '\d+' || echo "0")
           FAIL=$(grep -oP '\d+ fail' test-output.txt | grep -oP '\d+' || echo "0")
+          COV=$(awk -F'|' '/All files/ { gsub(/ /, "", $3); print $3 }' test-output.txt || echo "0")
           echo "pass=$PASS" >> $GITHUB_OUTPUT
           echo "fail=$FAIL" >> $GITHUB_OUTPUT
-          LCOV=$(find . -name 'lcov.info' -not -path '*/node_modules/*' | head -1)
-          if [ -n "$LCOV" ]; then
-            TOTAL=$(grep -c '^DA:' "$LCOV")
-            HIT=$(awk -F, '/^DA:/ && $2 > 0 { count++ } END { print count+0 }' "$LCOV")
-            COV=$(awk "BEGIN { printf \"%.1f\", ($HIT/$TOTAL)*100 }")
-          else
-            COV="unknown"
-          fi
           echo "pct=$COV" >> $GITHUB_OUTPUT
 
       - name: Build minified bundle
@@ -82,6 +68,6 @@ jobs:
           gistID: ${{ vars.BADGE_GIST_ID }}
           filename: smiles-js-coverage.json
           label: coverage
-          message: "${{ steps.coverage.outputs.pct }}%"
+          message: "${{ steps.tests.outputs.pct }}%"
           color: brightgreen
           namedLogo: bun
