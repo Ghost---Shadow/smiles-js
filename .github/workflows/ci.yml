@@ -30,21 +30,20 @@ jobs:
         run: bun test 2>&1 | tee test-output.txt
 
       - name: Generate coverage
-        run: bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage
+        run: |
+          printf '[test]\ncoverageReporter = ["lcov"]\ncoverageDir = "coverage"\n' > bunfig.toml
+          bun test --coverage
+          echo "=== Coverage dir ===" && ls -la coverage/ || echo "No coverage dir"
+          echo "=== Find lcov ===" && find . -name 'lcov*' -not -path '*/node_modules/*' || echo "No lcov files"
 
-      - name: Extract test counts
+      - name: Extract test and coverage
         id: tests
         run: |
           PASS=$(grep -oP '\d+ pass' test-output.txt | grep -oP '\d+' || echo "0")
           FAIL=$(grep -oP '\d+ fail' test-output.txt | grep -oP '\d+' || echo "0")
           echo "pass=$PASS" >> $GITHUB_OUTPUT
           echo "fail=$FAIL" >> $GITHUB_OUTPUT
-
-      - name: Extract coverage percentage
-        id: coverage
-        run: |
           LCOV=$(find . -name 'lcov.info' -not -path '*/node_modules/*' | head -1)
-          echo "Found lcov at: $LCOV"
           if [ -n "$LCOV" ]; then
             TOTAL=$(grep -c '^DA:' "$LCOV")
             HIT=$(awk -F, '/^DA:/ && $2 > 0 { count++ } END { print count+0 }' "$LCOV")
