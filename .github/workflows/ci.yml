@@ -27,17 +27,11 @@ jobs:
         continue-on-error: true
 
       - name: Run tests with coverage
-        run: bun test --coverage 2>&1 | tee test-output.txt
-
-      - name: Extract test and coverage
         id: tests
         run: |
-          PASS=$(grep -oP '\d+ pass' test-output.txt | grep -oP '\d+' || echo "0")
-          FAIL=$(grep -oP '\d+ fail' test-output.txt | grep -oP '\d+' || echo "0")
-          COV=$(awk -F'|' '/All files/ { gsub(/ /, "", $3); print $3 }' test-output.txt || echo "0")
-          echo "pass=$PASS" >> $GITHUB_OUTPUT
-          echo "fail=$FAIL" >> $GITHUB_OUTPUT
-          echo "pct=$COV" >> $GITHUB_OUTPUT
+          SUMMARY=$(bun run scripts/coverage-summary.js --json)
+          echo "pass=$(echo $SUMMARY | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).passing))")" >> $GITHUB_OUTPUT
+          echo "pct=$(echo $SUMMARY | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).coverage))")" >> $GITHUB_OUTPUT
 
       - name: Build minified bundle
         run: bun run build
