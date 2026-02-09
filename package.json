@@ -11,7 +11,8 @@
   "scripts": {
     "test": "bun test",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "build": "bun build src/index.js src/common.js --outdir=dist --minify --format=esm --splitting"
   },
   "repository": {
     "type": "git",

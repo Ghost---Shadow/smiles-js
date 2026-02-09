@@ -26,5 +26,55 @@ jobs:
         run: bun run lint
         continue-on-error: true
 
-      - name: Run tests
-        run: bun test
+      - name: Run tests with coverage
+        run: bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage 2>&1 | tee test-output.txt
+
+      - name: Extract test counts
+        id: tests
+        run: |
+          PASS=$(grep -oP '\d+ pass' test-output.txt | grep -oP '\d+' || echo "0")
+          FAIL=$(grep -oP '\d+ fail' test-output.txt | grep -oP '\d+' || echo "0")
+          echo "pass=$PASS" >> $GITHUB_OUTPUT
+          echo "fail=$FAIL" >> $GITHUB_OUTPUT
+
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          COV=$(awk '/All files/ { gsub(/%/, "", $NF); print $NF }' test-output.txt || echo "0")
+          if [ -z "$COV" ] || [ "$COV" = "0" ]; then
+            COV=$(grep -oP '[\d.]+(?=%)' test-output.txt | tail -1 || echo "0")
+          fi
+          echo "pct=$COV" >> $GITHUB_OUTPUT
+
+      - name: Build minified bundle
+        run: bun run build
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smiles-js-bundle
+          path: dist/
+
+      - name: Create test badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ vars.BADGE_GIST_ID }}
+          filename: smiles-js-tests.json
+          label: tests
+          message: "${{ steps.tests.outputs.pass }} passing"
+          color: brightgreen
+          namedLogo: bun
+
+      - name: Create coverage badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ vars.BADGE_GIST_ID }}
+          filename: smiles-js-coverage.json
+          label: coverage
+          message: "${{ steps.coverage.outputs.pct }}%"
+          color: brightgreen
+          namedLogo: bun

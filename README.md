@@ -2,9 +2,10 @@
 
 **A modern JavaScript library for programmatic molecular construction and SMILES manipulation**
 
-[![Tests](https://img.shields.io/badge/tests-457%20passing-brightgreen)]()
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)]()
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)]()
+[![CI](https://github.com/Ghost---Shadow/smiles-js/actions/workflows/ci.yml/badge.svg)](https://github.com/Ghost---Shadow/smiles-js/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Ghost---Shadow/57938674b290876a9651732e8177a1bb/raw/smiles-js-tests.json)](https://github.com/Ghost---Shadow/smiles-js/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Ghost---Shadow/57938674b290876a9651732e8177a1bb/raw/smiles-js-coverage.json)](https://github.com/Ghost---Shadow/smiles-js/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/smiles-js)](https://www.npmjs.com/package/smiles-js)
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 Build complex molecules programmatically with an intuitive, composable API. Parse, manipulate, and generate SMILES notation with full round-trip fidelity.

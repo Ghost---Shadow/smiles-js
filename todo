@@ -1,6 +1,3 @@
 repeat
 mirror
 HOSE integration
-vscode error only on .smiles.js files
-automate deploying to gh-pages
-automate tests and coverage badges in README
