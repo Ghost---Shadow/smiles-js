@@ -40,10 +40,9 @@ jobs:
       - name: Extract coverage percentage
         id: coverage
         run: |
-          COV=$(awk '/All files/ { gsub(/%/, "", $NF); print $NF }' test-output.txt || echo "0")
-          if [ -z "$COV" ] || [ "$COV" = "0" ]; then
-            COV=$(grep -oP '[\d.]+(?=%)' test-output.txt | tail -1 || echo "0")
-          fi
+          TOTAL=$(grep -c '^DA:' coverage/lcov.info)
+          HIT=$(awk -F, '/^DA:/ && $2 > 0 { count++ } END { print count+0 }' coverage/lcov.info)
+          COV=$(awk "BEGIN { printf \"%.1f\", ($HIT/$TOTAL)*100 }")
           echo "pct=$COV" >> $GITHUB_OUTPUT
 
       - name: Build minified bundle
