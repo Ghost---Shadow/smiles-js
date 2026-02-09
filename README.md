@@ -36,6 +36,18 @@ Claude [link](https://claude.ai/share/542ad854-a26b-4cb8-af31-3b7aa58e6559)
 npm install smiles-js
 ```
 
+## Embedding
+
+```html
+<script type="module">
+  import { Fragment, Ring, FusedRing, Linear } from 'https://unpkg.com/smiles-js@latest/src/index.js';
+  import { benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane } from 'https://unpkg.com/smiles-js@latest/src/common.js';
+
+  window.SMILES = { Fragment, Ring, FusedRing, Linear, benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane };
+  // Your code
+</script>
+```
+
 ---
 
 ## Quick Start

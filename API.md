@@ -4,6 +4,20 @@ Full API documentation for smiles-js. For a quick introduction, see the [README]
 
 ---
 
+## Embedding
+
+```html
+<script type="module">
+  import { Fragment, Ring, FusedRing, Linear } from 'https://unpkg.com/smiles-js@latest/src/index.js';
+  import { benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane } from 'https://unpkg.com/smiles-js@latest/src/common.js';
+
+  window.SMILES = { Fragment, Ring, FusedRing, Linear, benzene, methyl, ethyl, hydroxyl, carboxyl, phenyl, cyclohexane };
+  // Your code
+</script>
+```
+
+---
+
 ## Constructors
 
 ### `Ring(options)`
@@ -428,25 +442,6 @@ const rdkit = await RDKit.load();
 const mol = rdkit.get_mol(toluene.smiles);
 console.log(mol.get_svg());
 ```
-
----
-
-## Validation Results
-
-The library has been validated with **32+ real-world pharmaceutical molecules**:
-
-| Category | Molecules Tested | Status |
-|----------|-----------------|--------|
-| **Steroids** | Cortisone, Hydrocortisone, Prednisone, Dexamethasone | Perfect |
-| **Opioids** | Fentanyl, Tramadol, Morphine, Oxycodone, Hydrocodone | Perfect |
-| **NSAIDs** | Ibuprofen, Naproxen, Celecoxib, Meloxicam, Ketoprofen | Perfect |
-| **Statins** | Atorvastatin (Lipitor) | Perfect |
-| **PDE5 Inhibitors** | Sildenafil (Viagra) | Perfect |
-| **HIV Protease Inhibitors** | Ritonavir (Norvir) | Works* |
-| **Proton Pump Inhibitors** | Esomeprazole (Nexium), Omeprazole | Works* |
-| **Cannabinoids** | THC, CBD, Nabilone | Perfect |
-
-*Minor notation differences that don't affect structure
 
 ---
 
