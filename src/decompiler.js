@@ -577,19 +577,36 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const ringsStr = ringVars.map((rv) => rv.var).join(', ');
     lines.push(`${indent}${decl} ${fusedVar} = FusedRing([${ringsStr}]);`);
   } else {
-    // Single ring wrapped in FusedRing — use raw metadata since there's no
-    // public API to create a single-ring FusedRing
+    // Single ring wrapped in FusedRing — if it has sequential rings, handle below
+    // Otherwise this shouldn't happen in practice (single-ring FusedRing without seq rings)
     fusedVar = ringVars[0].var;
-    // eslint-disable-next-line no-use-before-define
-    return decompileComplexFusedRingSingleRing(
-      fusedRing,
-      fusedVar,
-      sequentialRings,
-      seqAtomAttachments,
-      lines,
-      indent,
-      nextVar,
-    );
+    if (!hasSeqRings) {
+      // This case should not occur, but if it does, just return the ring
+      return { code: lines.join('\n'), finalVar: fusedVar };
+    }
+    // For single ring with sequential rings:
+    // Check if the base ring has attachments - if so, use verbose metadata
+    const baseRingHasAttachments = fusedRing.rings[0].attachments
+      && Object.keys(fusedRing.rings[0].attachments).length > 0;
+    if (baseRingHasAttachments) {
+      // Use verbose metadata path (decompileComplexFusedRingSingleRing)
+      // eslint-disable-next-line no-use-before-define
+      return decompileComplexFusedRingSingleRing(
+        fusedRing,
+        fusedVar,
+        sequentialRings,
+        seqAtomAttachments,
+        lines,
+        indent,
+        nextVar,
+      );
+    }
+    // For simple rings without attachments, we'll use addSequentialRings below
+    // Need to change it to 'let' since we'll reassign it
+    const lastLine = lines[lines.length - 1];
+    if (lastLine.includes('const')) {
+      lines[lines.length - 1] = lastLine.replace('const', 'let');
+    }
   }
 
   // Step 2: Decompile sequential rings with computed offsets and depths
@@ -602,9 +619,16 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     sequentialRings.forEach((r) => (r.metaPositions || []).forEach((p) => allRingPositions.add(p)));
 
     // Compute per-ring depth from the ring's first position in the branch depth map
+    // Normalize depths relative to the base ring's depth
+    const baseRingDepth = fusedRing.rings.length > 0 && fusedRing.rings[0].metaPositions
+      ? (branchDepthMap.get(fusedRing.rings[0].metaPositions[0]) || 0)
+      : 0;
     const seqDepths = sequentialRings.map((ring) => {
       const positions = ring.metaPositions || [];
-      if (positions.length > 0) return branchDepthMap.get(positions[0]) || 0;
+      if (positions.length > 0) {
+        const absDepth = branchDepthMap.get(positions[0]) || 0;
+        return absDepth - baseRingDepth;
+      }
       if (ring.metaBranchDepths && ring.metaBranchDepths.length > 0) {
         return ring.metaBranchDepths[0];
       }

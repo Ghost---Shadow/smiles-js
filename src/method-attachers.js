@@ -69,6 +69,9 @@ export function attachRingMethods(node) {
     clone() {
       return ringClone(this);
     },
+    addSequentialRings(seqRings, options) {
+      return fusedRingAddSequentialRings(this, seqRings, options);
+    },
     toObject() {
       const result = {
         type: this.type,

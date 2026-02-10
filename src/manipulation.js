@@ -238,7 +238,10 @@ export function fusedRingRenumber(fusedRing, startNumber = 1) {
 }
 
 export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
-  const newRings = fusedRing.rings.map((r) => ({ ...r }));
+  // Handle both FusedRing and single Ring cases
+  const isSingleRing = !fusedRing.rings;
+  const rings = isSingleRing ? [fusedRing] : fusedRing.rings;
+  const newRings = rings.map((r) => ({ ...r }));
   const newNode = createFusedRingNode(newRings, { skipPositionComputation: true });
 
   // Copy interleaved codegen flag if present (parser-created nodes)
@@ -248,17 +251,40 @@ export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
 
   // Copy existing metadata from the base fused ring
   newNode.metaAllPositions = [...(fusedRing.metaAllPositions || [])];
-  newNode.metaTotalAtoms = fusedRing.metaTotalAtoms || 0;
+  // For single Ring case, initialize metaTotalAtoms to ring size
+  newNode.metaTotalAtoms = isSingleRing ? fusedRing.size : (fusedRing.metaTotalAtoms || 0);
   newNode.metaBranchDepthMap = new Map(fusedRing.metaBranchDepthMap || []);
   newNode.metaAtomValueMap = new Map(fusedRing.metaAtomValueMap || []);
   newNode.metaBondMap = new Map(fusedRing.metaBondMap || []);
   newNode.metaRingOrderMap = new Map(fusedRing.metaRingOrderMap || []);
 
-  // Copy ring-level metadata
-  fusedRing.rings.forEach((origRing, idx) => {
-    if (origRing.metaPositions) newNode.rings[idx].metaPositions = [...origRing.metaPositions];
-    if (origRing.metaStart !== undefined) newNode.rings[idx].metaStart = origRing.metaStart;
-    if (origRing.metaEnd !== undefined) newNode.rings[idx].metaEnd = origRing.metaEnd;
+  // Copy ring-level metadata and initialize for single Ring case
+  rings.forEach((origRing, idx) => {
+    if (origRing.metaPositions) {
+      newNode.rings[idx].metaPositions = [...origRing.metaPositions];
+    } else if (isSingleRing && newNode.metaAllPositions.length === 0) {
+      // Initialize positions for the base ring ONLY if it's a simple ring from API
+      // (no attachments, no substitutions, no existing positions)
+      // This happens when decompiler generates code like: Ring().addSequentialRings([...])
+      const hasAttachments = origRing.attachments && Object.keys(origRing.attachments).length > 0;
+      if (!hasAttachments) {
+        newNode.rings[idx].metaPositions = Array.from({ length: origRing.size }, (_, i) => i);
+        newNode.metaAllPositions = [
+          ...newNode.rings[idx].metaPositions,
+          ...newNode.metaAllPositions,
+        ];
+      }
+    }
+    if (origRing.metaStart !== undefined) {
+      newNode.rings[idx].metaStart = origRing.metaStart;
+    } else if (isSingleRing && newNode.rings[idx].metaPositions) {
+      newNode.rings[idx].metaStart = 0;
+    }
+    if (origRing.metaEnd !== undefined) {
+      newNode.rings[idx].metaEnd = origRing.metaEnd;
+    } else if (isSingleRing && newNode.rings[idx].metaPositions) {
+      newNode.rings[idx].metaEnd = origRing.size - 1;
+    }
   });
 
   // Store sequential rings

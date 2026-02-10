@@ -83,3 +83,5 @@ export const gemfibrozil = Fragment('CC1=CC(C)=CC=C1CCCC(C)(C)C(=O)O');
 // SMILES: CC(C)c1nc(nc(c1/C=C/[C@@H](O)C[C@@H](O)CC(=O)O)c2ccc(F)cc2)NC(=O)C3CC3
 
 export const pitavastatin = Fragment('CC(C)c1nc(nc(c1/C=C/[C@@H](O)C[C@@H](O)CC(=O)O)c2ccc(F)cc2)NC(=O)C3CC3');
+
+export const cholesterol = Fragment('C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C');
