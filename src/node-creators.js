@@ -42,13 +42,16 @@ export function createRingNode(
   return node;
 }
 
-export function createLinearNode(atoms, bonds, attachments = {}) {
+export function createLinearNode(atoms, bonds, attachments = {}, leadingBond) {
   const node = {
     type: ASTNodeType.LINEAR,
     atoms: [...atoms],
     bonds: [...bonds],
     attachments: { ...attachments },
   };
+  if (leadingBond !== undefined) {
+    node.metaLeadingBond = leadingBond;
+  }
   attachSmilesGetter(node);
   attachLinearMethods(node);
   return node;
@@ -86,9 +89,33 @@ export function createFusedRingNode(rings, options = {}) {
       const bondMap = new Map();
       const ringOrderMap = new Map();
 
-      // Extract ring nodes from metadata
+      // Extract ring nodes from metadata - only extract core data fields, not methods
       const extractedRings = metadata.rings.map((ringMeta) => ringMeta.ring);
-      node.rings = extractedRings.map((r) => ({ ...r }));
+      node.rings = extractedRings.map((r) => {
+        // Deep copy attachments (copy both the object and the arrays inside)
+        const attachments = {};
+        if (r.attachments) {
+          Object.keys(r.attachments).forEach((key) => {
+            attachments[key] = [...r.attachments[key]];
+          });
+        }
+
+        // Deep copy substitutions
+        const substitutions = r.substitutions ? { ...r.substitutions } : {};
+
+        return {
+          type: r.type,
+          atoms: r.atoms,
+          size: r.size,
+          ringNumber: r.ringNumber,
+          offset: r.offset,
+          bonds: r.bonds ? [...r.bonds] : [],
+          attachments,
+          substitutions,
+          // Preserve branch depth metadata if present
+          ...(r.metaBranchDepths && { metaBranchDepths: [...r.metaBranchDepths] }),
+        };
+      });
 
       // Process each ring and its atoms
       metadata.rings.forEach((ringMeta, idx) => {
@@ -121,15 +148,27 @@ export function createFusedRingNode(rings, options = {}) {
         }
       });
 
-      node.metaAllPositions = allPositions;
+      // Add positions from seqAtomAttachments if present
+      if (metadata.seqAtomAttachments) {
+        metadata.seqAtomAttachments.forEach((attachments, pos) => {
+          if (!allPositions.includes(pos)) {
+            allPositions.push(pos);
+          }
+        });
+      }
+
+      // Sort allPositions numerically for correct SMILES generation
+      node.metaAllPositions = allPositions.sort((a, b) => a - b);
       node.metaBranchDepthMap = branchDepthMap;
       node.metaAtomValueMap = atomValueMap;
       node.metaBondMap = bondMap;
       if (ringOrderMap.size > 0) node.metaRingOrderMap = ringOrderMap;
     }
 
-    // Support colocated atoms format (intermediate format with flat atoms array)
-    if (metadata.atoms) {
+    // Support standalone atoms format (atoms that are not part of any ring)
+    // This is used together with hierarchical rings format to include chain atoms
+    if (metadata.atoms && !metadata.rings) {
+      // Legacy flat atoms format (all atoms in one array)
       const allPositions = [];
       const branchDepthMap = new Map();
       const atomValueMap = new Map();
@@ -149,6 +188,19 @@ export function createFusedRingNode(rings, options = {}) {
       node.metaAtomValueMap = atomValueMap;
       node.metaBondMap = bondMap;
       if (ringOrderMap.size > 0) node.metaRingOrderMap = ringOrderMap;
+    } else if (metadata.atoms && metadata.rings) {
+      // Hierarchical format with standalone atoms
+      // metadata.rings was already processed above, now merge in standalone atoms
+      metadata.atoms.forEach((atom) => {
+        if (!node.metaAllPositions.includes(atom.position)) {
+          node.metaAllPositions.push(atom.position);
+        }
+        if (atom.depth !== undefined) node.metaBranchDepthMap.set(atom.position, atom.depth);
+        if (atom.value !== undefined) node.metaAtomValueMap.set(atom.position, atom.value);
+        if (atom.bond !== undefined) node.metaBondMap.set(atom.position, atom.bond);
+      });
+      // Re-sort allPositions after adding standalone atoms
+      node.metaAllPositions.sort((a, b) => a - b);
     }
 
     // Support legacy format (separate arrays/maps)

@@ -182,8 +182,14 @@ function decompileLinear(linear, indent, nextVar) {
 
   // Only include bonds array if there are non-null bonds
   const hasNonNullBonds = linear.bonds.some((b) => b !== null);
-  if (hasNonNullBonds) {
+  const hasLeadingBond = linear.metaLeadingBond !== undefined;
+
+  if (hasNonNullBonds && hasLeadingBond) {
+    lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${formatBondsArray(linear.bonds)}], {}, '${linear.metaLeadingBond}');`);
+  } else if (hasNonNullBonds) {
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${formatBondsArray(linear.bonds)}]);`);
+  } else if (hasLeadingBond) {
+    lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [], {}, '${linear.metaLeadingBond}');`);
   } else {
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}]);`);
   }
@@ -513,6 +519,8 @@ function formatMapCode(map) {
       entries.push(`[${key}, '${value}']`);
     } else if (value === null) {
       entries.push(`[${key}, null]`);
+    } else if (Array.isArray(value)) {
+      entries.push(`[${key}, [${value.join(', ')}]]`);
     } else {
       entries.push(`[${key}, ${value}]`);
     }
@@ -782,67 +790,34 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const bondMap = fusedRing.metaBondMap || new Map();
     const ringOrderMap = fusedRing.metaRingOrderMap;
 
-    // Build hierarchical metadata with rings containing their atoms
+    // Build metadata using legacy format (more compatible with all cases)
     const metadataParts = [];
 
-    // Create a hierarchical structure: rings with their atoms nested inside
-    // ringVars is in scope from earlier in decompileComplexFusedRing
-    const ringMetadata = fusedRing.rings.map((ring, ringIdx) => {
-      const positions = ring.metaPositions || [];
-      if (positions.length === 0) return null;
-
-      // Build atom objects for this ring's positions
-      const ringAtoms = positions.map((pos) => {
-        const parts = [`position: ${pos}`];
-
-        // Add depth if present
-        if (branchDepthMap.has(pos)) {
-          parts.push(`depth: ${branchDepthMap.get(pos)}`);
-        }
-
-        // Add atom value if present
-        if (atomValueMap.has(pos)) {
-          parts.push(`value: '${atomValueMap.get(pos)}'`);
-        }
-
-        // Add bond if present
-        if (bondMap.has(pos)) {
-          const bond = bondMap.get(pos);
-          if (bond !== null) {
-            parts.push(`bond: '${bond}'`);
-          }
-        }
-
-        // Add ring order if present (which rings this position belongs to)
-        if (ringOrderMap && ringOrderMap.has(pos)) {
-          const ringOrder = ringOrderMap.get(pos);
-          parts.push(`rings: [${ringOrder.join(', ')}]`);
-        }
-
-        return `{ ${parts.join(', ')} }`;
-      });
-
-      return {
-        ring: ringVars[ringIdx].var,
-        start: ring.metaStart,
-        end: ring.metaEnd,
-        atoms: ringAtoms,
-      };
-    });
-
-    if (ringMetadata.some((m) => m !== null)) {
-      const ringMetaParts = ringMetadata.map((m) => {
-        if (!m) return 'null';
-        const parts = [
-          `ring: ${m.ring}`,
-          `start: ${m.start}`,
-          `end: ${m.end}`,
-          `atoms: [${m.atoms.join(', ')}]`,
-        ];
-        return `{ ${parts.join(', ')} }`;
-      });
-      metadataParts.push(`rings: [${ringMetaParts.join(', ')}]`);
+    // Always use legacy format for now (hierarchical format has issues with standalone atoms)
+    metadataParts.push(`allPositions: [${allPositions.join(', ')}]`);
+    if (branchDepthMap.size > 0) {
+      metadataParts.push(`branchDepthMap: ${formatMapCode(branchDepthMap)}`);
     }
+    if (atomValueMap.size > 0) {
+      metadataParts.push(`atomValueMap: ${formatMapCode(atomValueMap)}`);
+    }
+    if (bondMap.size > 0) {
+      const nonNullBonds = new Map();
+      bondMap.forEach((value, key) => { if (value !== null) nonNullBonds.set(key, value); });
+      if (nonNullBonds.size > 0) {
+        metadataParts.push(`bondMap: ${formatMapCode(nonNullBonds)}`);
+      }
+    }
+    if (ringOrderMap && ringOrderMap.size > 0) {
+      metadataParts.push(`ringOrderMap: ${formatMapCode(ringOrderMap)}`);
+    }
+    // Add per-ring metadata
+    const ringMeta = fusedRing.rings.map((ring) => {
+      const positions = ring.metaPositions || [];
+      if (positions.length === 0) return 'null';
+      return `{ positions: [${positions.join(', ')}], start: ${ring.metaStart}, end: ${ring.metaEnd} }`;
+    });
+    metadataParts.push(`ringMetadata: [${ringMeta.join(', ')}]`)
 
     // Add leadingBond to metadata if present
     if (fusedRing.metaLeadingBond) {
@@ -867,9 +842,10 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
         // Replace .fuse(offset, ring); with .fuse(offset, ring, { metadata: {...} });
         lines[lastLineIdx] = lastLine.replace(/\);$/, `, { metadata: ${metadataStr} });`);
       } else if (lastLine.includes('FusedRing(')) {
-        // Replace FusedRing([...]); with FusedRing({ metadata: {...} });
-        // The ring refs are already in the metadata
-        lines[lastLineIdx] = lastLine.replace(/FusedRing\(\[.*?\]\);$/, `FusedRing({ metadata: ${metadataStr} });`);
+        // Keep the rings array but add metadata as second parameter
+        // Change: const v8 = FusedRing([v1, v2, v3]);
+        // To: const v8 = FusedRing([v1, v2, v3], { metadata: {...} });
+        lines[lastLineIdx] = lastLine.replace(/\);$/, `, { metadata: ${metadataStr} });`);
       }
     }
   }

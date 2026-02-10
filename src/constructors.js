@@ -120,13 +120,13 @@ export function Ring(options) {
  * @param {Object} [attachments={}] - Position -> attachment list
  * @returns {Object} Linear AST node
  */
-export function Linear(atoms, bonds = [], attachments = {}) {
+export function Linear(atoms, bonds = [], attachments = {}, leadingBond) {
   if (!Array.isArray(atoms)) {
     throw new Error('Linear atoms must be an array');
   }
   validateAtoms(atoms);
 
-  return createLinearNode(atoms, bonds, attachments);
+  return createLinearNode(atoms, bonds, attachments, leadingBond);
 }
 
 /**
