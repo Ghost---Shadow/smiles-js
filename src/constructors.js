@@ -131,12 +131,18 @@ export function Linear(atoms, bonds = [], attachments = {}) {
 
 /**
  * Create a FusedRing node
- * @param {Array<Object>} rings - Array of Ring nodes
+ * @param {Array<Object>|Object} rings - Array of Ring nodes OR object with metadata
  * @returns {Object} FusedRing AST node
  */
 export function FusedRing(rings, options = {}) {
+  // New format: FusedRing({ metadata: {...} })
+  if (rings && typeof rings === 'object' && !Array.isArray(rings) && rings.metadata) {
+    return createFusedRingNode(rings, options);
+  }
+
+  // Legacy format: FusedRing([ring1, ring2, ...], options)
   if (!Array.isArray(rings)) {
-    throw new Error('FusedRing requires an array of rings');
+    throw new Error('FusedRing requires an array of rings or an object with metadata');
   }
   if (rings.length < 2) {
     throw new Error('FusedRing requires at least 2 rings');

@@ -776,61 +776,72 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     // Non-sequential interleaved fused ring: use FusedRing constructor with metadata
     // to avoid mutations. Reconstruct using FusedRing([rings], { metadata: {...} })
 
-    // Build per-ring metadata
-    const ringMetadata = fusedRing.rings.map((ring) => {
-      const positions = ring.metaPositions || [];
-      if (positions.length === 0) return null;
-      return {
-        positions,
-        start: ring.metaStart,
-        end: ring.metaEnd,
-      };
-    });
-
     const allPositions = fusedRing.metaAllPositions || [];
     const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
     const atomValueMap = fusedRing.metaAtomValueMap || new Map();
     const bondMap = fusedRing.metaBondMap || new Map();
     const ringOrderMap = fusedRing.metaRingOrderMap;
 
-    // Build metadata object
+    // Build hierarchical metadata with rings containing their atoms
     const metadataParts = [];
+
+    // Create a hierarchical structure: rings with their atoms nested inside
+    // ringVars is in scope from earlier in decompileComplexFusedRing
+    const ringMetadata = fusedRing.rings.map((ring, ringIdx) => {
+      const positions = ring.metaPositions || [];
+      if (positions.length === 0) return null;
+
+      // Build atom objects for this ring's positions
+      const ringAtoms = positions.map((pos) => {
+        const parts = [`position: ${pos}`];
+
+        // Add depth if present
+        if (branchDepthMap.has(pos)) {
+          parts.push(`depth: ${branchDepthMap.get(pos)}`);
+        }
+
+        // Add atom value if present
+        if (atomValueMap.has(pos)) {
+          parts.push(`value: '${atomValueMap.get(pos)}'`);
+        }
+
+        // Add bond if present
+        if (bondMap.has(pos)) {
+          const bond = bondMap.get(pos);
+          if (bond !== null) {
+            parts.push(`bond: '${bond}'`);
+          }
+        }
+
+        // Add ring order if present (which rings this position belongs to)
+        if (ringOrderMap && ringOrderMap.has(pos)) {
+          const ringOrder = ringOrderMap.get(pos);
+          parts.push(`rings: [${ringOrder.join(', ')}]`);
+        }
+
+        return `{ ${parts.join(', ')} }`;
+      });
+
+      return {
+        ring: ringVars[ringIdx].var,
+        start: ring.metaStart,
+        end: ring.metaEnd,
+        atoms: ringAtoms,
+      };
+    });
 
     if (ringMetadata.some((m) => m !== null)) {
       const ringMetaParts = ringMetadata.map((m) => {
         if (!m) return 'null';
         const parts = [
-          `positions: [${m.positions.join(', ')}]`,
+          `ring: ${m.ring}`,
           `start: ${m.start}`,
           `end: ${m.end}`,
+          `atoms: [${m.atoms.join(', ')}]`,
         ];
         return `{ ${parts.join(', ')} }`;
       });
-      metadataParts.push(`ringMetadata: [${ringMetaParts.join(', ')}]`);
-    }
-
-    if (allPositions.length > 0) {
-      metadataParts.push(`allPositions: [${allPositions.join(', ')}]`);
-    }
-    if (branchDepthMap.size > 0) {
-      metadataParts.push(`branchDepthMap: ${formatMapCode(branchDepthMap)}`);
-    }
-    if (atomValueMap.size > 0) {
-      metadataParts.push(`atomValueMap: ${formatMapCode(atomValueMap)}`);
-    }
-    if (bondMap.size > 0) {
-      const nonNullBonds = new Map();
-      bondMap.forEach((value, key) => { if (value !== null) nonNullBonds.set(key, value); });
-      if (nonNullBonds.size > 0) {
-        metadataParts.push(`bondMap: ${formatMapCode(nonNullBonds)}`);
-      }
-    }
-    if (ringOrderMap && ringOrderMap.size > 0) {
-      const entries = [];
-      ringOrderMap.forEach((value, key) => {
-        entries.push(`[${key}, [${value.join(', ')}]]`);
-      });
-      metadataParts.push(`ringOrderMap: new Map([${entries.join(', ')}])`);
+      metadataParts.push(`rings: [${ringMetaParts.join(', ')}]`);
     }
 
     // Add leadingBond to metadata if present
@@ -850,14 +861,15 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
       // Change from: const v8 = v6.fuse(2, v7);
       // To: const v8 = v6.fuse(2, v7, { metadata: {...} });
       // Or from: const v8 = FusedRing([...]);
-      // To: const v8 = FusedRing([...], { metadata: {...} });
+      // To: const v8 = FusedRing({ metadata: {...} }); (refs are in metadata)
       const metadataStr = `{ ${metadataParts.join(', ')} }`;
       if (lastLine.includes('.fuse(')) {
         // Replace .fuse(offset, ring); with .fuse(offset, ring, { metadata: {...} });
         lines[lastLineIdx] = lastLine.replace(/\);$/, `, { metadata: ${metadataStr} });`);
       } else if (lastLine.includes('FusedRing(')) {
-        // Replace FusedRing([...]); with FusedRing([...], { metadata: {...} });
-        lines[lastLineIdx] = lastLine.replace(/\]\);$/, `], { metadata: ${metadataStr} });`);
+        // Replace FusedRing([...]); with FusedRing({ metadata: {...} });
+        // The ring refs are already in the metadata
+        lines[lastLineIdx] = lastLine.replace(/FusedRing\(\[.*?\]\);$/, `FusedRing({ metadata: ${metadataStr} });`);
       }
     }
   }
