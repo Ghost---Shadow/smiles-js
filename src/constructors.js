@@ -72,6 +72,7 @@ export function Ring(options) {
     bonds = [],
     branchDepths = null,
     leadingBond = null,
+    metadata = null,
   } = options;
 
   validateAtoms(atoms);
@@ -91,6 +92,22 @@ export function Ring(options) {
   // Preserve leading bond metadata if provided
   if (leadingBond) {
     node.metaLeadingBond = leadingBond;
+  }
+
+  // Apply metadata if provided (for sequential rings on single ring)
+  if (metadata) {
+    if (metadata.positions) node.metaPositions = [...metadata.positions];
+    if (metadata.start !== undefined) node.metaStart = metadata.start;
+    if (metadata.end !== undefined) node.metaEnd = metadata.end;
+    if (metadata.useInterleavedCodegen) node.metaUseInterleavedCodegen = true;
+    if (metadata.sequentialRings) node.metaSequentialRings = [...metadata.sequentialRings];
+    if (metadata.allPositions) node.metaAllPositions = [...metadata.allPositions];
+    if (metadata.branchDepthMap) node.metaBranchDepthMap = new Map(metadata.branchDepthMap);
+    if (metadata.atomValueMap) node.metaAtomValueMap = new Map(metadata.atomValueMap);
+    if (metadata.bondMap) node.metaBondMap = new Map(metadata.bondMap);
+    if (metadata.seqAtomAttachments) {
+      node.metaSeqAtomAttachments = new Map(metadata.seqAtomAttachments);
+    }
   }
 
   return node;

@@ -773,57 +773,93 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const optionsStr = optionParts.length > 0 ? `, { ${optionParts.join(', ')} }` : '';
     lines.push(`${indent}${fusedVar} = ${fusedVar}.addSequentialRings([${seqRingsStr}]${optionsStr});`);
   } else {
-    // Non-sequential interleaved fused ring: emit metadata so codegen
-    // can reconstruct the exact parser positions (fuse()/FusedRing() may
-    // compute different positions than the parser did)
-    fusedRing.rings.forEach((ring, ringIdx) => {
+    // Non-sequential interleaved fused ring: use FusedRing constructor with metadata
+    // to avoid mutations. Reconstruct using FusedRing([rings], { metadata: {...} })
+
+    // Build per-ring metadata
+    const ringMetadata = fusedRing.rings.map((ring) => {
       const positions = ring.metaPositions || [];
-      if (positions.length > 0) {
-        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaPositions = [${positions.join(', ')}];`);
-        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaStart = ${ring.metaStart};`);
-        lines.push(`${indent}${fusedVar}.rings[${ringIdx}].metaEnd = ${ring.metaEnd};`);
-      }
+      if (positions.length === 0) return null;
+      return {
+        positions,
+        start: ring.metaStart,
+        end: ring.metaEnd,
+      };
     });
 
     const allPositions = fusedRing.metaAllPositions || [];
     const branchDepthMap = fusedRing.metaBranchDepthMap || new Map();
     const atomValueMap = fusedRing.metaAtomValueMap || new Map();
     const bondMap = fusedRing.metaBondMap || new Map();
+    const ringOrderMap = fusedRing.metaRingOrderMap;
+
+    // Build metadata object
+    const metadataParts = [];
+
+    if (ringMetadata.some((m) => m !== null)) {
+      const ringMetaParts = ringMetadata.map((m) => {
+        if (!m) return 'null';
+        const parts = [
+          `positions: [${m.positions.join(', ')}]`,
+          `start: ${m.start}`,
+          `end: ${m.end}`,
+        ];
+        return `{ ${parts.join(', ')} }`;
+      });
+      metadataParts.push(`ringMetadata: [${ringMetaParts.join(', ')}]`);
+    }
 
     if (allPositions.length > 0) {
-      lines.push(`${indent}${fusedVar}.metaAllPositions = [${allPositions.join(', ')}];`);
+      metadataParts.push(`allPositions: [${allPositions.join(', ')}]`);
     }
     if (branchDepthMap.size > 0) {
-      lines.push(`${indent}${fusedVar}.metaBranchDepthMap = ${formatMapCode(branchDepthMap)};`);
+      metadataParts.push(`branchDepthMap: ${formatMapCode(branchDepthMap)}`);
     }
     if (atomValueMap.size > 0) {
-      lines.push(`${indent}${fusedVar}.metaAtomValueMap = ${formatMapCode(atomValueMap)};`);
+      metadataParts.push(`atomValueMap: ${formatMapCode(atomValueMap)}`);
     }
     if (bondMap.size > 0) {
       const nonNullBonds = new Map();
       bondMap.forEach((value, key) => { if (value !== null) nonNullBonds.set(key, value); });
       if (nonNullBonds.size > 0) {
-        lines.push(`${indent}${fusedVar}.metaBondMap = ${formatMapCode(nonNullBonds)};`);
+        metadataParts.push(`bondMap: ${formatMapCode(nonNullBonds)}`);
       }
     }
-    const ringOrderMap = fusedRing.metaRingOrderMap;
     if (ringOrderMap && ringOrderMap.size > 0) {
       const entries = [];
       ringOrderMap.forEach((value, key) => {
         entries.push(`[${key}, [${value.join(', ')}]]`);
       });
-      lines.push(`${indent}${fusedVar}.metaRingOrderMap = new Map([${entries.join(', ')}]);`);
+      metadataParts.push(`ringOrderMap: new Map([${entries.join(', ')}])`);
     }
-  }
 
-  // Emit leading bond if present
-  if (fusedRing.metaLeadingBond) {
-    lines.push(`${indent}${fusedVar}.metaLeadingBond = '${fusedRing.metaLeadingBond}';`);
-  }
+    // Add leadingBond to metadata if present
+    if (fusedRing.metaLeadingBond) {
+      metadataParts.push(`leadingBond: '${fusedRing.metaLeadingBond}'`);
+    }
 
-  // Emit seqAtomAttachments map using pre-decompiled attachment vars (non-seq-ring case)
-  if (seqAtomAttachmentVarEntries.length > 0) {
-    lines.push(`${indent}${fusedVar}.metaSeqAtomAttachments = new Map([${seqAtomAttachmentVarEntries.join(', ')}]);`);
+    // Add seqAtomAttachments if present (non-seq-ring case)
+    if (seqAtomAttachmentVarEntries.length > 0) {
+      metadataParts.push(`seqAtomAttachments: new Map([${seqAtomAttachmentVarEntries.join(', ')}])`);
+    }
+
+    if (metadataParts.length > 0) {
+      // Replace the fuse/FusedRing call with one that includes metadata
+      const lastLineIdx = lines.length - 1;
+      const lastLine = lines[lastLineIdx];
+      // Change from: const v8 = v6.fuse(2, v7);
+      // To: const v8 = v6.fuse(2, v7, { metadata: {...} });
+      // Or from: const v8 = FusedRing([...]);
+      // To: const v8 = FusedRing([...], { metadata: {...} });
+      const metadataStr = `{ ${metadataParts.join(', ')} }`;
+      if (lastLine.includes('.fuse(')) {
+        // Replace .fuse(offset, ring); with .fuse(offset, ring, { metadata: {...} });
+        lines[lastLineIdx] = lastLine.replace(/\);$/, `, { metadata: ${metadataStr} });`);
+      } else if (lastLine.includes('FusedRing(')) {
+        // Replace FusedRing([...]); with FusedRing([...], { metadata: {...} });
+        lines[lastLineIdx] = lastLine.replace(/\]\);$/, `], { metadata: ${metadataStr} });`);
+      }
+    }
   }
 
   return { code: lines.join('\n'), finalVar: fusedVar };
@@ -958,10 +994,8 @@ function decompileMolecule(molecule, indent, nextVar) {
     // eslint-disable-next-line no-use-before-define
     const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
     lines.push(componentCode);
-    // Preserve metaLeadingBond on linear/ring components (e.g., '/' in ring/C=C/ring)
-    if (component.metaLeadingBond) {
-      lines.push(`${indent}${finalVar}.metaLeadingBond = '${component.metaLeadingBond}';`);
-    }
+    // Note: metaLeadingBond is now handled in component constructors via metadata
+    // or leadingBond option, so no mutation needed here
     componentFinalVars.push(finalVar);
   });
 
