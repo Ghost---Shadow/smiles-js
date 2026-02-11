@@ -79,9 +79,11 @@ const hydroxyl = Linear(['O']);
 const ethanol = ethyl.attach(2, hydroxyl);
 ```
 
-### `FusedRing(rings)`
+### `FusedRing(rings)` / `FusedRing({ metadata })`
 
-Create fused ring systems like naphthalene.
+Create fused ring systems like naphthalene. Supports two formats:
+
+**Array format** (simple fused rings):
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -92,6 +94,30 @@ const naphthalene = FusedRing([
   Ring({ atoms: 'C', size: 10, offset: 0, ringNumber: 1 }),
   Ring({ atoms: 'C', size: 6, offset: 2, ringNumber: 2 })
 ]);
+```
+
+**Metadata format** (complex interleaved rings with position data):
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `metadata.rings` | `object[]` | Per-ring metadata with `ring`, `start`, `end`, and `atoms` |
+| `metadata.atoms` | `object[]` | Standalone atoms not belonging to any ring |
+| `metadata.leadingBond` | `string` | Optional leading bond (e.g., `'='`) |
+
+Each ring entry: `{ ring, start, end, atoms: [{ position, depth, value?, bond?, rings?, attachments? }] }`
+
+Each standalone atom entry: `{ position, depth, value?, bond?, attachments? }`
+
+```javascript
+const ring1 = Ring({ atoms: 'C', size: 6 });
+const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+const fused = FusedRing({ metadata: {
+  rings: [
+    { ring: ring1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 5, depth: 0 }] },
+    { ring: ring2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 6, depth: 0 }] }
+  ],
+  atoms: [{ position: 12, depth: 0, value: 'N' }]
+} });
 ```
 
 ### `Molecule(components)`
@@ -240,9 +266,8 @@ const decorated = fused.attachToRing(1, 4, Linear(['O']));
 // Renumber rings
 const renumbered = fused.renumber(10);
 
-// Add sequential continuation rings with depths and chain atoms
-const withSeq = fused.addSequentialRings([ring3, ring4], {
-  depths: [1, 2],
+// Add sequential continuation rings with colocated depth
+const withSeq = fused.addSequentialRings([{ ring: ring3, depth: 1 }, { ring: ring4, depth: 2 }], {
   chainAtoms: [
     { atom: 'C', depth: 2, position: 'before' },
     { atom: 'C', depth: 2, position: 'after', attachments: [Linear(['O'], ['='])] },
@@ -259,10 +284,16 @@ Add continuation rings to a fused ring system. Computes all position metadata in
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `rings` | `Ring[]` | Array of sequential Ring nodes to add |
-| `options.depths` | `number[]` | Per-ring branch depth (e.g., `[1, 2, 1, 2]`) |
+| `rings` | `Ring[]` or `object[]` | Sequential rings — plain `Ring` nodes or `{ ring, depth? }` objects |
+| `options.depths` | `number[]` | Legacy: per-ring branch depth. Prefer colocated `{ ring, depth }` format instead |
 | `options.chainAtoms` | `object[]` | Standalone atoms between rings (see below) |
-| `options.atomAttachments` | `object` | Legacy: position → attachment list map |
+
+**rings entries (object format):**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ring` | `Ring` | The Ring node to add |
+| `depth` | `number` | Branch depth for this ring (default: `0`, omit if zero) |
 
 **chainAtoms entries:**
 
@@ -458,4 +489,8 @@ Some complex molecules may have minor notation differences during round-trip:
 
 ### toCode() Generated Code
 
-The `.toCode()` method generates JavaScript constructor code that reconstructs the molecule. For molecules with sequential continuation rings (e.g., Telmisartan), the generated code uses `addSequentialRings()` with `depths` and `chainAtoms` options to produce clean structural API calls with no raw metadata assignments.
+The `.toCode()` method generates JavaScript constructor code that reconstructs the molecule:
+
+- **Interleaved fused rings** emit `FusedRing({ metadata: { rings: [...], atoms: [...] } })` with hierarchical, colocated atom data (position, depth, value, bond, rings, attachments) instead of scattered Maps
+- **Sequential continuation rings** use `const`-only declarations and `addSequentialRings([{ ring: v, depth }])` with colocated depth per ring
+- All generated variable declarations use `const` (no `let` + reassignment)
