@@ -198,6 +198,10 @@ export function createFusedRingNode(rings, options = {}) {
         if (atom.depth !== undefined) node.metaBranchDepthMap.set(atom.position, atom.depth);
         if (atom.value !== undefined) node.metaAtomValueMap.set(atom.position, atom.value);
         if (atom.bond !== undefined) node.metaBondMap.set(atom.position, atom.bond);
+        if (atom.attachments) {
+          if (!node.metaSeqAtomAttachments) node.metaSeqAtomAttachments = new Map();
+          node.metaSeqAtomAttachments.set(atom.position, atom.attachments);
+        }
       });
       // Re-sort allPositions after adding standalone atoms
       node.metaAllPositions.sort((a, b) => a - b);

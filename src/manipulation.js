@@ -237,7 +237,26 @@ export function fusedRingRenumber(fusedRing, startNumber = 1) {
   return createFusedRingNode(newRings);
 }
 
-export function fusedRingAddSequentialRings(fusedRing, seqRings, options = {}) {
+export function fusedRingAddSequentialRings(fusedRing, seqRingsInput, options = {}) {
+  // Normalize seqRings: accept both [ring] and [{ ring, depth }] formats
+  // Extract colocated depths from { ring, depth } objects into options.depths
+  const normalizedOptions = { ...options };
+  const seqRings = seqRingsInput.map((entry, idx) => {
+    if (entry && entry.ring && entry.type === undefined) {
+      // { ring, depth? } object format
+      if (entry.depth !== undefined && !normalizedOptions.depths) {
+        normalizedOptions.depths = seqRingsInput.map(() => 0);
+      }
+      if (entry.depth !== undefined && normalizedOptions.depths) {
+        normalizedOptions.depths[idx] = entry.depth;
+      }
+      return entry.ring;
+    }
+    return entry; // plain ring node
+  });
+  // eslint-disable-next-line no-param-reassign
+  options = normalizedOptions;
+
   // Handle both FusedRing and single Ring cases
   const isSingleRing = !fusedRing.rings;
   const rings = isSingleRing ? [fusedRing] : fusedRing.rings;

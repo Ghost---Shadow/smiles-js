@@ -1519,7 +1519,7 @@ export const v19 = v17.attach(4, v18);
 export const v20 = v16.attach(3, v19);
 export const v21 = Linear(['O']);
 export const v22 = v20.attach(4, v21);
-export const v23 = Linear(['C', 'C'], ['=']);
+export const v23 = Linear(['C', 'C'], ['='], {}, '/');
 export const v24 = Ring({ atoms: 'c', size: 6, leadingBond: '/' });
 export const v25 = Molecule([v3, v22, v23, v24]);"
 `;
