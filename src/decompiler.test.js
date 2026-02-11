@@ -2,7 +2,7 @@ import {
   describe, test, expect,
 } from 'bun:test';
 import {
-  Ring, Linear, Molecule,
+  Ring, Linear, Molecule, FusedRing,
 } from './constructors.js';
 import { decompile } from './decompiler.js';
 import { parse } from './parser/index.js';
@@ -218,100 +218,75 @@ export const v3 = v1.fuse(1, v2);`);
 });
 
 describe('Decompiler - FusedRing (interleaved/complex path)', () => {
-  test('decompiles fused ring created via .fuse() with metadata', () => {
+  // When .fuse() produces parser metadata (interleaved positions), the decompiler
+  // should emit FusedRing({ metadata: { rings: [...] } }) with hierarchical colocated atoms.
+  // No scattered Maps, no mutations.
+
+  test('decompiles fused ring created via .fuse() with hierarchical metadata', () => {
+    // ring1.fuse(1, ring2) produces:
+    //   ring1 positions: [0, 1, 6, 7, 8, 9], start: 0, end: 9
+    //   ring2 positions: [1, 2, 3, 4, 5, 6], start: 1, end: 6
+    //   allPositions: [0..9], all depth 0
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
     const fused = ring1.fuse(1, ring2);
     const code = decompile(fused);
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export const v3 = v1.fuse(1, v2, { metadata: { allPositions: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], branchDepthMap: new Map([[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0]]), ringMetadata: [{ positions: [0, 1, 6, 7, 8, 9], start: 0, end: 9 }, { positions: [1, 2, 3, 4, 5, 6], start: 1, end: 6 }] } });`);
+export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }] } });`);
   });
 
-  test('decompiles fused ring with leadingBond via interleaved path', () => {
+  test('decompiles fused ring with leadingBond in hierarchical metadata', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
     const fused = ring1.fuse(1, ring2);
     fused.metaLeadingBond = '=';
-    fused.metaSequentialRings = [];
-    fused.metaAllPositions = [];
     const code = decompile(fused);
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export const v3 = v1.fuse(1, v2, { leadingBond: '=' });`);
+export const v3 = FusedRing({ metadata: { leadingBond: '=', rings: [{ ring: v1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }] } });`);
   });
 
-  test('decompiles fused ring with ring having attachments and metadata', () => {
+  test('decompiles fused ring with attachments and extra atom metadata', () => {
+    // Ring with attachment at position 2, fused, plus an extra atom at position 12 with value 'O'
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const branch = Linear(['N']);
     const ringWithAttach = ring1.attach(2, branch);
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ringWithAttach.fuse(1, ring2);
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
-    fused.metaBranchDepthMap.set(12, 0);
-    fused.metaAtomValueMap = new Map([[12, 'O']]);
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const fused = FusedRing({ metadata: { rings: [{ ring: ringWithAttach, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: ring2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'O' }] } });
     const code = decompile(fused);
+    // Attachments stay as .attach() calls on rings.
+    // FusedRing uses hierarchical metadata with the extra atom (position 12, value 'O') colocated.
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Linear(['N']);
 export const v3 = v1.attach(2, v2);
 export const v4 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export const v5 = v3.fuse(1, v4, { metadata: { allPositions: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], branchDepthMap: new Map([[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 0], [12, 0]]), atomValueMap: new Map([[12, 'O']]), ringMetadata: [{ positions: [0, 1, 6, 7, 8, 9], start: 0, end: 9 }, { positions: [1, 2, 3, 4, 5, 6], start: 1, end: 6 }] } });`);
+export const v5 = FusedRing({ metadata: { rings: [{ ring: v3, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v4, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'O' }] } });`);
   });
 
-  test('decompiles fused ring with extra atomValueMap metadata', () => {
+  test('decompiles fused ring with extra standalone atom', () => {
+    // Extra atom at position 12 with value 'N', not belonging to any ring
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const fused = ring1.fuse(1, ring2);
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    fused.metaBranchDepthMap = new Map([[12, 0]]);
-    fused.metaAtomValueMap = new Map([[12, 'N']]);
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
-    delete fused.metaLeadingBond;
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
+    const fused = FusedRing({ metadata: { rings: [{ ring: ring1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: ring2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'N' }] } });
     const code = decompile(fused);
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export const v3 = v1.fuse(1, v2, { metadata: { allPositions: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], branchDepthMap: new Map([[12, 0]]), atomValueMap: new Map([[12, 'N']]), ringMetadata: [{ positions: [0, 1, 6, 7, 8, 9], start: 0, end: 9 }, { positions: [1, 2, 3, 4, 5, 6], start: 1, end: 6 }] } });`);
+export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'N' }] } });`);
   });
 
-  test('decompiles single-ring fused with branchDepthMap and null bondMap via interleaved', () => {
+  test('decompiles single-ring fused with null bondMap via interleaved returns just Ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5];
-    fused.metaBranchDepthMap = new Map([[5, 0]]);
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map([[5, null]]);
-    fused.metaSeqAtomAttachments = new Map();
+    const fused = ring1.addSequentialRings([]);
+    fused.metaBranchDepthMap.set(5, 0);
+    fused.metaBondMap.set(5, null);
     const code = decompile(fused, { includeMetadata: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 
-  test('decompiles single-ring fused with empty maps via interleaved', () => {
+  test('decompiles single-ring fused with empty maps returns just Ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5];
-    fused.metaBranchDepthMap = new Map();
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
+    const fused = ring1.addSequentialRings([]);
     const code = decompile(fused, { includeMetadata: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
@@ -328,229 +303,119 @@ export const v3 = v1.fuse(1, v2, { metadata: { allPositions: [0, 1, 2, 3, 4, 5, 
 });
 
 describe('Decompiler - FusedRing (sequential rings)', () => {
+  // Sequential rings: all const, no let+reassignment.
+  // Depth colocated per-ring as { ring: v, depth: N }. Depth 0 is default (omitted).
+  // chainAtoms: depth always explicit.
+
   test('decompiles complex fused ring with sequential rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    ring2.metaPositions = [6, 7, 8, 9, 10, 11];
-    ring2.metaStart = 6;
-    ring2.metaEnd = 11;
-    const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
     const fused = ring1.fuse(1, ring2);
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-    fused.metaBranchDepthMap = new Map();
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
-    const code = decompile(fused);
+    const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
+    const result = fused.addSequentialRings([seqRing]);
+    const code = decompile(result);
+    // const for fuse, new const for addSequentialRings, depth 0 omitted
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export let v3 = v1.fuse(1, v2);
+export const v3 = v1.fuse(1, v2);
 export const v4 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-v3 = v3.addSequentialRings([v4], { depths: [0], chainAtoms: [{ atom: 'C', depth: 0, position: 'before' }, { atom: 'C', depth: 0, position: 'before' }] });`);
+export const v5 = v3.addSequentialRings([{ ring: v4 }]);`);
   });
 
   test('decompiles sequential rings with branchDepthMap', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-    seqRing.metaPositions = [10, 11, 12, 13, 14];
-    seqRing.metaStart = 10;
-    seqRing.metaEnd = 14;
     const fused = ring1.fuse(1, ring2);
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-    fused.metaBranchDepthMap = new Map();
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
-    fused.metaBranchDepthMap.set(10, 0);
-    const code = decompile(fused, { includeMetadata: true });
+    const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
+    const result = fused.addSequentialRings([seqRing]);
+    const code = decompile(result, { includeMetadata: true });
+    // depth 0 is default, so omitted in the ring entry
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-export let v3 = v1.fuse(1, v2);
+export const v3 = v1.fuse(1, v2);
 export const v4 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-v3 = v3.addSequentialRings([v4], { depths: [0] });`);
+export const v5 = v3.addSequentialRings([{ ring: v4 }]);`);
   });
 
-  test('generates clean addSequentialRings API for simple sequential rings', () => {
+  test('generates clean addSequentialRings for simple sequential rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-    seqRing.metaPositions = [6, 7, 8, 9, 10];
-    seqRing.metaStart = 6;
-    seqRing.metaEnd = 10;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0] = { ...ring1 };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
-    const code = decompile(fused, { includeMetadata: true });
-    expect(code).toBe(`export let v1 = Ring({ atoms: 'C', size: 6 });
+    const result = ring1.addSequentialRings([seqRing]);
+    const code = decompile(result, { includeMetadata: true });
+    // Single base ring + sequential ring, all depth 0 (omitted), all const
+    expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-v1 = v1.addSequentialRings([v2], { depths: [0] });`);
+export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
   });
 
   test('generates chainAtoms with attachments for sequential rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-    seqRing.metaPositions = [6, 7, 8, 9, 10];
-    seqRing.metaStart = 6;
-    seqRing.metaEnd = 10;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-    fused.metaBranchDepthMap = new Map([[11, 0]]);
-    fused.metaAtomValueMap = new Map([[11, 'N']]);
-    fused.metaBondMap = new Map();
     const attachment = Linear(['O']);
-    fused.metaSeqAtomAttachments = new Map([[11, [attachment]]]);
-    const code = decompile(fused, { includeMetadata: true });
-    expect(code).toBe(`export let v1 = Ring({ atoms: 'C', size: 6 });
+    const result = ring1.addSequentialRings([seqRing], { chainAtoms: [{ atom: 'N', depth: 0, position: 'after', attachments: [attachment] }] });
+    const code = decompile(result, { includeMetadata: true });
+    // chainAtoms depth always explicit, attachment declared before addSequentialRings
+    expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
 export const v3 = Linear(['O']);
-v1 = v1.addSequentialRings([v2], { depths: [0], chainAtoms: [{ atom: 'N', depth: 0, position: 'after', attachments: [v3] }] });`);
+export const v4 = v1.addSequentialRings([{ ring: v2 }], { chainAtoms: [{ atom: 'N', depth: 0, position: 'after', attachments: [v3] }] });`);
   });
 
   test('embeds atom values in chainAtoms structure', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-    seqRing.metaPositions = [6, 7, 8, 9, 10];
-    seqRing.metaStart = 6;
-    seqRing.metaEnd = 10;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
-    fused.metaAtomValueMap = new Map([[10, 'N']]);
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
-    const code = decompile(fused, { includeMetadata: true });
-    expect(code).toBe(`export let v1 = Ring({ atoms: 'C', size: 6 });
+    const result = ring1.addSequentialRings([seqRing]);
+    // Position 10 is within the sequential ring — atom value here doesn't need chainAtom
+    result.metaAtomValueMap.set(10, 'N');
+    const code = decompile(result, { includeMetadata: true });
+    expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-v1 = v1.addSequentialRings([v2], { depths: [0] });`);
+export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
   });
 
   test('embeds bond types in chainAtoms structure', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-    seqRing.metaPositions = [6, 7, 8, 9, 10];
-    seqRing.metaStart = 6;
-    seqRing.metaEnd = 10;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map([[1, '='], [2, null], [3, '#']]);
-    fused.metaSeqAtomAttachments = new Map();
-    const code = decompile(fused, { includeMetadata: true });
-    expect(code).toBe(`export let v1 = Ring({ atoms: 'C', size: 6 });
+    const result = ring1.addSequentialRings([seqRing]);
+    // Bonds at base ring positions don't generate chainAtoms
+    result.metaBondMap.set(1, '=');
+    result.metaBondMap.set(2, null);
+    result.metaBondMap.set(3, '#');
+    const code = decompile(result, { includeMetadata: true });
+    expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-v1 = v1.addSequentialRings([v2], { depths: [0] });`);
+export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
   });
 
   test('embeds atom attachments in chainAtoms structure', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-    seqRing.metaPositions = [6, 7, 8, 9, 10];
-    seqRing.metaStart = 6;
-    seqRing.metaEnd = 10;
-    const fused = { type: 'fused_ring', rings: [ring1] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    fused.metaBranchDepthMap = new Map();
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((i) => fused.metaBranchDepthMap.set(i, 0));
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map();
     const att1 = Linear(['O']);
     const att2 = Linear(['N']);
-    fused.metaSeqAtomAttachments = new Map([[3, [att1, att2]]]);
-    const code = decompile(fused, { includeMetadata: true });
-    expect(code).toBe(`export let v1 = Ring({ atoms: 'C', size: 6 });
+    const result = ring1.addSequentialRings([seqRing]);
+    // Attachments at base ring position 3 don't generate chainAtoms
+    result.metaSeqAtomAttachments.set(3, [att1, att2]);
+    const code = decompile(result, { includeMetadata: true });
+    expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-v1 = v1.addSequentialRings([v2], { depths: [0] });`);
+export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
   });
 
   test('decompiles 3+ base rings with sequential ring using FusedRing constructor', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6 });
-    ring1.metaPositions = [0, 1, 2, 3, 4, 5];
-    ring1.metaStart = 0;
-    ring1.metaEnd = 5;
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    ring2.metaPositions = [6, 7, 8, 9, 10, 11];
-    ring2.metaStart = 6;
-    ring2.metaEnd = 11;
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
-    ring3.metaPositions = [12, 13, 14, 15, 16, 17];
-    ring3.metaStart = 12;
-    ring3.metaEnd = 17;
+    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
+    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 6 });
+    const fused = FusedRing([ring1, ring2, ring3]);
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 4 });
-    seqRing.metaPositions = [18, 19, 20, 21, 22];
-    seqRing.metaStart = 18;
-    seqRing.metaEnd = 22;
-    const fused = { type: 'fused_ring', rings: [ring1, ring2, ring3] };
-    fused.rings[0].metaPositions = ring1.metaPositions;
-    fused.rings[0].metaStart = ring1.metaStart;
-    fused.rings[0].metaEnd = ring1.metaEnd;
-    fused.rings[1].metaPositions = ring2.metaPositions;
-    fused.rings[1].metaStart = ring2.metaStart;
-    fused.rings[1].metaEnd = ring2.metaEnd;
-    fused.rings[2].metaPositions = ring3.metaPositions;
-    fused.rings[2].metaStart = ring3.metaStart;
-    fused.rings[2].metaEnd = ring3.metaEnd;
-    fused.metaSequentialRings = [seqRing];
-    fused.metaAllPositions = Array.from({ length: 23 }, (_, i) => i);
-    fused.metaBranchDepthMap = new Map();
-    fused.metaAllPositions.forEach((i) => fused.metaBranchDepthMap.set(i, 0));
-    fused.metaAtomValueMap = new Map();
-    fused.metaBondMap = new Map();
-    fused.metaSeqAtomAttachments = new Map();
-    const code = decompile(fused, { includeMetadata: true });
+    const result = fused.addSequentialRings([seqRing]);
+    const code = decompile(result, { includeMetadata: true });
+    // All const, new const for addSequentialRings, depth 0 omitted
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
-export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
-export let v4 = FusedRing([v1, v2, v3]);
+export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
+export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 6 });
+export const v4 = FusedRing([v1, v2, v3]);
 export const v5 = Ring({ atoms: 'C', size: 5, ringNumber: 4 });
-v4 = v4.addSequentialRings([v5], { depths: [0] });`);
+export const v6 = v4.addSequentialRings([{ ring: v5 }]);`);
   });
 });
 
