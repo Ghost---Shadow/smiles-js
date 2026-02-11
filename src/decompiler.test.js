@@ -252,8 +252,27 @@ export const v3 = FusedRing({ metadata: { leadingBond: '=', rings: [{ ring: v1, 
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const branch = Linear(['N']);
     const ringWithAttach = ring1.attach(2, branch);
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-    const fused = FusedRing({ metadata: { rings: [{ ring: ringWithAttach, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: ring2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'O' }] } });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
+    const fused = FusedRing({
+      metadata: {
+        rings: [{
+          ring: ringWithAttach,
+          start: 0,
+          end: 9,
+          // eslint-disable-next-line max-len
+          atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }],
+        }, {
+          ring: ring2,
+          start: 1,
+          end: 6,
+          // eslint-disable-next-line max-len
+          atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }],
+        }],
+        atoms: [{ position: 12, depth: 0, value: 'O' }],
+      },
+    });
     const code = decompile(fused);
     // Attachments stay as .attach() calls on rings.
     // FusedRing uses hierarchical metadata with the extra atom (position 12, value 'O') colocated.
@@ -267,8 +286,27 @@ export const v5 = FusedRing({ metadata: { rings: [{ ring: v3, start: 0, end: 9, 
   test('decompiles fused ring with extra standalone atom', () => {
     // Extra atom at position 12 with value 'N', not belonging to any ring
     const ring1 = Ring({ atoms: 'C', size: 6 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
-    const fused = FusedRing({ metadata: { rings: [{ ring: ring1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: ring2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'N' }] } });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 1,
+    });
+    const fused = FusedRing({
+      metadata: {
+        rings: [{
+          ring: ring1,
+          start: 0,
+          end: 9,
+          // eslint-disable-next-line max-len
+          atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }],
+        }, {
+          ring: ring2,
+          start: 1,
+          end: 6,
+          // eslint-disable-next-line max-len
+          atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }],
+        }],
+        atoms: [{ position: 12, depth: 0, value: 'N' }],
+      },
+    });
     const code = decompile(fused);
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
@@ -352,7 +390,11 @@ export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
     const attachment = Linear(['O']);
-    const result = ring1.addSequentialRings([seqRing], { chainAtoms: [{ atom: 'N', depth: 0, position: 'after', attachments: [attachment] }] });
+    const result = ring1.addSequentialRings([seqRing], {
+      chainAtoms: [{
+        atom: 'N', depth: 0, position: 'after', attachments: [attachment],
+      }],
+    });
     const code = decompile(result, { includeMetadata: true });
     // chainAtoms depth always explicit, attachment declared before addSequentialRings
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
@@ -402,9 +444,15 @@ export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
   });
 
   test('decompiles 3+ base rings with sequential ring using FusedRing constructor', () => {
-    const ring1 = Ring({ atoms: 'C', size: 6, ringNumber: 1, offset: 0 });
-    const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
-    const ring3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 6 });
+    const ring1 = Ring({
+      atoms: 'C', size: 6, ringNumber: 1, offset: 0,
+    });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 3,
+    });
+    const ring3 = Ring({
+      atoms: 'C', size: 6, ringNumber: 3, offset: 6,
+    });
     const fused = FusedRing([ring1, ring2, ring3]);
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 4 });
     const result = fused.addSequentialRings([seqRing]);
