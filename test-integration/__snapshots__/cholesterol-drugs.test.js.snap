@@ -2190,3 +2190,179 @@ export const v21 = v19.attach(2, v20);
 export const v22 = Ring({ atoms: 'C', size: 3, ringNumber: 3 });
 export const v23 = Molecule([v3, v18, v21, v22]);"
 `;
+
+exports[`Cholesterol Integration Test parses cholesterol 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "[C@H]",
+      ],
+      "attachments": {
+        "2": [
+          {
+            "atoms": [
+              "C",
+              "C",
+              "C",
+              "C",
+              "C",
+            ],
+            "attachments": {
+              "4": [
+                {
+                  "atoms": [
+                    "C",
+                  ],
+                  "attachments": {},
+                  "bonds": [
+                    null,
+                  ],
+                  "type": "linear",
+                },
+              ],
+            },
+            "bonds": [
+              null,
+              null,
+              null,
+              null,
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "rings": [
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 5,
+          "substitutions": {
+            "1": "[C@H]",
+            "4": "[C@@H]",
+            "5": "[C@@]",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "[C@H]",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {
+            "1": "[C@@H]",
+            "2": "[C@@]",
+            "3": "C",
+            "4": "C",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            "=",
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 3,
+          "size": 6,
+          "substitutions": {
+            "1": "[C@H]",
+            "2": "[C@H]",
+            "6": "[C@@]",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 4,
+          "size": 6,
+          "substitutions": {
+            "2": "[C@@]",
+            "5": "[C@@H]",
+          },
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+    {
+      "atoms": [
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Cholesterol Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Linear(['C', '[C@H]']);
+export const v2 = Linear(['C', 'C', 'C', 'C', 'C']);
+export const v3 = Linear(['C']);
+export const v4 = v2.attach(4, v3);
+export const v5 = v1.attach(2, v4);
+export const v6 = Ring({ atoms: 'C', size: 5 });
+export const v7 = v6.substitute(1, '[C@H]');
+export const v8 = v7.substitute(4, '[C@@H]');
+export const v9 = v8.substitute(5, '[C@@]');
+export const v10 = Ring({ atoms: '[C@H]', size: 6, ringNumber: 2, offset: 3, branchDepths: [0, 0, 1, 1, 1, 1] });
+export const v11 = v10.substitute(1, '[C@@H]');
+export const v12 = v11.substitute(2, '[C@@]');
+export const v13 = v12.substitute(3, 'C');
+export const v14 = v13.substitute(4, 'C');
+export const v15 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: [null, null, null, '=', null, null] });
+export const v16 = v15.substitute(1, '[C@H]');
+export const v17 = v16.substitute(2, '[C@H]');
+export const v18 = v17.substitute(6, '[C@@]');
+export const v19 = Ring({ atoms: 'C', size: 6, ringNumber: 4, branchDepths: [1, 1, 2, 2, 2, 3], leadingBond: '=' });
+export const v20 = v19.substitute(2, '[C@@]');
+export const v21 = v20.substitute(5, '[C@@H]');
+export const v22 = FusedRing({ metadata: { rings: [{ ring: v9, start: 8, end: 12, atoms: [{ position: 8, depth: 0, value: '[C@H]', rings: [1, 1] }, { position: 9, depth: 0, value: 'C', rings: [1] }, { position: 10, depth: 0, value: 'C', rings: [1] }, { position: 11, depth: 0, value: '[C@@H]', rings: [2, 1, 2] }, { position: 12, depth: 0, value: '[C@@]', rings: [1, 2] }] }, { ring: v14, start: 11, end: 16, atoms: [{ position: 11, depth: 0, value: '[C@@H]', rings: [2, 1, 2] }, { position: 12, depth: 0, value: '[C@@]', rings: [1, 2] }, { position: 13, depth: 1, value: 'C', rings: [2], branchId: 20 }, { position: 14, depth: 1, value: 'C', rings: [2], branchId: 20 }, { position: 15, depth: 1, value: '[C@H]', rings: [3, 2, 3], branchId: 20 }, { position: 16, depth: 1, value: '[C@H]', rings: [2, 3], branchId: 20 }] }, { ring: v18, start: 15, end: 20, atoms: [{ position: 15, depth: 1, value: '[C@H]', rings: [3, 2, 3], branchId: 20 }, { position: 16, depth: 1, value: '[C@H]', rings: [2, 3], branchId: 20 }, { position: 17, depth: 1, value: 'C', rings: [3], branchId: 20 }, { position: 18, depth: 1, value: 'C', rings: [3], branchId: 20 }, { position: 19, depth: 1, value: 'C', bond: '=', rings: [4, 3, 4], branchId: 20 }, { position: 20, depth: 1, value: '[C@@]', rings: [3, 4], branchId: 20 }] }, { ring: v21, start: 19, end: 24, atoms: [{ position: 19, depth: 1, value: 'C', bond: '=', rings: [4, 3, 4], branchId: 20 }, { position: 20, depth: 1, value: '[C@@]', rings: [3, 4], branchId: 20 }, { position: 21, depth: 2, value: 'C', rings: [4], branchId: 34 }, { position: 22, depth: 2, value: 'C', rings: [4], branchId: 34 }, { position: 23, depth: 2, value: '[C@@H]', rings: [4], branchId: 34 }, { position: 24, depth: 3, value: 'C', rings: [4], branchId: 38 }] }], atoms: [{ position: 25, depth: 2, value: 'O', branchId: 34 }, { position: 26, depth: 1, value: 'C', branchId: 20 }] } });
+export const v23 = Linear(['C']);
+export const v24 = Molecule([v5, v22, v23]);"
+`;

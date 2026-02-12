@@ -29,10 +29,16 @@ export function ringAttach(ring, position, attachment, options = {}) {
     updatedAttachments[position] = [];
   }
 
-  // Clone the attachment and set metaIsSibling if provided in options
+  // Clone the attachment and set metaIsSibling/metaBeforeInline if provided in options
   let attachmentToAdd = attachment;
-  if (options.sibling !== undefined) {
-    attachmentToAdd = { ...attachment, metaIsSibling: options.sibling };
+  if (options.sibling !== undefined || options.beforeInline !== undefined) {
+    attachmentToAdd = { ...attachment };
+    if (options.sibling !== undefined) {
+      attachmentToAdd.metaIsSibling = options.sibling;
+    }
+    if (options.beforeInline !== undefined) {
+      attachmentToAdd.metaBeforeInline = options.beforeInline;
+    }
   }
 
   updatedAttachments[position] = [...updatedAttachments[position], attachmentToAdd];

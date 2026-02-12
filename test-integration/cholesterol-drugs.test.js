@@ -12,6 +12,7 @@ const EZETIMIBE_SMILES = 'C[C@H]1[C@@H](O)[C@H](O[C@H]1c2ccc(F)cc2)c3ccc(O)cc3C(
 const FENOFIBRATE_SMILES = 'CC(C)OC(=O)C(C)(C)Oc1ccc(cc1)C(=O)c2ccc(Cl)cc2';
 const GEMFIBROZIL_SMILES = 'CC1=CC(C)=CC=C1CCCC(C)(C)C(=O)O';
 const PITAVASTATIN_SMILES = 'CC(C)c1nc(nc(c1/C=C/[C@@H](O)C[C@@H](O)CC(=O)O)c2ccc(F)cc2)NC(=O)C3CC3';
+const CHOLESTEROL_SMILES = 'C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C';
 
 describe('Atorvastatin Integration Test', () => {
   test('parses atorvastatin', () => {
@@ -410,5 +411,45 @@ describe('Pitavastatin Integration Test', () => {
     const reconstructed = executeCode(executableCode, lastVar);
 
     expect(reconstructed.smiles).toBe(PITAVASTATIN_SMILES);
+  });
+});
+
+describe('Cholesterol Integration Test', () => {
+  test('parses cholesterol', () => {
+    const ast = parse(CHOLESTEROL_SMILES);
+    const obj = ast.toObject();
+    expect(obj).toMatchSnapshot();
+    expect(ast.smiles).toBe(CHOLESTEROL_SMILES);
+  });
+
+  test('generates valid code via toCode()', () => {
+    const ast = parse(CHOLESTEROL_SMILES);
+    const code = ast.toCode('v');
+    expect(code).toMatchSnapshot();
+  });
+
+  test('generated code is valid JavaScript', () => {
+    const ast = parse(CHOLESTEROL_SMILES);
+    const code = ast.toCode('v');
+    const executableCode = stripExports(code);
+
+    let factory;
+    expect(() => {
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+    }).not.toThrow();
+    expect(typeof factory).toBe('function');
+  });
+
+  test('codegen round-trip: generated code produces valid SMILES', () => {
+    const ast = parse(CHOLESTEROL_SMILES);
+    const code = ast.toCode('v');
+    const executableCode = stripExports(code);
+
+    const varMatch = code.match(/export const (v\d+) = /g);
+    const lastVar = varMatch ? varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1] : 'v1';
+
+    const reconstructed = executeCode(executableCode, lastVar);
+
+    expect(reconstructed.smiles).toBe(CHOLESTEROL_SMILES);
   });
 });

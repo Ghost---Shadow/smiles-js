@@ -76,14 +76,35 @@ export function buildBranchCrossingRingSMILES(ring, buildSMILES) {
 
     if (attachments[i] && attachments[i].length > 0) {
       if (hasInlineBranchAfter) {
-        // Delay attachments - output after inline branch closes back to this depth
-        const processedAttachments = attachments[i].map((att) => {
-          if (att.metaIsSibling !== undefined) {
-            return att;
+        // Determine the branchId of the inline continuation (next ring position)
+        const metaBranchIds = ring.metaBranchIds || [];
+        const inlineBranchId = i < size ? (metaBranchIds[i] || Infinity) : Infinity;
+
+        // Separate: siblings that come BEFORE the inline branch (emit now)
+        // vs siblings that come AFTER (delay), and non-siblings (delay)
+        const emitNow = [];
+        const delay = [];
+        attachments[i].forEach((att) => {
+          const isSibling = att.metaIsSibling !== undefined ? att.metaIsSibling : true;
+          if (!isSibling) {
+            delay.push(att);
+          } else if (att.metaBranchId !== undefined && att.metaBranchId < inlineBranchId) {
+            emitNow.push(att);
+          } else if (att.metaBeforeInline === true) {
+            emitNow.push(att);
+          } else {
+            // Default: delay sibling (beforeInline defaults to false)
+            delay.push({ ...att, metaIsSibling: true });
           }
-          return { ...att, metaIsSibling: true };
         });
-        pendingAttachments.set(i, { depth: posDepth, attachments: processedAttachments });
+        // Emit siblings that come before the inline branch
+        emitNow.forEach((attachment) => {
+          emitAttachment(parts, attachment, buildSMILES);
+        });
+        // Delay the rest
+        if (delay.length > 0) {
+          pendingAttachments.set(i, { depth: posDepth, attachments: delay });
+        }
       } else {
         // Output attachments immediately
         attachments[i].forEach((attachment) => {

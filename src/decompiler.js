@@ -115,17 +115,38 @@ function generateAttachmentCode(ring, indent, nextVar, initialVar) {
   let currentVar = initialVar;
 
   if (ring.attachments && Object.keys(ring.attachments).length > 0) {
+    // Determine inline branchId for sibling ordering
+    const metaBranchIds = ring.metaBranchIds || [];
+    const normalizedDepths = ring.metaBranchDepths || [];
+
     Object.entries(ring.attachments).forEach(([pos, attachmentList]) => {
+      const posIdx = Number(pos) - 1; // 0-indexed
+      const nextIdx = posIdx + 1;
+      const posDepth = normalizedDepths[posIdx] || 0;
+      const nextDepth = nextIdx < normalizedDepths.length ? (normalizedDepths[nextIdx] || 0) : 0;
+      const hasInlineBranchAfter = nextDepth > posDepth;
+      const inlineBranchId = hasInlineBranchAfter ? (metaBranchIds[nextIdx] || Infinity) : Infinity;
+
       attachmentList.forEach((attachment) => {
         const attachResult = decompileChildNode(attachment, indent, nextVar);
         lines.push(attachResult.code);
 
         const newVar = nextVar();
         const isSibling = attachment.metaIsSibling;
+        const optParts = [];
         if (isSibling === true) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { sibling: true });`);
+          optParts.push('sibling: true');
+          // Encode beforeInline for sibling ordering in branch-crossing rings
+          // Only emit when true since false is the default
+          if (hasInlineBranchAfter && attachment.metaBranchId !== undefined
+              && attachment.metaBranchId < inlineBranchId) {
+            optParts.push('beforeInline: true');
+          }
         } else if (isSibling === false) {
-          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { sibling: false });`);
+          optParts.push('sibling: false');
+        }
+        if (optParts.length > 0) {
+          lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar}, { ${optParts.join(', ')} });`);
         } else {
           lines.push(`${indent}const ${newVar} = ${currentVar}.attach(${pos}, ${attachResult.finalVar});`);
         }
@@ -758,6 +779,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     const atomValueMap = fusedRing.metaAtomValueMap || new Map();
     const bondMap = fusedRing.metaBondMap || new Map();
     const ringOrderMap = fusedRing.metaRingOrderMap;
+    const branchIdMap = fusedRing.metaBranchIdMap || new Map();
 
     // Helper to format a single atom entry with all available metadata
     function formatAtomEntry(pos) {
@@ -767,6 +789,9 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
       if (bond !== undefined && bond !== null) parts.push(`bond: '${bond}'`);
       if (ringOrderMap && ringOrderMap.has(pos)) {
         parts.push(`rings: [${ringOrderMap.get(pos).join(', ')}]`);
+      }
+      if (branchIdMap.has(pos) && branchIdMap.get(pos) !== null) {
+        parts.push(`branchId: ${branchIdMap.get(pos)}`);
       }
       if (seqAtomAttachmentVarMap.has(pos)) {
         parts.push(`attachments: [${seqAtomAttachmentVarMap.get(pos).join(', ')}]`);

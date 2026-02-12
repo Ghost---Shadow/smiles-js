@@ -236,19 +236,34 @@ export function buildAST(atoms, ringBoundaries) {
     return Molecule([]);
   }
 
-  const mainChainRings = ringBoundaries.filter((r) => r.branchDepth === 0);
+  // Include rings that are on the main chain (branchDepth 0) or that have
+  // any positions on the main chain (depth 0 atoms in their path)
+  const mainChainRings = ringBoundaries.filter(
+    (r) => r.branchDepth === 0
+      || r.positions.some((pos) => atoms[pos].branchDepth === 0),
+  );
 
-  const mainChainPositions = new Set();
+  const knownPositions = new Set();
   mainChainRings.forEach((r) => {
-    r.positions.forEach((pos) => mainChainPositions.add(pos));
+    r.positions.forEach((pos) => knownPositions.add(pos));
   });
 
-  const bridgeRings = ringBoundaries.filter((r) => {
-    if (r.branchDepth === 0) return false;
-    return r.positions.some((pos) => mainChainPositions.has(pos));
-  });
+  // Iteratively discover bridge rings — rings that share atoms with already-known positions
+  const includedRings = new Set(mainChainRings.map((r) => r.ringNumber));
+  let foundNew = true;
+  while (foundNew) {
+    foundNew = false;
+    ringBoundaries.forEach((r) => {
+      if (includedRings.has(r.ringNumber)) return;
+      if (r.positions.some((pos) => knownPositions.has(pos))) {
+        includedRings.add(r.ringNumber);
+        r.positions.forEach((pos) => knownPositions.add(pos));
+        foundNew = true;
+      }
+    });
+  }
 
-  const ringsToGroup = [...mainChainRings, ...bridgeRings];
+  const ringsToGroup = ringBoundaries.filter((r) => includedRings.has(r.ringNumber));
   const fusedGroups = groupFusedRings(ringsToGroup);
 
   const atomToGroup = new Map();

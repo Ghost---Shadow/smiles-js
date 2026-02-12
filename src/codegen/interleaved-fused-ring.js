@@ -103,11 +103,33 @@ export function buildInterleavedFusedRingSMILES(fusedRing, buildSMILES) {
   // Pending attachments: depth -> attachment[]
   const pendingAttachments = new Map();
 
+  const branchIdMap = fusedRing.metaBranchIdMap || new Map();
+  let prevBranchId = null;
+
   allPositions.forEach((pos, idx) => {
     const entry = atomSequence[pos];
     if (!entry) return;
 
     const posDepth = branchDepthMap.get(pos) || 0;
+    const posBranchId = branchIdMap.get(pos);
+
+    // Detect sibling branch switch: same depth, different branch ID
+    // Need to close current branch and reopen a new one
+    if (posDepth > 0 && posDepth === depthRef.value && prevBranchId !== null
+        && posBranchId !== prevBranchId && posBranchId !== null) {
+      // Close the current branch and reopen
+      parts.push(')');
+      // Emit any pending attachments at the parent depth
+      const parentDepth = posDepth - 1;
+      if (pendingAttachments.has(parentDepth)) {
+        const attachmentsToOutput = pendingAttachments.get(parentDepth);
+        attachmentsToOutput.forEach((attachment) => {
+          emitAttachment(parts, attachment, buildSMILES);
+        });
+        pendingAttachments.delete(parentDepth);
+      }
+      parts.push('(');
+    }
 
     // Handle branch depth changes
     openBranches(parts, depthRef, posDepth);
@@ -164,6 +186,8 @@ export function buildInterleavedFusedRingSMILES(fusedRing, buildSMILES) {
         });
       }
     }
+
+    prevBranchId = posBranchId;
   });
 
   // Close any remaining open branches

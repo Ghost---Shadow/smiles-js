@@ -87,7 +87,12 @@ export function buildSingleRingNodeWithContext(
     const ringBranchDepth = ringAtoms[0]?.branchDepth ?? 0;
     excludedPositions = new Set();
     ringBoundaries.forEach((rb) => {
-      if (rb.branchDepth === ringBranchDepth) {
+      // Exclude rings at the same branch depth OR rings that have any position
+      // at this depth (cross-depth rings like ring 2 in C1C(C1)(C2)CC2)
+      const hasAtomAtDepth = rb.positions.some(
+        (pos) => atoms[pos].branchDepth === ringBranchDepth,
+      );
+      if (rb.branchDepth === ringBranchDepth || hasAtomAtDepth) {
         rb.positions.forEach((pos) => excludedPositions.add(pos));
       }
     });
@@ -144,6 +149,7 @@ export function buildSingleRingNodeWithContext(
           if (hasVaryingDepths) {
             node.metaIsSibling = !ringPathBranchIdsAfter.has(group.branchId);
           }
+          node.metaBranchId = group.branchId;
 
           return node;
         },
@@ -167,6 +173,7 @@ export function buildSingleRingNodeWithContext(
   ringNode.metaEnd = ring.end;
   ringNode.metaBranchDepths = ringAtoms.map((a) => a.branchDepth);
   ringNode.metaParentIndices = ringAtoms.map((a) => a.parentIndex);
+  ringNode.metaBranchIds = ringAtoms.map((a) => a.branchId);
 
   // Store leading bond if the first ring atom has a bond
   const firstRingAtom = ringAtoms[0];
@@ -305,14 +312,16 @@ function buildMetadataMaps(positions, atoms) {
   const parentIndexMap = new Map();
   const atomValueMap = new Map();
   const bondMap = new Map();
+  const branchIdMap = new Map();
   positions.forEach((pos) => {
     branchDepthMap.set(pos, atoms[pos].branchDepth);
     parentIndexMap.set(pos, atoms[pos].parentIndex);
     atomValueMap.set(pos, atoms[pos].rawValue);
     bondMap.set(pos, atoms[pos].bond);
+    branchIdMap.set(pos, atoms[pos].branchId);
   });
   return {
-    branchDepthMap, parentIndexMap, atomValueMap, bondMap,
+    branchDepthMap, parentIndexMap, atomValueMap, bondMap, branchIdMap,
   };
 }
 
@@ -390,6 +399,7 @@ function assembleFusedRingNode(
     fusedNode.metaParentIndexMap = maps.parentIndexMap;
     fusedNode.metaAtomValueMap = maps.atomValueMap;
     fusedNode.metaBondMap = maps.bondMap;
+    fusedNode.metaBranchIdMap = maps.branchIdMap;
 
     // Include sequential ring positions
     seqRingNodes.forEach((seqRing) => {
@@ -401,6 +411,7 @@ function assembleFusedRingNode(
           maps.parentIndexMap.set(pos, atoms[pos].parentIndex);
           maps.atomValueMap.set(pos, atoms[pos].rawValue);
           maps.bondMap.set(pos, atoms[pos].bond);
+          maps.branchIdMap.set(pos, atoms[pos].branchId);
         }
       });
     });
@@ -426,6 +437,7 @@ function assembleFusedRingNode(
   fusedNode.metaParentIndexMap = maps.parentIndexMap;
   fusedNode.metaAtomValueMap = maps.atomValueMap;
   fusedNode.metaBondMap = maps.bondMap;
+  fusedNode.metaBranchIdMap = maps.branchIdMap;
 
   // Ring order map — tracks which ring markers appear at each position
   const ringOrderMap = new Map();

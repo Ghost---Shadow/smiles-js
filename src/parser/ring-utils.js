@@ -90,9 +90,24 @@ export function collectRingPath(
   const innerRings = findInnerFusedRings(startIdx, endIdx, atoms, branchDepth, closedRings);
   const endAtom = atoms[endIdx];
   const ringEntersDeepBranch = endAtom && endAtom.branchDepth > branchDepth;
+  const ringExitsToShallowerDepth = endAtom && endAtom.branchDepth < branchDepth;
   const ringPathBranchIds = ringEntersDeepBranch
     ? traceRingPathBranchIds(endAtom, branchDepth, atoms)
     : new Set();
+
+  // When ring exits to a shallower depth, trace from start atom to find branch IDs
+  // that contain the start, and also include atoms at the shallower end depth
+  const exitBranchIds = new Set();
+  if (ringExitsToShallowerDepth) {
+    let traceAtom = atoms[startIdx];
+    while (traceAtom && traceAtom.branchDepth > endAtom.branchDepth) {
+      if (traceAtom.branchId !== null) {
+        exitBranchIds.add(traceAtom.branchId);
+      }
+      const parentIdx = traceAtom.parentIndex;
+      traceAtom = parentIdx !== null ? atoms[parentIdx] : null;
+    }
+  }
 
   let idx = startIdx;
   while (idx <= endIdx) {
@@ -105,6 +120,19 @@ export function collectRingPath(
       if (innerRing) {
         positions.push(idx);
         idx = innerRing.end;
+      } else if (ringExitsToShallowerDepth) {
+        // For rings that exit to shallower depth:
+        // Include atoms at the start's branch context OR at the end's depth
+        const inStartBranch = atom.branchDepth === branchDepth
+          && (branchDepth === 0 || atom.branchId === branchId);
+        const inExitBranch = exitBranchIds.has(atom.branchId);
+        const atEndDepth = atom.branchDepth === endAtom.branchDepth
+          && (endAtom.branchDepth === 0
+            || isInSameBranchContext(atom, endAtom, atoms));
+        if (inStartBranch || inExitBranch || atEndDepth) {
+          positions.push(idx);
+        }
+        idx += 1;
       } else {
         const startAtom = atoms[startIdx];
         if (shouldIncludeAtomInRing(

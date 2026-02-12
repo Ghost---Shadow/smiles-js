@@ -9,7 +9,7 @@ const projectRoot = join(__dirname, '..');
 
 const result = spawnSync('bun', ['test', '--coverage'], {
   encoding: 'utf-8',
-  cwd: projectRoot
+  cwd: projectRoot,
 });
 
 const output = (result.stdout || '') + (result.stderr || '');

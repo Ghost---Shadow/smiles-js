@@ -88,6 +88,7 @@ export function createFusedRingNode(rings, options = {}) {
       const atomValueMap = new Map();
       const bondMap = new Map();
       const ringOrderMap = new Map();
+      const branchIdMap = new Map();
 
       // Extract ring nodes from metadata - only extract core data fields, not methods
       const extractedRings = metadata.rings.map((ringMeta) => ringMeta.ring);
@@ -141,6 +142,7 @@ export function createFusedRingNode(rings, options = {}) {
               if (atom.value !== undefined) atomValueMap.set(atom.position, atom.value);
               if (atom.bond !== undefined) bondMap.set(atom.position, atom.bond);
               if (atom.rings !== undefined) ringOrderMap.set(atom.position, atom.rings);
+              if (atom.branchId !== undefined) branchIdMap.set(atom.position, atom.branchId);
             });
           }
 
@@ -163,6 +165,7 @@ export function createFusedRingNode(rings, options = {}) {
       node.metaAtomValueMap = atomValueMap;
       node.metaBondMap = bondMap;
       if (ringOrderMap.size > 0) node.metaRingOrderMap = ringOrderMap;
+      if (branchIdMap.size > 0) node.metaBranchIdMap = branchIdMap;
     }
 
     // Support standalone atoms format (atoms that are not part of any ring)
@@ -198,6 +201,10 @@ export function createFusedRingNode(rings, options = {}) {
         if (atom.depth !== undefined) node.metaBranchDepthMap.set(atom.position, atom.depth);
         if (atom.value !== undefined) node.metaAtomValueMap.set(atom.position, atom.value);
         if (atom.bond !== undefined) node.metaBondMap.set(atom.position, atom.bond);
+        if (atom.branchId !== undefined) {
+          if (!node.metaBranchIdMap) node.metaBranchIdMap = new Map();
+          node.metaBranchIdMap.set(atom.position, atom.branchId);
+        }
         if (atom.attachments) {
           if (!node.metaSeqAtomAttachments) node.metaSeqAtomAttachments = new Map();
           node.metaSeqAtomAttachments.set(atom.position, atom.attachments);
