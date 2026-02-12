@@ -1,5 +1,8 @@
 import { describe, test, expect } from 'bun:test';
-import { Ring, Linear, Molecule } from './constructors.js';
+import {
+  Ring, Linear, Molecule,
+} from './constructors.js';
+import { repeat, fusedRepeat } from './manipulation.js';
 
 describe('Ring.attach()', () => {
   test('attaches a linear chain to a ring', () => {
@@ -440,5 +443,150 @@ describe('Molecule methods', () => {
 
     expect(updated.components[0]).toBe(methyl);
     expect(updated.components[1]).toBe(benzene);
+  });
+});
+
+describe('repeat()', () => {
+  test('Linear repeat n=1 returns clone', () => {
+    const ethylene = Linear(['C', 'C']);
+    const result = ethylene.repeat(1, 1, 2);
+    expect(result.smiles).toBe('CC');
+    expect(result.type).toBe('linear');
+  });
+
+  test('Linear repeat n=3 (polyethylene trimer)', () => {
+    const ethylene = Linear(['C', 'C']);
+    const result = ethylene.repeat(3, 1, 2);
+    expect(result.smiles).toBe('CCCCCC');
+  });
+
+  test('Linear with attachments repeat preserves branches', () => {
+    const styrene = Linear(['C', 'C']).attach(2, Ring({ atoms: 'c', size: 6 }));
+    const dimer = styrene.repeat(2, 1, 2);
+    expect(dimer.smiles).toBe('CC(c1ccccc1)CC(c2ccccc2)');
+  });
+
+  test('Linear with attachments repeat trimer', () => {
+    const styrene = Linear(['C', 'C']).attach(2, Ring({ atoms: 'c', size: 6 }));
+    const trimer = styrene.repeat(3, 1, 2);
+    expect(trimer.smiles).toBe('CC(c1ccccc1)CC(c2ccccc2)CC(c3ccccc3)');
+  });
+
+  test('Ring repeat n=1 returns clone', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = benzene.repeat(1, 1, 6);
+    expect(result.smiles).toBe('c1ccccc1');
+    expect(result.type).toBe('ring');
+  });
+
+  test('Ring repeat n=2 (biphenyl)', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = benzene.repeat(2, 1, 6);
+    expect(result.smiles).toBe('c1ccccc1c2ccccc2');
+  });
+
+  test('Ring repeat n=3 (terphenyl)', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = benzene.repeat(3, 1, 6);
+    expect(result.smiles).toBe('c1ccccc1c2ccccc2c3ccccc3');
+  });
+
+  test('Ring with substitutions repeat', () => {
+    const pyridine = Ring({ atoms: 'c', size: 6, substitutions: { 3: 'n' } });
+    const result = pyridine.repeat(2, 1, 6);
+    expect(result.smiles).toBe('c1cnccc1c2cnccc2');
+  });
+
+  test('repeat does not modify original', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    benzene.repeat(3, 1, 6);
+    expect(benzene.smiles).toBe('c1ccccc1');
+    expect(benzene.ringNumber).toBe(1);
+  });
+
+  test('repeat throws for n < 1', () => {
+    const ethylene = Linear(['C', 'C']);
+    expect(() => ethylene.repeat(0, 1, 2)).toThrow('Repeat count n must be an integer >= 1');
+  });
+
+  test('repeat throws for invalid leftId', () => {
+    const ethylene = Linear(['C', 'C']);
+    expect(() => ethylene.repeat(2, 0, 2)).toThrow('leftId must be a positive integer');
+  });
+
+  test('repeat throws for invalid rightId', () => {
+    const ethylene = Linear(['C', 'C']);
+    expect(() => ethylene.repeat(2, 1, 0)).toThrow('rightId must be a positive integer');
+  });
+
+  test('Molecule repeat', () => {
+    const unit = Molecule([Linear(['C']), Ring({ atoms: 'c', size: 6 })]);
+    const dimer = unit.repeat(2, 1, 1);
+    expect(dimer.type).toBe('molecule');
+    expect(dimer.smiles).toBe('Cc1ccccc1Cc2ccccc2');
+  });
+
+  test('functional API repeat()', () => {
+    const ethylene = Linear(['C', 'C']);
+    const result = repeat(ethylene, 3, 1, 2);
+    expect(result.smiles).toBe('CCCCCC');
+  });
+});
+
+describe('fusedRepeat()', () => {
+  test('fusedRepeat n=1 returns ring clone', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = benzene.fusedRepeat(1, 4);
+    expect(result.smiles).toBe('c1ccccc1');
+    expect(result.type).toBe('ring');
+  });
+
+  test('fusedRepeat n=2 (naphthalene)', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = benzene.fusedRepeat(2, 4);
+    expect(result.type).toBe('fused_ring');
+    expect(result.rings).toHaveLength(2);
+  });
+
+  test('fusedRepeat n=3 (anthracene)', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = benzene.fusedRepeat(3, 4);
+    expect(result.type).toBe('fused_ring');
+    expect(result.rings).toHaveLength(3);
+  });
+
+  test('fusedRepeat does not modify original', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    benzene.fusedRepeat(3, 4);
+    expect(benzene.smiles).toBe('c1ccccc1');
+    expect(benzene.type).toBe('ring');
+  });
+
+  test('fusedRepeat throws for non-ring', () => {
+    expect(() => fusedRepeat(Linear(['C', 'C']), 2, 4)).toThrow('fusedRepeat requires a Ring node');
+  });
+
+  test('fusedRepeat throws for n < 1', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    expect(() => benzene.fusedRepeat(0, 4)).toThrow('Repeat count n must be an integer >= 1');
+  });
+
+  test('fusedRepeat throws for invalid offset', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    expect(() => benzene.fusedRepeat(2, 0)).toThrow('Fusion offset must be a positive integer');
+  });
+
+  test('functional API fusedRepeat()', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const result = fusedRepeat(benzene, 2, 4);
+    expect(result.type).toBe('fused_ring');
+    expect(result.rings).toHaveLength(2);
+  });
+
+  test('fusedRepeat with substitutions', () => {
+    const ring = Ring({ atoms: 'C', size: 6, substitutions: { 3: 'N' } });
+    const result = ring.fusedRepeat(2, 4);
+    expect(result.type).toBe('fused_ring');
+    expect(result.rings).toHaveLength(2);
   });
 });

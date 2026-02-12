@@ -16,6 +16,7 @@ Build complex molecules programmatically with an intuitive, composable API. Pars
 
 - **Parse complex SMILES** - Handles real-world pharmaceutical molecules (60-80+ characters)
 - **Programmatic construction** - Build molecules using composable Ring, Linear, and Molecule constructors
+- **Polymer construction** - Build repeating units with `.repeat()` and fused acene systems with `.fusedRepeat()`
 - **Round-trip fidelity** - Parse SMILES -> AST -> SMILES with structure preservation
 - **Code generation** - Auto-generate JavaScript construction code from SMILES strings
 - **Pharmaceutical validated** - Tested with Atorvastatin, Sildenafil, Ritonavir, and 30+ other drugs
@@ -83,6 +84,27 @@ console.log(toluene.smiles);  // c1(C)ccccc1
 // Create pyridine via substitution
 const pyridine = benzene.substitute(5, 'n');
 console.log(pyridine.smiles);  // c1cccnc1
+```
+
+### Build Polymers
+
+```javascript
+import { Ring, Linear } from 'smiles-js';
+
+// Polyethylene trimer: repeat ethylene unit 3 times
+const ethylene = Linear(['C', 'C']);
+const PE = ethylene.repeat(3, 1, 2);
+console.log(PE.smiles);  // CCCCCC
+
+// Polystyrene dimer: repeat styrene unit with phenyl branch
+const styrene = Linear(['C', 'C']).attach(2, Ring({ atoms: 'c', size: 6 }));
+const PS = styrene.repeat(2, 1, 2);
+console.log(PS.smiles);  // CC(c1ccccc1)CC(c2ccccc2)
+
+// Acene series via fused repeat
+const benzene = Ring({ atoms: 'c', size: 6 });
+const naphthalene = benzene.fusedRepeat(2, 4);  // 2 fused rings
+const anthracene = benzene.fusedRepeat(3, 4);   // 3 fused rings
 ```
 
 ### Generate Construction Code

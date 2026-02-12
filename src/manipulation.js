@@ -12,8 +12,13 @@ import {
   cloneSubstitutions,
   cloneComponents,
   deepCloneRing,
+  deepCloneLinear,
+  deepCloneFusedRing,
+  deepCloneMolecule,
 } from './constructors.js';
-import { validatePosition, isLinearNode, isMoleculeNode } from './ast.js';
+import {
+  validatePosition, isLinearNode, isMoleculeNode, isRingNode, isFusedRingNode,
+} from './ast.js';
 import { computeFusedRingPositions } from './layout/index.js';
 
 /**
@@ -632,4 +637,223 @@ export function moleculeReplaceComponent(molecule, index, newComponent) {
   const newComponents = cloneComponents(molecule.components);
   newComponents[index] = newComponent;
   return createMoleculeNode(newComponents);
+}
+
+/**
+ * Generic repeat / polymer methods
+ */
+
+/**
+ * Deep-clone any AST node
+ */
+function cloneNode(node) {
+  if (isRingNode(node)) return deepCloneRing(node);
+  if (isLinearNode(node)) return deepCloneLinear(node);
+  if (isFusedRingNode(node)) return deepCloneFusedRing(node);
+  if (isMoleculeNode(node)) return deepCloneMolecule(node);
+  throw new Error(`Unknown node type: ${node?.type}`);
+}
+
+/**
+ * Find the maximum ring number used anywhere in a node tree.
+ * This is needed to renumber ring copies so ring markers don't collide.
+ */
+function maxRingNumber(node) {
+  if (isRingNode(node)) {
+    let max = node.ringNumber || 0;
+    Object.values(node.attachments || {}).forEach((list) => {
+      list.forEach((att) => { max = Math.max(max, maxRingNumber(att)); });
+    });
+    return max;
+  }
+  if (isFusedRingNode(node)) {
+    let max = 0;
+    (node.rings || []).forEach((r) => { max = Math.max(max, r.ringNumber || 0); });
+    return max;
+  }
+  if (isMoleculeNode(node)) {
+    let max = 0;
+    (node.components || []).forEach((c) => { max = Math.max(max, maxRingNumber(c)); });
+    return max;
+  }
+  if (isLinearNode(node)) {
+    let max = 0;
+    Object.values(node.attachments || {}).forEach((list) => {
+      list.forEach((att) => { max = Math.max(max, maxRingNumber(att)); });
+    });
+    return max;
+  }
+  return 0;
+}
+
+/**
+ * Shift all ring numbers in a node by a given delta.
+ * Returns a new node (immutable).
+ */
+function shiftRingNumbers(node, delta) {
+  if (delta === 0) return node;
+
+  if (isRingNode(node)) {
+    const newAttachments = {};
+    Object.entries(node.attachments || {}).forEach(([pos, list]) => {
+      newAttachments[pos] = list.map((att) => shiftRingNumbers(att, delta));
+    });
+    return createRingNode(
+      node.atoms,
+      node.size,
+      node.ringNumber + delta,
+      node.offset,
+      node.substitutions,
+      newAttachments,
+      node.bonds || [],
+      node.metaBranchDepths || null,
+    );
+  }
+
+  if (isFusedRingNode(node)) {
+    const newRings = (node.rings || []).map((r) => ({
+      ...r,
+      ringNumber: (r.ringNumber || 1) + delta,
+    }));
+    return createFusedRingNode(newRings);
+  }
+
+  if (isMoleculeNode(node)) {
+    const newComponents = (node.components || []).map((c) => shiftRingNumbers(c, delta));
+    return createMoleculeNode(newComponents);
+  }
+
+  if (isLinearNode(node)) {
+    const newAttachments = {};
+    Object.entries(node.attachments || {}).forEach(([pos, list]) => {
+      newAttachments[pos] = list.map((att) => shiftRingNumbers(att, delta));
+    });
+    return createLinearNode(node.atoms, node.bonds, newAttachments, node.metaLeadingBond);
+  }
+
+  return node;
+}
+
+/**
+ * Repeat a monomer unit n times, creating a polymer chain.
+ *
+ * leftId and rightId are 1-indexed positions defining the attachment points.
+ * For Linear nodes, leftId=1 and rightId=atoms.length are the natural endpoints.
+ * For Ring nodes, leftId=1 and rightId=size are the natural SMILES endpoints
+ * (the first and last atoms emitted in the ring's SMILES).
+ *
+ * The resulting Molecule concatenates n copies. In SMILES, concatenation
+ * bonds the last atom of component i to the first atom of component i+1.
+ *
+ * @param {Object} node - Any AST node (Ring, Linear, FusedRing, Molecule)
+ * @param {number} n - Number of repeating units (>= 1)
+ * @param {number} leftId - 1-indexed left (incoming) attachment point
+ * @param {number} rightId - 1-indexed right (outgoing) attachment point
+ * @returns {Object} Molecule node (or clone for n=1)
+ */
+export function repeat(node, n, leftId, rightId) {
+  if (!Number.isInteger(n) || n < 1) {
+    throw new Error('Repeat count n must be an integer >= 1');
+  }
+  if (!Number.isInteger(leftId) || leftId < 1) {
+    throw new Error('leftId must be a positive integer');
+  }
+  if (!Number.isInteger(rightId) || rightId < 1) {
+    throw new Error('rightId must be a positive integer');
+  }
+
+  if (n === 1) {
+    return cloneNode(node);
+  }
+
+  // For simple Linear nodes (no attachments), efficiently concatenate atoms arrays
+  const hasAttachments = isLinearNode(node) && Object.keys(node.attachments || {}).length > 0;
+  if (isLinearNode(node) && !hasAttachments && leftId === 1 && rightId === node.atoms.length) {
+    let atoms = [];
+    let bonds = [];
+    for (let i = 0; i < n; i += 1) {
+      atoms = [...atoms, ...node.atoms];
+      if (node.bonds.length > 0) {
+        bonds = [...bonds, ...node.bonds];
+      }
+    }
+    return createLinearNode(atoms, bonds, {});
+  }
+
+  const maxRing = maxRingNumber(node);
+  const copies = [];
+  for (let i = 0; i < n; i += 1) {
+    const delta = i * maxRing;
+    const copy = delta > 0 ? shiftRingNumbers(cloneNode(node), delta) : cloneNode(node);
+    copies.push(copy);
+  }
+
+  return createMoleculeNode(copies);
+}
+
+/**
+ * Repeat a ring n times by fusing, creating an acene-like system.
+ *
+ * Each new ring shares `offset` atoms with the previous ring,
+ * producing linear fused ring systems (naphthalene, anthracene, etc.).
+ *
+ * @param {Object} ring - Ring AST node
+ * @param {number} n - Total number of rings (>= 1)
+ * @param {number} offset - Fusion offset (shared atoms between adjacent rings)
+ * @returns {Object} Ring (n=1) or FusedRing (n>=2) node
+ */
+export function fusedRepeat(ring, n, offset) {
+  if (!isRingNode(ring)) {
+    throw new Error('fusedRepeat requires a Ring node');
+  }
+  if (!Number.isInteger(n) || n < 1) {
+    throw new Error('Repeat count n must be an integer >= 1');
+  }
+  if (!Number.isInteger(offset) || offset < 1) {
+    throw new Error('Fusion offset must be a positive integer');
+  }
+
+  if (n === 1) {
+    return deepCloneRing(ring);
+  }
+
+  // First fusion: ring1.fuse(offset, ring2)
+  const ring1 = createRingNode(
+    ring.atoms,
+    ring.size,
+    1,
+    0,
+    ring.substitutions,
+    ring.attachments,
+    ring.bonds || [],
+    ring.metaBranchDepths || null,
+  );
+  const ring2 = createRingNode(
+    ring.atoms,
+    ring.size,
+    2,
+    offset,
+    ring.substitutions,
+    {},
+    ring.bonds || [],
+    null,
+  );
+  let result = createFusedRingNode([ring1, ring2]);
+
+  // Additional fusions
+  for (let i = 2; i < n; i += 1) {
+    const nextRing = createRingNode(
+      ring.atoms,
+      ring.size,
+      i + 1,
+      offset,
+      ring.substitutions,
+      {},
+      ring.bonds || [],
+      null,
+    );
+    result = fusedRingAddRing(result, offset + i * (ring.size - offset), nextRing);
+  }
+
+  return result;
 }

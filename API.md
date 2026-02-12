@@ -190,6 +190,49 @@ Fuse this ring with another ring. `offset` is how many positions into this ring 
 
 Return a deep copy of the ring.
 
+#### `ring.repeat(n, leftId, rightId)`
+
+Repeat the ring `n` times to build polymer chains. Each copy gets unique ring numbers automatically.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `n` | `number` | Number of repeating units (>= 1) |
+| `leftId` | `number` | 1-indexed left (incoming) attachment point |
+| `rightId` | `number` | 1-indexed right (outgoing) attachment point |
+
+```javascript
+// Biphenyl (two linked benzene rings)
+const benzene = Ring({ atoms: 'c', size: 6 });
+const biphenyl = benzene.repeat(2, 1, 6);
+console.log(biphenyl.smiles);  // c1ccccc1c2ccccc2
+
+// Terphenyl (three linked benzene rings)
+const terphenyl = benzene.repeat(3, 1, 6);
+console.log(terphenyl.smiles);  // c1ccccc1c2ccccc2c3ccccc3
+```
+
+#### `ring.fusedRepeat(n, offset)`
+
+Repeat a ring `n` times by fusing, creating acene-like edge-sharing systems (naphthalene, anthracene, tetracene).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `n` | `number` | Total number of rings (>= 1) |
+| `offset` | `number` | Fusion offset (number of shared atom positions between adjacent rings) |
+
+```javascript
+const benzene = Ring({ atoms: 'c', size: 6 });
+
+// Naphthalene (2 fused rings)
+const naphthalene = benzene.fusedRepeat(2, 4);
+
+// Anthracene (3 fused rings)
+const anthracene = benzene.fusedRepeat(3, 4);
+
+// Tetracene (4 fused rings)
+const tetracene = benzene.fusedRepeat(4, 4);
+```
+
 ### Linear Methods
 
 ```javascript
@@ -225,6 +268,28 @@ Attach one or more branches at a position.
 
 Attach branches at multiple positions. `branchMap` is `{ position: node | [nodes] }`.
 
+#### `linear.repeat(n, leftId, rightId)`
+
+Repeat the linear chain `n` times to build polymer chains.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `n` | `number` | Number of repeating units (>= 1) |
+| `leftId` | `number` | 1-indexed left (incoming) attachment point |
+| `rightId` | `number` | 1-indexed right (outgoing) attachment point |
+
+```javascript
+// Polyethylene trimer
+const ethylene = Linear(['C', 'C']);
+const PE = ethylene.repeat(3, 1, 2);
+console.log(PE.smiles);  // CCCCCC
+
+// Polystyrene dimer
+const styrene = Linear(['C', 'C']).attach(2, Ring({ atoms: 'c', size: 6 }));
+const PS = styrene.repeat(2, 1, 2);
+console.log(PS.smiles);  // CC(c1ccccc1)CC(c2ccccc2)
+```
+
 ### Molecule Methods
 
 ```javascript
@@ -244,6 +309,11 @@ const modified = mol.replaceComponent(0, Linear(['N', 'N']));
 
 // Concatenate molecules
 const combined = mol.concat(Molecule([Ring({ atoms: 'c', size: 6 })]));
+
+// Repeat the molecule as a polymer unit
+const unit = Molecule([Linear(['C']), Ring({ atoms: 'c', size: 6 })]);
+const dimer = unit.repeat(2, 1, 1);
+console.log(dimer.smiles);  // Cc1ccccc1Cc2ccccc2
 ```
 
 ### FusedRing Methods
@@ -276,6 +346,9 @@ const withSeq = fused.addSequentialRings([{ ring: ring3, depth: 1 }, { ring: rin
 
 // Add attachment to a sequential atom position
 const withAtt = fused.addSequentialAtomAttachment(25, Linear(['O']));
+
+// Repeat the fused ring system as a polymer unit
+const fusedDimer = fused.repeat(2, 1, 1);
 ```
 
 #### `fusedRing.addSequentialRings(rings, options?)`
@@ -431,10 +504,16 @@ import {
   moleculeConcat,
   moleculeGetComponent,
   moleculeReplaceComponent,
+  repeat,
+  fusedRepeat,
 } from 'smiles-js/manipulation';
 
 const benzene = Ring({ atoms: 'c', size: 6 });
 const toluene = ringAttach(benzene, 1, Linear(['C']));
+
+// Polymer construction
+const biphenyl = repeat(benzene, 2, 1, 6);
+const naphthalene = fusedRepeat(benzene, 2, 4);
 ```
 
 ---

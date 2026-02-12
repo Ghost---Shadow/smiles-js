@@ -29,6 +29,8 @@ import {
   moleculeConcat,
   moleculeGetComponent,
   moleculeReplaceComponent,
+  repeat,
+  fusedRepeat,
 } from './manipulation.js';
 
 /**
@@ -72,6 +74,12 @@ export function attachRingMethods(node) {
     addSequentialRings(seqRings, options) {
       return fusedRingAddSequentialRings(this, seqRings, options);
     },
+    repeat(n, leftId, rightId) {
+      return repeat(this, n, leftId, rightId);
+    },
+    fusedRepeat(n, offset) {
+      return fusedRepeat(this, n, offset);
+    },
     toObject() {
       const result = {
         type: this.type,
@@ -108,6 +116,9 @@ export function attachLinearMethods(node) {
     },
     concat(other) {
       return linearConcat(this, other);
+    },
+    repeat(n, leftId, rightId) {
+      return repeat(this, n, leftId, rightId);
     },
     clone() {
       return deepCloneLinear(this);
@@ -147,6 +158,9 @@ export function attachMoleculeMethods(node) {
     },
     replaceComponent(index, newComponent) {
       return moleculeReplaceComponent(this, index, newComponent);
+    },
+    repeat(n, leftId, rightId) {
+      return repeat(this, n, leftId, rightId);
     },
     clone() {
       return deepCloneMolecule(this);
@@ -189,6 +203,9 @@ export function attachFusedRingMethods(node) {
     },
     concat(other) {
       return fusedRingConcat(this, other);
+    },
+    repeat(n, leftId, rightId) {
+      return repeat(this, n, leftId, rightId);
     },
     clone() {
       return deepCloneFusedRing(this);
