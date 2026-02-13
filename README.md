@@ -17,6 +17,7 @@ Build complex molecules programmatically with an intuitive, composable API. Pars
 - **Parse complex SMILES** - Handles real-world pharmaceutical molecules (60-80+ characters)
 - **Programmatic construction** - Build molecules using composable Ring, Linear, and Molecule constructors
 - **Polymer construction** - Build repeating units with `.repeat()` and fused acene systems with `.fusedRepeat()`
+- **Mirror symmetry** - Create palindromic chains and ABA block patterns with `.mirror()`
 - **Round-trip fidelity** - Parse SMILES -> AST -> SMILES with structure preservation
 - **Code generation** - Auto-generate JavaScript construction code from SMILES strings
 - **Pharmaceutical validated** - Tested with Atorvastatin, Sildenafil, Ritonavir, and 30+ other drugs
@@ -105,6 +106,22 @@ console.log(PS.smiles);  // CC(c1ccccc1)CC(c2ccccc2)
 const benzene = Ring({ atoms: 'c', size: 6 });
 const naphthalene = benzene.fusedRepeat(2, 4);  // 2 fused rings
 const anthracene = benzene.fusedRepeat(3, 4);   // 3 fused rings
+```
+
+### Mirror Symmetry
+
+```javascript
+import { Ring, Linear, Molecule } from 'smiles-js';
+
+// Diethyl ether: mirror C-C-O around oxygen
+const ether = Linear(['C', 'C', 'O']).mirror();
+console.log(ether.smiles);  // CCOCC
+
+// ABA triblock copolymer
+const A = Linear(['C', 'C']);
+const B = Ring({ atoms: 'c', size: 6 });
+const ABA = Molecule([A, B]).mirror();
+console.log(ABA.smiles);  // CCc1ccccc1CC
 ```
 
 ### Generate Construction Code

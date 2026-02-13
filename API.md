@@ -233,6 +233,27 @@ const anthracene = benzene.fusedRepeat(3, 4);
 const tetracene = benzene.fusedRepeat(4, 4);
 ```
 
+#### `ring.mirror(pivotId?)`
+
+Mirror a ring's attachments and substitutions to create symmetric patterns. The pivot defines the axis of symmetry on the ring.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `pivotId` | `number` | `1` | 1-indexed ring position that serves as the symmetry axis |
+
+```javascript
+const benzene = Ring({ atoms: 'c', size: 6 });
+
+// meta-dimethylbenzene: attach at 2, mirror around pivot 3
+const mono = benzene.attach(2, Linear(['C']));
+const meta = mono.mirror(3);
+console.log(meta.smiles);  // c1c(C)cc(C)cc1
+
+// Symmetric nitrogen substitution
+const pyridine = Ring({ atoms: 'c', size: 6, substitutions: { 2: 'n' } });
+const diazine = pyridine.mirror(1);  // n at 2 and 6
+```
+
 ### Linear Methods
 
 ```javascript
@@ -290,6 +311,31 @@ const PS = styrene.repeat(2, 1, 2);
 console.log(PS.smiles);  // CC(c1ccccc1)CC(c2ccccc2)
 ```
 
+#### `linear.mirror(pivotId?)`
+
+Mirror a linear chain around a pivot atom to create palindromic (A-B-A) patterns. The pivot atom appears once at the center.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `pivotId` | `number` | `atoms.length` | 1-indexed pivot position (center of symmetry) |
+
+```javascript
+// Diethyl ether: mirror ethanol around the oxygen
+const chain = Linear(['C', 'C', 'O']);
+const ether = chain.mirror();  // pivot defaults to last atom
+console.log(ether.smiles);  // CCOCC
+
+// Symmetric alkene: mirror C=C around position 2
+const vinyl = Linear(['C', 'C'], ['=']);
+const symAlkene = vinyl.mirror(2);
+console.log(symAlkene.smiles);  // C=CC
+
+// With attachments: phenyl pendants are mirrored too
+const base = Linear(['C', 'C', 'C']).attach(1, Ring({ atoms: 'c', size: 6 }));
+const mirrored = base.mirror();
+console.log(mirrored.smiles);  // C(c1ccccc1)CCC(c2ccccc2)C
+```
+
 ### Molecule Methods
 
 ```javascript
@@ -314,6 +360,36 @@ const combined = mol.concat(Molecule([Ring({ atoms: 'c', size: 6 })]));
 const unit = Molecule([Linear(['C']), Ring({ atoms: 'c', size: 6 })]);
 const dimer = unit.repeat(2, 1, 1);
 console.log(dimer.smiles);  // Cc1ccccc1Cc2ccccc2
+
+// Mirror molecule for ABA patterns
+const A = Linear(['C', 'C']);
+const B = Ring({ atoms: 'c', size: 6 });
+const AB = Molecule([A, B]);
+const ABA = AB.mirror();  // pivot defaults to last component
+console.log(ABA.smiles);  // CCc1ccccc1CC
+```
+
+#### `molecule.mirror(pivotComponent?)`
+
+Mirror a molecule's component sequence to create ABA or ABCBA patterns. The pivot component appears once at the center.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `pivotComponent` | `number` | `components.length - 1` | 0-indexed pivot component (center of symmetry) |
+
+```javascript
+// ABA triblock: Linear-Ring-Linear
+const A = Linear(['C', 'C']);
+const B = Ring({ atoms: 'c', size: 6 });
+const AB = Molecule([A, B]);
+const ABA = AB.mirror();
+console.log(ABA.smiles);  // CCc1ccccc1CC
+
+// ABCBA pentablock
+const C = Linear(['N']);
+const ABC = Molecule([A, B, C]);
+const ABCBA = ABC.mirror();
+console.log(ABCBA.smiles);  // CCc1ccccc1NCCc2ccccc2CC... (mirrored)
 ```
 
 ### FusedRing Methods
@@ -506,6 +582,9 @@ import {
   moleculeReplaceComponent,
   repeat,
   fusedRepeat,
+  linearMirror,
+  moleculeMirror,
+  ringMirror,
 } from 'smiles-js/manipulation';
 
 const benzene = Ring({ atoms: 'c', size: 6 });
@@ -514,6 +593,10 @@ const toluene = ringAttach(benzene, 1, Linear(['C']));
 // Polymer construction
 const biphenyl = repeat(benzene, 2, 1, 6);
 const naphthalene = fusedRepeat(benzene, 2, 4);
+
+// Mirror symmetry
+const chain = Linear(['C', 'C', 'O']);
+const ether = linearMirror(chain);  // CCOCC
 ```
 
 ---

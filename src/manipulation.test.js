@@ -2,7 +2,9 @@ import { describe, test, expect } from 'bun:test';
 import {
   Ring, Linear, Molecule,
 } from './constructors.js';
-import { repeat, fusedRepeat } from './manipulation.js';
+import {
+  repeat, fusedRepeat, linearMirror, moleculeMirror, ringMirror,
+} from './manipulation.js';
 
 describe('Ring.attach()', () => {
   test('attaches a linear chain to a ring', () => {
@@ -588,5 +590,213 @@ describe('fusedRepeat()', () => {
     const result = ring.fusedRepeat(2, 4);
     expect(result.type).toBe('fused_ring');
     expect(result.rings).toHaveLength(2);
+  });
+});
+
+describe('linearMirror()', () => {
+  test('simple chain mirror (diethyl ether)', () => {
+    const half = Linear(['C', 'C', 'O']);
+    const result = half.mirror();
+    expect(result.smiles).toBe('CCOCC');
+  });
+
+  test('default pivot is last atom', () => {
+    const half = Linear(['C', 'C', 'C', 'N']);
+    const result = half.mirror();
+    expect(result.smiles).toBe('CCCNCCC');
+  });
+
+  test('explicit pivot in the middle', () => {
+    const chain = Linear(['C', 'C', 'C', 'O', 'C']);
+    const result = chain.mirror(4);
+    expect(result.smiles).toBe('CCCOCCC');
+  });
+
+  test('single atom mirror returns clone', () => {
+    const single = Linear(['O']);
+    const result = single.mirror();
+    expect(result.smiles).toBe('O');
+  });
+
+  test('two atoms mirror (pivot at 2)', () => {
+    const two = Linear(['C', 'O']);
+    const result = two.mirror();
+    expect(result.smiles).toBe('COC');
+  });
+
+  test('mirrors bonds correctly', () => {
+    const half = Linear(['C', 'C', 'O'], ['=']);
+    const result = half.mirror();
+    expect(result.smiles).toBe('C=COC=C');
+  });
+
+  test('mirrors multiple bond types', () => {
+    const half = Linear(['C', 'C', 'N', 'O'], ['=', '#']);
+    const result = half.mirror();
+    expect(result.smiles).toBe('C=C#NON#C=C');
+  });
+
+  test('mirrors attachments with ring renumbering', () => {
+    const half = Linear(['C', 'C', 'O']).attach(
+      1,
+      Ring({ atoms: 'c', size: 6 }),
+    );
+    const result = half.mirror();
+    expect(result.smiles).toBe('C(c1ccccc1)COCC(c2ccccc2)');
+  });
+
+  test('does not modify original', () => {
+    const half = Linear(['C', 'C', 'O']);
+    half.mirror();
+    expect(half.smiles).toBe('CCO');
+  });
+
+  test('throws for invalid pivotId', () => {
+    const chain = Linear(['C', 'C', 'O']);
+    expect(() => chain.mirror(0)).toThrow();
+    expect(() => chain.mirror(4)).toThrow();
+  });
+
+  test('functional API linearMirror()', () => {
+    const half = Linear(['C', 'C', 'O']);
+    const result = linearMirror(half);
+    expect(result.smiles).toBe('CCOCC');
+  });
+});
+
+describe('moleculeMirror()', () => {
+  test('ABA triblock copolymer', () => {
+    const A = Linear(['C', 'C']);
+    const B = Ring({ atoms: 'c', size: 6 });
+    const AB = Molecule([A, B]);
+    const result = AB.mirror();
+    expect(result.smiles).toBe('CCc1ccccc1CC');
+  });
+
+  test('ABCBA from ABC', () => {
+    const block = Molecule([
+      Linear(['C', 'C']),
+      Ring({ atoms: 'c', size: 6 }),
+      Linear(['O']),
+    ]);
+    const result = block.mirror();
+    expect(result.smiles).toBe('CCc1ccccc1Oc2ccccc2CC');
+  });
+
+  test('default pivot is last component', () => {
+    const mol = Molecule([Linear(['C']), Linear(['N']), Linear(['O'])]);
+    const result = mol.mirror();
+    expect(result.smiles).toBe('CNONC');
+  });
+
+  test('explicit pivot at component 0 returns clone of single', () => {
+    const mol = Molecule([Linear(['C']), Linear(['N'])]);
+    const result = mol.mirror(0);
+    expect(result.smiles).toBe('C');
+    expect(result.components).toHaveLength(1);
+  });
+
+  test('explicit pivot at middle component', () => {
+    const mol = Molecule([Linear(['C']), Linear(['N']), Linear(['O'])]);
+    const result = mol.mirror(1);
+    expect(result.smiles).toBe('CNC');
+  });
+
+  test('does not modify original', () => {
+    const mol = Molecule([Linear(['C']), Linear(['N'])]);
+    mol.mirror();
+    expect(mol.smiles).toBe('CN');
+    expect(mol.components).toHaveLength(2);
+  });
+
+  test('throws for invalid pivotComponent', () => {
+    const mol = Molecule([Linear(['C']), Linear(['N'])]);
+    expect(() => mol.mirror(-1)).toThrow();
+    expect(() => mol.mirror(2)).toThrow();
+  });
+
+  test('functional API moleculeMirror()', () => {
+    const mol = Molecule([Linear(['C']), Ring({ atoms: 'c', size: 6 })]);
+    const result = moleculeMirror(mol);
+    expect(result.smiles).toBe('Cc1ccccc1C');
+  });
+});
+
+describe('ringMirror()', () => {
+  test('mirrors substitution (pyrimidine from pyridine)', () => {
+    const pyridine = Ring({
+      atoms: 'c',
+      size: 6,
+      substitutions: { 2: 'n' },
+    });
+    const result = pyridine.mirror(1);
+    // pos 2 mirrors to pos 6 around pivot 1
+    expect(result.substitutions).toEqual({ 2: 'n', 6: 'n' });
+  });
+
+  test('mirrors attachment to symmetric position', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(2, Linear(['C']));
+    const result = mono.mirror(1);
+    // pos 2 mirrors to pos 6 around pivot 1
+    expect(result.attachments[2]).toHaveLength(1);
+    expect(result.attachments[6]).toHaveLength(1);
+  });
+
+  test('meta substitution pattern via mirror', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(2, Linear(['C']));
+    const result = mono.mirror(3);
+    // pos 2 mirrors to pos 4 around pivot 3
+    expect(result.smiles).toBe('c1c(C)cc(C)cc1');
+  });
+
+  test('attachment at pivot stays (no duplication)', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(1, Linear(['C']));
+    const result = mono.mirror(1);
+    // pos 1 is the pivot, mirrors to self → no duplicate
+    expect(result.attachments[1]).toHaveLength(1);
+  });
+
+  test('default pivot is 1', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(2, Linear(['C']));
+    const result = mono.mirror();
+    // default pivot=1, pos 2 mirrors to pos 6
+    expect(result.attachments[2]).toHaveLength(1);
+    expect(result.attachments[6]).toHaveLength(1);
+  });
+
+  test('ring renumbering in mirrored attachments', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(2, Ring({ atoms: 'c', size: 5 }));
+    const result = mono.mirror(1);
+    // Attachment at pos 2 has ring with ringNumber=1
+    // Mirrored attachment at pos 6 should have ringNumber=2 (shifted)
+    const origAtt = result.attachments[2][0];
+    const mirrorAtt = result.attachments[6][0];
+    expect(origAtt.ringNumber).toBe(1);
+    expect(mirrorAtt.ringNumber).toBe(2);
+  });
+
+  test('does not modify original', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(2, Linear(['C']));
+    mono.mirror(1);
+    expect(mono.attachments[6]).toBeUndefined();
+  });
+
+  test('throws for invalid pivotId', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    expect(() => benzene.mirror(0)).toThrow();
+    expect(() => benzene.mirror(7)).toThrow();
+  });
+
+  test('functional API ringMirror()', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const mono = benzene.attach(2, Linear(['C']));
+    const result = ringMirror(mono, 3);
+    expect(result.smiles).toBe('c1c(C)cc(C)cc1');
   });
 });

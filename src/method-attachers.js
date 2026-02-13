@@ -31,6 +31,9 @@ import {
   moleculeReplaceComponent,
   repeat,
   fusedRepeat,
+  linearMirror,
+  moleculeMirror,
+  ringMirror,
 } from './manipulation.js';
 
 /**
@@ -80,6 +83,9 @@ export function attachRingMethods(node) {
     fusedRepeat(n, offset) {
       return fusedRepeat(this, n, offset);
     },
+    mirror(pivotId) {
+      return ringMirror(this, pivotId);
+    },
     toObject() {
       const result = {
         type: this.type,
@@ -119,6 +125,9 @@ export function attachLinearMethods(node) {
     },
     repeat(n, leftId, rightId) {
       return repeat(this, n, leftId, rightId);
+    },
+    mirror(pivotId) {
+      return linearMirror(this, pivotId);
     },
     clone() {
       return deepCloneLinear(this);
@@ -161,6 +170,9 @@ export function attachMoleculeMethods(node) {
     },
     repeat(n, leftId, rightId) {
       return repeat(this, n, leftId, rightId);
+    },
+    mirror(pivotComponent) {
+      return moleculeMirror(this, pivotComponent);
     },
     clone() {
       return deepCloneMolecule(this);

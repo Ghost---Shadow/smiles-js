@@ -857,3 +857,178 @@ export function fusedRepeat(ring, n, offset) {
 
   return result;
 }
+
+/**
+ * Mirror / symmetry methods
+ */
+
+/**
+ * Mirror a linear chain around a pivot atom to create a palindromic structure.
+ *
+ * Takes atoms [0..pivotId-1] (left half including pivot), then appends
+ * atoms [pivotId-2..0] in reverse. The pivot atom appears once in the center.
+ * Bonds and attachments are mirrored accordingly.
+ *
+ * @param {Object} linear - Linear AST node
+ * @param {number} [pivotId] - 1-indexed pivot position (default: atoms.length)
+ * @returns {Object} New Linear or Molecule node
+ */
+export function linearMirror(linear, pivotId) {
+  const pivot = pivotId !== undefined ? pivotId : linear.atoms.length;
+  if (!Number.isInteger(pivot) || pivot < 1 || pivot > linear.atoms.length) {
+    throw new Error(
+      `pivotId must be an integer between 1 and ${linear.atoms.length}`,
+    );
+  }
+
+  // Left half: atoms [0..pivot-1] (includes pivot)
+  const leftAtoms = linear.atoms.slice(0, pivot);
+  // Right half: atoms [0..pivot-2] reversed (excludes pivot)
+  const rightAtoms = linear.atoms.slice(0, pivot - 1).reverse();
+
+  const newAtoms = [...leftAtoms, ...rightAtoms];
+
+  // Mirror bonds
+  // In main-chain format, bonds[i] is the bond between atoms[i] and atoms[i+1]
+  // Pad bonds to full length (pivot-1 entries for the left half) so mirror is correct
+  const paddedLeftBonds = Array.from(
+    { length: pivot - 1 },
+    (_, i) => linear.bonds[i] || null,
+  );
+  const rightBonds = paddedLeftBonds.slice(0, pivot - 1).reverse();
+  const newBonds = [...paddedLeftBonds, ...rightBonds];
+
+  // Mirror attachments
+  const leftAttachments = linear.attachments || {};
+  const hasAtt = Object.keys(leftAttachments).length > 0;
+
+  if (!hasAtt) {
+    return createLinearNode(newAtoms, newBonds, {});
+  }
+
+  // Attachments need ring renumbering for the mirrored half
+  const totalMaxRing = maxRingNumber(linear);
+  const newAttachments = cloneAttachments(leftAttachments);
+
+  // Mirror each attachment position: position p mirrors to (2*pivot - p)
+  Object.entries(leftAttachments).forEach(([posStr, attList]) => {
+    const pos = Number(posStr);
+    if (pos === pivot) return; // pivot attachments stay, no mirror
+    const mirrorPos = 2 * pivot - pos;
+    if (mirrorPos < 1 || mirrorPos > newAtoms.length) return;
+    if (!newAttachments[mirrorPos]) {
+      newAttachments[mirrorPos] = [];
+    }
+    attList.forEach((att) => {
+      const shifted = totalMaxRing > 0
+        ? shiftRingNumbers(cloneNode(att), totalMaxRing)
+        : cloneNode(att);
+      newAttachments[mirrorPos] = [...newAttachments[mirrorPos], shifted];
+    });
+  });
+
+  return createLinearNode(newAtoms, newBonds, newAttachments);
+}
+
+/**
+ * Mirror a molecule's component sequence to create an ABA-like structure.
+ *
+ * Takes components [0..pivot], then appends components [pivot-1..0] in reverse
+ * with ring numbers shifted to avoid collisions.
+ *
+ * @param {Object} molecule - Molecule AST node
+ * @param {number} [pivotComponent] - 0-indexed pivot component (default: last)
+ * @returns {Object} New Molecule node
+ */
+export function moleculeMirror(molecule, pivotComponent) {
+  const pivot = pivotComponent !== undefined
+    ? pivotComponent
+    : molecule.components.length - 1;
+  if (!Number.isInteger(pivot) || pivot < 0 || pivot >= molecule.components.length) {
+    throw new Error(
+      `pivotComponent must be an integer between 0 and ${molecule.components.length - 1}`,
+    );
+  }
+
+  // Left half: components [0..pivot] (includes pivot)
+  const leftComponents = molecule.components.slice(0, pivot + 1);
+  // Right half: components [0..pivot-1] reversed (excludes pivot)
+  const rightSources = molecule.components.slice(0, pivot).reverse();
+
+  // Shift ring numbers in mirrored components
+  let totalMaxRing = 0;
+  leftComponents.forEach((c) => {
+    totalMaxRing = Math.max(totalMaxRing, maxRingNumber(c));
+  });
+
+  const rightComponents = rightSources.map((c) => {
+    const cloned = cloneNode(c);
+    return totalMaxRing > 0 ? shiftRingNumbers(cloned, totalMaxRing) : cloned;
+  });
+
+  return createMoleculeNode([...leftComponents, ...rightComponents]);
+}
+
+/**
+ * Mirror a ring's attachments and substitutions to create symmetric patterns.
+ *
+ * For each attachment/substitution at position p, adds a copy at the mirror
+ * position relative to the pivot. The mirror position for p around pivot v
+ * on a ring of size s is: ((2*v - p - 1) mod s) + 1  (1-indexed).
+ *
+ * @param {Object} ring - Ring AST node
+ * @param {number} [pivotId=1] - 1-indexed pivot position
+ * @returns {Object} New Ring node
+ */
+export function ringMirror(ring, pivotId) {
+  const pivot = pivotId !== undefined ? pivotId : 1;
+  validatePosition(pivot, ring.size);
+
+  const { size } = ring;
+
+  // Helper: compute mirror position (1-indexed)
+  // For a ring, position p mirrors around pivot v as:
+  // mirror = ((2*v - p - 1) mod s) + 1
+  // This reflects p across v on the ring.
+  const mirrorPos = (p) => ((((2 * (pivot - 1) - (p - 1)) % size) + size) % size) + 1;
+
+  // Mirror substitutions
+  const newSubstitutions = { ...ring.substitutions };
+  Object.entries(ring.substitutions).forEach(([posStr, atom]) => {
+    const pos = Number(posStr);
+    const mp = mirrorPos(pos);
+    if (mp !== pos && !newSubstitutions[mp]) {
+      newSubstitutions[mp] = atom;
+    }
+  });
+
+  // Mirror attachments
+  const newAttachments = cloneAttachments(ring.attachments);
+  const totalMaxRing = maxRingNumber(ring);
+
+  Object.entries(ring.attachments).forEach(([posStr, attList]) => {
+    const pos = Number(posStr);
+    const mp = mirrorPos(pos);
+    if (mp === pos) return; // pivot position or self-symmetric, skip
+    if (!newAttachments[mp]) {
+      newAttachments[mp] = [];
+    }
+    attList.forEach((att) => {
+      const shifted = totalMaxRing > 0
+        ? shiftRingNumbers(cloneNode(att), totalMaxRing)
+        : cloneNode(att);
+      newAttachments[mp] = [...newAttachments[mp], shifted];
+    });
+  });
+
+  return createRingNode(
+    ring.atoms,
+    ring.size,
+    ring.ringNumber,
+    ring.offset,
+    newSubstitutions,
+    newAttachments,
+    ring.bonds || [],
+    ring.metaBranchDepths || null,
+  );
+}
