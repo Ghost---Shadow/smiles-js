@@ -199,6 +199,31 @@ exports[`Met-Enkephalin Integration Test parses met-enkephalin 1`] = `
 `;
 
 exports[`Met-Enkephalin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CSCCCNCCNCCNCCNCCN');
+export const v2 = Fragment('CO');
+export const v3 = Linear(['O'], ['=']);
+export const v4 = v2.attach(1, v3);
+export const v5 = v1.attach(5, v4);
+export const v6 = Linear(['O'], ['=']);
+export const v7 = v5.attach(7, v6);
+export const v8 = Fragment('C');
+export const v9 = Fragment('C1=CC=CC=C1');
+export const v10 = Molecule([v8, v9]);
+export const v11 = v7.attach(8, v10);
+export const v12 = Linear(['O'], ['=']);
+export const v13 = v11.attach(10, v12);
+export const v14 = Linear(['O'], ['=']);
+export const v15 = v13.attach(13, v14);
+export const v16 = Linear(['O'], ['=']);
+export const v17 = v15.attach(16, v16);
+export const v18 = Fragment('C');
+export const v19 = Fragment('C2=CC=C(C=C2)');
+export const v20 = Fragment('O');
+export const v21 = Molecule([v18, v19, v20]);
+export const v22 = v17.attach(17, v21);"
+`;
+
+exports[`Met-Enkephalin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'S', 'C', 'C', 'C', 'N', 'C', 'C', 'N', 'C', 'C', 'N', 'C', 'C', 'N', 'C', 'C', 'N']);
 export const v2 = Linear(['C', 'O']);
 export const v3 = Linear(['O'], ['=']);
@@ -432,6 +457,33 @@ exports[`Leu-Enkephalin Integration Test parses leu-enkephalin 1`] = `
 `;
 
 exports[`Leu-Enkephalin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCCNCCNCCNCCNCCN');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(2, v2);
+export const v4 = Fragment('CO');
+export const v5 = Linear(['O'], ['=']);
+export const v6 = v4.attach(1, v5);
+export const v7 = v3.attach(4, v6);
+export const v8 = Linear(['O'], ['=']);
+export const v9 = v7.attach(6, v8);
+export const v10 = Fragment('C');
+export const v11 = Fragment('C1=CC=CC=C1');
+export const v12 = Molecule([v10, v11]);
+export const v13 = v9.attach(7, v12);
+export const v14 = Linear(['O'], ['=']);
+export const v15 = v13.attach(9, v14);
+export const v16 = Linear(['O'], ['=']);
+export const v17 = v15.attach(12, v16);
+export const v18 = Linear(['O'], ['=']);
+export const v19 = v17.attach(15, v18);
+export const v20 = Fragment('C');
+export const v21 = Fragment('C2=CC=C(C=C2)');
+export const v22 = Fragment('O');
+export const v23 = Molecule([v20, v21, v22]);
+export const v24 = v19.attach(16, v23);"
+`;
+
+exports[`Leu-Enkephalin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C', 'N', 'C', 'C', 'N', 'C', 'C', 'N', 'C', 'C', 'N', 'C', 'C', 'N']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
@@ -712,6 +764,39 @@ exports[`Endomorphin-1 Integration Test parses endomorphin-1 1`] = `
 `;
 
 exports[`Endomorphin-1 Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('C1CC(C(C1))');
+export const v2 = Fragment('C1CC(N(C1))');
+export const v3 = Fragment('CCN');
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(1, v4);
+export const v6 = Fragment('C');
+export const v7 = Fragment('C2=CC=C(C=C2)');
+export const v8 = Fragment('O');
+export const v9 = Molecule([v6, v7, v8]);
+export const v10 = v5.attach(2, v9);
+export const v11 = v2.attach(3, v10, { sibling: false });
+export const v12 = Fragment('CNCCNCCN');
+export const v13 = Linear(['O'], ['=']);
+export const v14 = v12.attach(1, v13);
+export const v15 = Fragment('C');
+export const v16 = Fragment('C3=CCC=CC=CC=C3');
+export const v17 = Fragment('C3=CNC=CC=CC=C3');
+export const v18 = Fragment('C4=CC=CC=C4');
+export const v19 = FusedRing({ metadata: { rings: [{ ring: v17, start: 22, end: 30, atoms: [{ position: 22, depth: 1, value: 'C', rings: [3, 3], branchId: 42 }, { position: 23, depth: 1, value: 'C', bond: '=', rings: [3], branchId: 42 }, { position: 24, depth: 1, value: 'N', rings: [3], branchId: 42 }, { position: 25, depth: 1, value: 'C', rings: [4, 4, 3], branchId: 42 }, { position: 26, depth: 1, value: 'C', bond: '=', rings: [4, 3], branchId: 42 }, { position: 27, depth: 1, value: 'C', rings: [4, 3], branchId: 42 }, { position: 28, depth: 1, value: 'C', bond: '=', rings: [4, 3], branchId: 42 }, { position: 29, depth: 1, value: 'C', rings: [4, 3], branchId: 42 }, { position: 30, depth: 1, value: 'C', bond: '=', rings: [4, 3], branchId: 42 }] }, { ring: v18, start: 25, end: 30, atoms: [{ position: 25, depth: 1, value: 'C', rings: [4, 4, 3], branchId: 42 }, { position: 26, depth: 1, value: 'C', bond: '=', rings: [4, 3], branchId: 42 }, { position: 27, depth: 1, value: 'C', rings: [4, 3], branchId: 42 }, { position: 28, depth: 1, value: 'C', bond: '=', rings: [4, 3], branchId: 42 }, { position: 29, depth: 1, value: 'C', rings: [4, 3], branchId: 42 }, { position: 30, depth: 1, value: 'C', bond: '=', rings: [4, 3], branchId: 42 }] }] } });
+export const v20 = Molecule([v15, v19]);
+export const v21 = v14.attach(3, v20);
+export const v22 = Linear(['O'], ['=']);
+export const v23 = v21.attach(4, v22);
+export const v24 = Fragment('C');
+export const v25 = Fragment('C5=CC=CC=C5');
+export const v26 = Molecule([v24, v25]);
+export const v27 = v23.attach(6, v26);
+export const v28 = Linear(['O'], ['=']);
+export const v29 = v27.attach(7, v28);
+export const v30 = Molecule([v11, v29]);"
+`;
+
+exports[`Endomorphin-1 Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Ring({ atoms: 'C', size: 5, branchDepths: [0, 0, 0, 1, 2] });
 export const v2 = v1.substitute(4, 'N');
 export const v3 = Linear(['C', 'C', 'N']);
@@ -971,6 +1056,36 @@ exports[`Endomorphin-2 Integration Test parses endomorphin-2 1`] = `
 `;
 
 exports[`Endomorphin-2 Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('C1CC(C(C1))');
+export const v2 = Fragment('C1CC(N(C1))');
+export const v3 = Fragment('CCN');
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(1, v4);
+export const v6 = Fragment('C');
+export const v7 = Fragment('C2=CC=C(C=C2)');
+export const v8 = Fragment('O');
+export const v9 = Molecule([v6, v7, v8]);
+export const v10 = v5.attach(2, v9);
+export const v11 = v2.attach(3, v10, { sibling: false });
+export const v12 = Fragment('CNCCNCCN');
+export const v13 = Linear(['O'], ['=']);
+export const v14 = v12.attach(1, v13);
+export const v15 = Fragment('C');
+export const v16 = Fragment('C3=CC=CC=C3');
+export const v17 = Molecule([v15, v16]);
+export const v18 = v14.attach(3, v17);
+export const v19 = Linear(['O'], ['=']);
+export const v20 = v18.attach(4, v19);
+export const v21 = Fragment('C');
+export const v22 = Fragment('C4=CC=CC=C4');
+export const v23 = Molecule([v21, v22]);
+export const v24 = v20.attach(6, v23);
+export const v25 = Linear(['O'], ['=']);
+export const v26 = v24.attach(7, v25);
+export const v27 = Molecule([v11, v26]);"
+`;
+
+exports[`Endomorphin-2 Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Ring({ atoms: 'C', size: 5, branchDepths: [0, 0, 0, 1, 2] });
 export const v2 = v1.substitute(4, 'N');
 export const v3 = Linear(['C', 'C', 'N']);

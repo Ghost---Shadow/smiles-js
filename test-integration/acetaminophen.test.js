@@ -19,6 +19,12 @@ describe('Acetaminophen Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(ACETAMINOPHEN_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(ACETAMINOPHEN_SMILES);
     const code = ast.toCode('v');
@@ -26,14 +32,14 @@ describe('Acetaminophen Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(ACETAMINOPHEN_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -59,9 +65,15 @@ describe('Phenacetin Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(PHENACETIN_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(PHENACETIN_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);

@@ -9,11 +9,13 @@ import {
   isRingNode,
   isLinearNode,
 } from './ast.js';
+import { buildSMILES } from './codegen/index.js';
+import { createRingNode } from './node-creators.js';
 
 // Helper to call decompileNode (satisfies no-loop-func rule)
-function decompileChildNode(node, indent, nextVar) {
+function decompileChildNode(node, indent, nextVar, verbose) {
   // eslint-disable-next-line no-use-before-define
-  return decompileNode(node, indent, nextVar);
+  return decompileNode(node, indent, nextVar, verbose);
 }
 
 /**
@@ -110,7 +112,7 @@ function generateSubstitutionCode(ring, indent, nextVar, initialVar) {
  * Generate code for ring attachments
  * @returns {{ lines: string[], currentVar: string }}
  */
-function generateAttachmentCode(ring, indent, nextVar, initialVar) {
+function generateAttachmentCode(ring, indent, nextVar, initialVar, verbose = true) {
   const lines = [];
   let currentVar = initialVar;
 
@@ -128,7 +130,7 @@ function generateAttachmentCode(ring, indent, nextVar, initialVar) {
       const inlineBranchId = hasInlineBranchAfter ? (metaBranchIds[nextIdx] || Infinity) : Infinity;
 
       attachmentList.forEach((attachment) => {
-        const attachResult = decompileChildNode(attachment, indent, nextVar);
+        const attachResult = decompileChildNode(attachment, indent, nextVar, verbose);
         lines.push(attachResult.code);
 
         const newVar = nextVar();
@@ -159,12 +161,71 @@ function generateAttachmentCode(ring, indent, nextVar, initialVar) {
 }
 
 /**
+ * Compute the SMILES for a ring node with substitutions but without attachments.
+ * Used in non-verbose mode to emit Fragment('SMILES') for the substituted ring.
+ */
+function getRingWithSubsSmiles(ring) {
+  const tempNode = createRingNode(
+    ring.atoms,
+    ring.size,
+    ring.ringNumber,
+    ring.offset,
+    ring.substitutions,
+    {},
+    ring.bonds,
+    ring.metaBranchDepths,
+  );
+  if (ring.metaLeadingBond) {
+    tempNode.metaLeadingBond = ring.metaLeadingBond;
+  }
+  return buildSMILES(tempNode);
+}
+
+/**
  * Decompile a Ring node
  */
-function decompileRing(ring, indent, nextVar) {
+function decompileRing(ring, indent, nextVar, verbose = true) {
   const lines = [];
   const varName = nextVar();
 
+  if (!verbose && !ring.metaLeadingBond) {
+    // Non-verbose: emit Fragment('SMILES') for base ring
+    const baseSmiles = buildSMILES(createRingNode(
+      ring.atoms,
+      ring.size,
+      ring.ringNumber,
+      ring.offset,
+      {},
+      {},
+      ring.bonds,
+      ring.metaBranchDepths,
+    ));
+    lines.push(`${indent}const ${varName} = Fragment('${baseSmiles}');`);
+
+    // Substitutions: each becomes an independent Fragment('SMILES')
+    let currentVar = varName;
+    if (Object.keys(ring.substitutions).length > 0) {
+      const subsSmiles = getRingWithSubsSmiles(ring);
+      const newVar = nextVar();
+      lines.push(`${indent}const ${newVar} = Fragment('${subsSmiles}');`);
+      currentVar = newVar;
+    }
+
+    // Attachments stay as .attach() calls
+    const { lines: attLines, currentVar: attVar } = generateAttachmentCode(
+      ring,
+      indent,
+      nextVar,
+      currentVar,
+      verbose,
+    );
+    lines.push(...attLines);
+    currentVar = attVar;
+
+    return { code: lines.join('\n'), finalVar: currentVar };
+  }
+
+  // Verbose mode (original behavior)
   // Build options object (include branchDepths for full decompilation)
   const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
   lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
@@ -185,6 +246,7 @@ function decompileRing(ring, indent, nextVar) {
     indent,
     nextVar,
     currentVar,
+    verbose,
   );
   lines.push(...attLines);
   currentVar = attVar;
@@ -195,7 +257,7 @@ function decompileRing(ring, indent, nextVar) {
 /**
  * Decompile a Linear node
  */
-function decompileLinear(linear, indent, nextVar) {
+function decompileLinear(linear, indent, nextVar, verbose = true) {
   const lines = [];
   const varName = nextVar();
 
@@ -205,7 +267,13 @@ function decompileLinear(linear, indent, nextVar) {
   const hasNonNullBonds = linear.bonds.some((b) => b !== null);
   const hasLeadingBond = linear.metaLeadingBond !== undefined;
 
-  if (hasNonNullBonds && hasLeadingBond) {
+  // Non-verbose: use Fragment('SMILES') when possible (no bonds, no leadingBond)
+  if (!verbose && !hasNonNullBonds && !hasLeadingBond) {
+    // Compute SMILES without attachments for the base linear node
+    const baseLinear = { ...linear, attachments: {} };
+    const smiles = buildSMILES(baseLinear);
+    lines.push(`${indent}const ${varName} = Fragment('${smiles}');`);
+  } else if (hasNonNullBonds && hasLeadingBond) {
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${formatBondsArray(linear.bonds)}], {}, '${linear.metaLeadingBond}');`);
   } else if (hasNonNullBonds) {
     lines.push(`${indent}const ${varName} = Linear([${atomsStr}], [${formatBondsArray(linear.bonds)}]);`);
@@ -222,7 +290,7 @@ function decompileLinear(linear, indent, nextVar) {
     Object.entries(linear.attachments).forEach(([pos, attachmentList]) => {
       attachmentList.forEach((attachment) => {
         // eslint-disable-next-line no-use-before-define
-        const attachRes = decompileNode(attachment, indent, nextVar);
+        const attachRes = decompileNode(attachment, indent, nextVar, verbose);
         const { code: aCode, finalVar: aFinalVar } = attachRes;
         lines.push(aCode);
 
@@ -423,7 +491,7 @@ function computeSharedPositions(fusedRing) {
  * Emits .fuse() for the first pair and .addRing() for subsequent rings.
  * The resulting code goes through the simple codegen path (offset-based).
  */
-function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
+function decompileSimpleFusedRing(fusedRing, indent, nextVar, verbose = true) {
   const lines = [];
   const ringFinalVars = [];
 
@@ -486,20 +554,52 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
     }
 
     const varName = nextVar();
-    const { optionsStr } = buildRingOptions(effectiveRing, { includeBranchDepths: true });
-    lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
 
-    const {
-      lines: subLines, currentVar: subVar,
-    } = generateSubstitutionCode(effectiveRing, indent, nextVar, varName);
-    lines.push(...subLines);
+    if (!verbose && !effectiveRing.metaLeadingBond) {
+      // Non-verbose: use Fragment for ring constructor
+      const baseSmiles = buildSMILES(createRingNode(
+        effectiveRing.atoms,
+        effectiveRing.size,
+        effectiveRing.ringNumber,
+        effectiveRing.offset,
+        {},
+        {},
+        effectiveRing.bonds,
+        effectiveRing.metaBranchDepths,
+      ));
+      lines.push(`${indent}const ${varName} = Fragment('${baseSmiles}');`);
 
-    const {
-      lines: attLines, currentVar: attVar,
-    } = generateAttachmentCode(effectiveRing, indent, nextVar, subVar);
-    lines.push(...attLines);
+      let currentVar = varName;
+      if (Object.keys(effectiveRing.substitutions || {}).length > 0) {
+        const subsSmiles = getRingWithSubsSmiles(effectiveRing);
+        const newVar = nextVar();
+        lines.push(`${indent}const ${newVar} = Fragment('${subsSmiles}');`);
+        currentVar = newVar;
+      }
 
-    ringFinalVars.push(attVar);
+      const {
+        lines: attLines, currentVar: attVar,
+      } = generateAttachmentCode(effectiveRing, indent, nextVar, currentVar, verbose);
+      lines.push(...attLines);
+
+      ringFinalVars.push(attVar);
+    } else {
+      // Verbose: original behavior
+      const { optionsStr } = buildRingOptions(effectiveRing, { includeBranchDepths: true });
+      lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+
+      const {
+        lines: subLines, currentVar: subVar,
+      } = generateSubstitutionCode(effectiveRing, indent, nextVar, varName);
+      lines.push(...subLines);
+
+      const {
+        lines: attLines, currentVar: attVar,
+      } = generateAttachmentCode(effectiveRing, indent, nextVar, subVar, verbose);
+      lines.push(...attLines);
+
+      ringFinalVars.push(attVar);
+    }
   });
 
   const leadingBond = fusedRing.metaLeadingBond;
@@ -541,7 +641,7 @@ function decompileSimpleFusedRing(fusedRing, indent, nextVar) {
  * rings to a fused ring. The codegen uses this metadata to correctly interleave
  * ring markers and handle branch depths.
  */
-function decompileComplexFusedRing(fusedRing, indent, nextVar) {
+function decompileComplexFusedRing(fusedRing, indent, nextVar, verbose = true) {
   const lines = [];
   const sequentialRings = fusedRing.metaSequentialRings || [];
   const seqAtomAttachments = fusedRing.metaSeqAtomAttachments || new Map();
@@ -549,17 +649,45 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
   // Step 1: Decompile the base fused ring
   const ringVars = [];
   fusedRing.rings.forEach((ring) => {
-    const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
     const varName = nextVar();
-    lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
 
-    const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
-    lines.push(...subResult.lines);
+    if (!verbose && !ring.metaLeadingBond) {
+      const baseSmiles = buildSMILES(createRingNode(
+        ring.atoms,
+        ring.size,
+        ring.ringNumber,
+        ring.offset,
+        {},
+        {},
+        ring.bonds,
+        ring.metaBranchDepths,
+      ));
+      lines.push(`${indent}const ${varName} = Fragment('${baseSmiles}');`);
 
-    const attResult = generateAttachmentCode(ring, indent, nextVar, subResult.currentVar);
-    lines.push(...attResult.lines);
+      let currentVar = varName;
+      if (Object.keys(ring.substitutions || {}).length > 0) {
+        const subsSmiles = getRingWithSubsSmiles(ring);
+        const newVar = nextVar();
+        lines.push(`${indent}const ${newVar} = Fragment('${subsSmiles}');`);
+        currentVar = newVar;
+      }
 
-    ringVars.push({ var: attResult.currentVar, ring });
+      const attResult = generateAttachmentCode(ring, indent, nextVar, currentVar, verbose);
+      lines.push(...attResult.lines);
+
+      ringVars.push({ var: attResult.currentVar, ring });
+    } else {
+      const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
+      lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+
+      const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
+      lines.push(...subResult.lines);
+
+      const attResult = generateAttachmentCode(ring, indent, nextVar, subResult.currentVar, verbose);
+      lines.push(...attResult.lines);
+
+      ringVars.push({ var: attResult.currentVar, ring });
+    }
   });
 
   // Decompile seqAtomAttachments BEFORE fuse so their vars are declared early
@@ -569,7 +697,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     seqAtomAttachments.forEach((attachments, pos) => {
       const attVars = [];
       attachments.forEach((att) => {
-        const attResult = decompileChildNode(att, indent, nextVar);
+        const attResult = decompileChildNode(att, indent, nextVar, verbose);
         lines.push(attResult.code);
         attVars.push(attResult.finalVar);
       });
@@ -691,17 +819,45 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
     // Decompile sequential rings
     const seqRingVars = [];
     sequentialRings.forEach((ring) => {
-      const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
       const varName = nextVar();
-      lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
 
-      const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
-      lines.push(...subResult.lines);
+      if (!verbose && !ring.metaLeadingBond) {
+        const baseSmiles = buildSMILES(createRingNode(
+          ring.atoms,
+          ring.size,
+          ring.ringNumber,
+          ring.offset,
+          {},
+          {},
+          ring.bonds,
+          ring.metaBranchDepths,
+        ));
+        lines.push(`${indent}const ${varName} = Fragment('${baseSmiles}');`);
 
-      const attResult = generateAttachmentCode(ring, indent, nextVar, subResult.currentVar);
-      lines.push(...attResult.lines);
+        let currentVar = varName;
+        if (Object.keys(ring.substitutions || {}).length > 0) {
+          const subsSmiles = getRingWithSubsSmiles(ring);
+          const newVar = nextVar();
+          lines.push(`${indent}const ${newVar} = Fragment('${subsSmiles}');`);
+          currentVar = newVar;
+        }
 
-      seqRingVars.push(attResult.currentVar);
+        const attResult = generateAttachmentCode(ring, indent, nextVar, currentVar, verbose);
+        lines.push(...attResult.lines);
+
+        seqRingVars.push(attResult.currentVar);
+      } else {
+        const { optionsStr } = buildRingOptions(ring, { includeBranchDepths: true });
+        lines.push(`${indent}const ${varName} = Ring({ ${optionsStr} });`);
+
+        const subResult = generateSubstitutionCode(ring, indent, nextVar, varName);
+        lines.push(...subResult.lines);
+
+        const attResult = generateAttachmentCode(ring, indent, nextVar, subResult.currentVar, verbose);
+        lines.push(...attResult.lines);
+
+        seqRingVars.push(attResult.currentVar);
+      }
     });
 
     // Decompile chain atom attachments
@@ -710,7 +866,7 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
         const attachments = seqAtomAttachments.get(entry.attachmentPos) || [];
         const attVars = [];
         attachments.forEach((att) => {
-          const attResult = decompileChildNode(att, indent, nextVar);
+          const attResult = decompileChildNode(att, indent, nextVar, verbose);
           lines.push(attResult.code);
           attVars.push(attResult.finalVar);
         });
@@ -845,24 +1001,24 @@ function decompileComplexFusedRing(fusedRing, indent, nextVar) {
  * - Sequential rings or interleaved codegen → preserves metadata (needs it for correct SMILES)
  * - Everything else → structural API calls only (no metadata)
  */
-function decompileFusedRing(fusedRing, indent, nextVar) {
+function decompileFusedRing(fusedRing, indent, nextVar, verbose = true) {
   const seqRings = fusedRing.metaSequentialRings;
   const hasSeqRings = seqRings && seqRings.length > 0;
   const isInterleaved = needsInterleavedCodegen(fusedRing);
 
   // Use complex decompilation for sequential rings or genuinely interleaved fused rings
   if (hasSeqRings || isInterleaved) {
-    return decompileComplexFusedRing(fusedRing, indent, nextVar);
+    return decompileComplexFusedRing(fusedRing, indent, nextVar, verbose);
   }
 
   // Everything else goes through the simple path (no metadata)
-  return decompileSimpleFusedRing(fusedRing, indent, nextVar);
+  return decompileSimpleFusedRing(fusedRing, indent, nextVar, verbose);
 }
 
 /**
  * Decompile a Molecule node
  */
-function decompileMolecule(molecule, indent, nextVar) {
+function decompileMolecule(molecule, indent, nextVar, verbose = true) {
   const lines = [];
   const { components } = molecule;
 
@@ -878,7 +1034,7 @@ function decompileMolecule(molecule, indent, nextVar) {
   const componentFinalVars = [];
   components.forEach((component) => {
     // eslint-disable-next-line no-use-before-define
-    const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar);
+    const { code: componentCode, finalVar } = decompileNode(component, indent, nextVar, verbose);
     lines.push(componentCode);
     // Note: metaLeadingBond is now handled in component constructors via metadata
     // or leadingBond option, so no mutation needed here
@@ -893,21 +1049,21 @@ function decompileMolecule(molecule, indent, nextVar) {
   return { code: lines.join('\n'), finalVar: finalVarName };
 }
 
-function decompileNode(node, indent, nextVar) {
+function decompileNode(node, indent, nextVar, verbose = true) {
   if (isRingNode(node)) {
-    return decompileRing(node, indent, nextVar);
+    return decompileRing(node, indent, nextVar, verbose);
   }
 
   if (isLinearNode(node)) {
-    return decompileLinear(node, indent, nextVar);
+    return decompileLinear(node, indent, nextVar, verbose);
   }
 
   if (isFusedRingNode(node)) {
-    return decompileFusedRing(node, indent, nextVar);
+    return decompileFusedRing(node, indent, nextVar, verbose);
   }
 
   if (isMoleculeNode(node)) {
-    return decompileMolecule(node, indent, nextVar);
+    return decompileMolecule(node, indent, nextVar, verbose);
   }
 
   throw new Error(`Unknown node type: ${node.type}`);
@@ -919,15 +1075,19 @@ function decompileNode(node, indent, nextVar) {
  * @param {Object} options - Options
  * @param {number} options.indent - Indentation level (default 0)
  * @param {string} options.varName - Variable name prefix (default 'v')
+ * @param {boolean} options.verbose - Use verbose constructor syntax (default false).
+ *   When false, uses Fragment('SMILES') for Ring and simple Linear nodes.
  * @param {boolean} options.includeMetadata - Include metadata assignments
  *   (default true). Set to false for cleaner output (but code may not work)
  */
 export function decompile(node, options = {}) {
-  const { indent = 0, varName = 'v', includeMetadata = true } = options;
+  const {
+    indent = 0, varName = 'v', includeMetadata = true, verbose = false,
+  } = options;
   const indentStr = '  '.repeat(indent);
   const nextVar = createCounter(varName);
 
-  const { code } = decompileNode(node, indentStr, nextVar);
+  const { code } = decompileNode(node, indentStr, nextVar, verbose);
 
   // Always use export for declarations
   let result = code.replace(/^(\s*)(const|let) /gm, '$1export $2 ');

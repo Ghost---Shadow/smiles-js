@@ -102,8 +102,8 @@ export function attachRingMethods(node) {
       });
       return result;
     },
-    toCode(varName = 'ring') {
-      return decompile(this, { varName });
+    toCode(varName = 'ring', { verbose = false } = {}) {
+      return decompile(this, { varName, verbose });
     },
   });
 }
@@ -144,8 +144,8 @@ export function attachLinearMethods(node) {
       });
       return result;
     },
-    toCode(varName = 'linear') {
-      return decompile(this, { varName });
+    toCode(varName = 'linear', { verbose = false } = {}) {
+      return decompile(this, { varName, verbose });
     },
   });
 }
@@ -183,8 +183,8 @@ export function attachMoleculeMethods(node) {
         components: this.components.map((c) => (c.toObject ? c.toObject() : c)),
       };
     },
-    toCode(varName = 'molecule') {
-      return decompile(this, { varName });
+    toCode(varName = 'molecule', { verbose = false } = {}) {
+      return decompile(this, { varName, verbose });
     },
   });
 }
@@ -236,8 +236,8 @@ export function attachFusedRingMethods(node) {
         })),
       };
     },
-    toCode(varName = 'fusedRing') {
-      return decompile(this, { varName });
+    toCode(varName = 'fusedRing', { verbose = false } = {}) {
+      return decompile(this, { varName, verbose });
     },
   });
 }

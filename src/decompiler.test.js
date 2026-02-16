@@ -15,42 +15,42 @@ function rawFusedRing(rings) {
   return { type: 'fused_ring', rings };
 }
 
-describe('Decompiler - Ring', () => {
+describe('Decompiler - Ring (verbose)', () => {
   test('decompiles simple ring', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
-    const code = decompile(benzene);
+    const code = decompile(benzene, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'c', size: 6 });");
   });
 
   test('decompiles ring with custom ring number', () => {
     const ring = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-    const code = decompile(ring);
+    const code = decompile(ring, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });");
   });
 
   test('decompiles ring with offset', () => {
     const ring = Ring({ atoms: 'C', size: 6, offset: 2 });
-    const code = decompile(ring);
+    const code = decompile(ring, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6, offset: 2 });");
   });
 
   test('decompiles ring with bonds', () => {
     const ring = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '='] });
-    const code = decompile(ring);
+    const code = decompile(ring, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '='] });");
   });
 
   test('decompiles ring with branchDepths metadata', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     ring.metaBranchDepths = [0, 0, 0, 1, 1, 1];
-    const code = decompile(ring);
+    const code = decompile(ring, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6, branchDepths: [0, 0, 0, 1, 1, 1] });");
   });
 
   test('decompiles ring with substitutions', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     const substituted = ring.substitute(2, 'N');
-    const code = decompile(substituted);
+    const code = decompile(substituted, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = v1.substitute(2, 'N');`);
   });
@@ -59,7 +59,7 @@ export const v2 = v1.substitute(2, 'N');`);
     const ring = Ring({ atoms: 'C', size: 6 });
     const methyl = Linear(['C']);
     const attached = ring.attach(1, methyl);
-    const code = decompile(attached);
+    const code = decompile(attached, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(1, v2);`);
@@ -71,7 +71,7 @@ export const v3 = v1.attach(1, v2);`);
     const branch2 = Linear(['O']);
     const withAttach = ring.attach(2, branch1);
     const withBoth = withAttach.attach(4, branch2);
-    const code = decompile(withBoth);
+    const code = decompile(withBoth, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Linear(['N']);
 export const v3 = v1.attach(2, v2);
@@ -79,35 +79,98 @@ export const v4 = Linear(['O']);
 export const v5 = v3.attach(4, v4);`);
   });
 
-  test('uses toCode() method', () => {
+  test('uses toCode() method with verbose', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
-    expect(benzene.toCode()).toBe("export const ring1 = Ring({ atoms: 'c', size: 6 });");
-    expect(benzene.toCode('r')).toBe("export const r1 = Ring({ atoms: 'c', size: 6 });");
+    expect(benzene.toCode('ring', { verbose: true })).toBe("export const ring1 = Ring({ atoms: 'c', size: 6 });");
+    expect(benzene.toCode('r', { verbose: true })).toBe("export const r1 = Ring({ atoms: 'c', size: 6 });");
   });
 });
 
-describe('Decompiler - Linear', () => {
+describe('Decompiler - Ring (non-verbose)', () => {
+  test('decompiles simple ring as Fragment', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const code = decompile(benzene);
+    expect(code).toBe("export const v1 = Fragment('c1ccccc1');");
+  });
+
+  test('decompiles ring with custom ring number as Fragment', () => {
+    const ring = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
+    const code = decompile(ring);
+    expect(code).toBe("export const v1 = Fragment('C2CCCCC2');");
+  });
+
+  test('decompiles ring with bonds as Fragment', () => {
+    const ring = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '='] });
+    const code = decompile(ring);
+    expect(code).toBe("export const v1 = Fragment('C1=CC=CC=C1');");
+  });
+
+  test('decompiles ring with branchDepths as Fragment', () => {
+    const ring = Ring({ atoms: 'C', size: 6 });
+    ring.metaBranchDepths = [0, 0, 0, 1, 1, 1];
+    const code = decompile(ring);
+    expect(code).toBe("export const v1 = Fragment('C1CC(CCC1)');");
+  });
+
+  test('decompiles ring with substitutions as Fragment', () => {
+    const ring = Ring({ atoms: 'C', size: 6 });
+    const substituted = ring.substitute(2, 'N');
+    const code = decompile(substituted);
+    expect(code).toBe(`export const v1 = Fragment('C1CCCCC1');
+export const v2 = Fragment('C1NCCCC1');`);
+  });
+
+  test('decompiles ring with single attachment using Fragment', () => {
+    const ring = Ring({ atoms: 'C', size: 6 });
+    const methyl = Linear(['C']);
+    const attached = ring.attach(1, methyl);
+    const code = decompile(attached);
+    expect(code).toBe(`export const v1 = Fragment('C1CCCCC1');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(1, v2);`);
+  });
+
+  test('decompiles ring with substitution and attachment using Fragment', () => {
+    const ring = Ring({ atoms: 'C', size: 6 });
+    const substituted = ring.substitute(2, 'N');
+    const branch = Linear(['O']);
+    const attached = substituted.attach(1, branch);
+    const code = decompile(attached);
+    expect(code).toBe(`export const v1 = Fragment('C1CCCCC1');
+export const v2 = Fragment('C1NCCCC1');
+export const v3 = Fragment('O');
+export const v4 = v2.attach(1, v3);`);
+  });
+
+  test('uses toCode() non-verbose by default', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    expect(benzene.toCode()).toBe("export const ring1 = Fragment('c1ccccc1');");
+    expect(benzene.toCode('r')).toBe("export const r1 = Fragment('c1ccccc1');");
+  });
+});
+
+describe('Decompiler - Linear (verbose)', () => {
   test('decompiles simple linear chain', () => {
     const propane = Linear(['C', 'C', 'C']);
-    const code = decompile(propane);
+    const code = decompile(propane, { verbose: true });
     expect(code).toBe("export const v1 = Linear(['C', 'C', 'C']);");
   });
 
   test('decompiles single-atom linear', () => {
     const linear = Linear(['C']);
-    const code = decompile(linear);
+    const code = decompile(linear, { verbose: true });
     expect(code).toBe("export const v1 = Linear(['C']);");
   });
 
   test('decompiles linear with bonds', () => {
     const ethene = Linear(['C', 'C'], ['=']);
-    const code = decompile(ethene);
+    const code = decompile(ethene, { verbose: true });
     expect(code).toBe("export const v1 = Linear(['C', 'C'], ['=']);");
   });
 
   test('decompiles linear with different atom types and bond', () => {
     const linear = Linear(['C', 'N'], ['=']);
-    const code = decompile(linear);
+    const code = decompile(linear, { verbose: true });
     expect(code).toBe("export const v1 = Linear(['C', 'N'], ['=']);");
   });
 
@@ -115,27 +178,69 @@ describe('Decompiler - Linear', () => {
     const chain = Linear(['C', 'C', 'C']);
     const branch = Linear(['N']);
     const attached = chain.attach(2, branch);
-    const code = decompile(attached);
+    const code = decompile(attached, { verbose: true });
     expect(code).toBe(`export const v1 = Linear(['C', 'C', 'C']);
 export const v2 = Linear(['N']);
 export const v3 = v1.attach(2, v2);`);
   });
 
-  test('uses toCode() method', () => {
+  test('uses toCode() method with verbose', () => {
     const propane = Linear(['C', 'C', 'C']);
-    expect(propane.toCode()).toBe("export const linear1 = Linear(['C', 'C', 'C']);");
-    expect(propane.toCode('c')).toBe("export const c1 = Linear(['C', 'C', 'C']);");
+    expect(propane.toCode('linear', { verbose: true })).toBe("export const linear1 = Linear(['C', 'C', 'C']);");
+    expect(propane.toCode('c', { verbose: true })).toBe("export const c1 = Linear(['C', 'C', 'C']);");
   });
 });
 
-describe('Decompiler - FusedRing (simple path)', () => {
+describe('Decompiler - Linear (non-verbose)', () => {
+  test('decompiles simple linear as Fragment', () => {
+    const propane = Linear(['C', 'C', 'C']);
+    const code = decompile(propane);
+    expect(code).toBe("export const v1 = Fragment('CCC');");
+  });
+
+  test('decompiles single-atom linear as Fragment', () => {
+    const linear = Linear(['C']);
+    const code = decompile(linear);
+    expect(code).toBe("export const v1 = Fragment('C');");
+  });
+
+  test('keeps linear with bonds as Linear (not Fragment)', () => {
+    const ethene = Linear(['C', 'C'], ['=']);
+    const code = decompile(ethene);
+    expect(code).toBe("export const v1 = Linear(['C', 'C'], ['=']);");
+  });
+
+  test('keeps linear with leadingBond as Linear (not Fragment)', () => {
+    const linear = Linear(['C', 'C'], [], {}, '=');
+    const code = decompile(linear);
+    expect(code).toBe("export const v1 = Linear(['C', 'C'], [], {}, '=');");
+  });
+
+  test('decompiles linear with attachments using Fragment', () => {
+    const chain = Linear(['C', 'C', 'C']);
+    const branch = Linear(['N']);
+    const attached = chain.attach(2, branch);
+    const code = decompile(attached);
+    expect(code).toBe(`export const v1 = Fragment('CCC');
+export const v2 = Fragment('N');
+export const v3 = v1.attach(2, v2);`);
+  });
+
+  test('uses toCode() non-verbose by default', () => {
+    const propane = Linear(['C', 'C', 'C']);
+    expect(propane.toCode()).toBe("export const linear1 = Fragment('CCC');");
+    expect(propane.toCode('c')).toBe("export const c1 = Fragment('CCC');");
+  });
+});
+
+describe('Decompiler - FusedRing (simple path, verbose)', () => {
   test('decompiles 2-ring fused ring system via rawFusedRing', () => {
     const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
     const ring2 = Ring({
       atoms: 'C', size: 6, ringNumber: 2, offset: 2,
     });
     const fusedRing = rawFusedRing([ring1, ring2]);
-    const code = decompile(fusedRing);
+    const code = decompile(fusedRing, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 10 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2 });
 export const v3 = v1.fuse(2, v2);`);
@@ -148,7 +253,7 @@ export const v3 = v1.fuse(2, v2);`);
     });
     const fused = rawFusedRing([ring1, ring2]);
     fused.metaLeadingBond = '=';
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = v1.fuse(1, v2, { leadingBond: '=' });`);
@@ -164,7 +269,7 @@ export const v3 = v1.fuse(1, v2, { leadingBond: '=' });`);
     });
     const fused = rawFusedRing([ring1, ring2, ring3]);
     fused.metaLeadingBond = '#';
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 2 });
@@ -181,7 +286,7 @@ export const v5 = v4.addRing(2, v3);`);
       atoms: 'C', size: 6, ringNumber: 3, offset: 2,
     });
     const fused = rawFusedRing([ring1, ring2, ring3]);
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 2 });
@@ -192,14 +297,14 @@ export const v5 = v4.addRing(2, v3);`);
   test('decompiles single-ring FusedRing via simple path', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const fused = { type: 'fused_ring', rings: [ring1] };
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 
   test('decompiles single-ring FusedRing with empty sequential rings', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const fused = { type: 'fused_ring', rings: [ring1], metaSequentialRings: [] };
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 
@@ -210,14 +315,35 @@ export const v5 = v4.addRing(2, v3);`);
     });
     const fused = rawFusedRing([ring1, ring2]);
     fused.metaSequentialRings = [];
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = v1.fuse(1, v2);`);
   });
 });
 
-describe('Decompiler - FusedRing (interleaved/complex path)', () => {
+describe('Decompiler - FusedRing (simple path, non-verbose)', () => {
+  test('decompiles 2-ring rawFusedRing as Fragment', () => {
+    const ring1 = Ring({ atoms: 'C', size: 10, ringNumber: 1 });
+    const ring2 = Ring({
+      atoms: 'C', size: 6, ringNumber: 2, offset: 2,
+    });
+    const fusedRing = rawFusedRing([ring1, ring2]);
+    const code = decompile(fusedRing);
+    expect(code).toBe(`export const v1 = Fragment('C1CCCCCCCCC1');
+export const v2 = Fragment('C2CCCCC2');
+export const v3 = v1.fuse(2, v2);`);
+  });
+
+  test('decompiles single-ring FusedRing as Fragment', () => {
+    const ring1 = Ring({ atoms: 'C', size: 6 });
+    const fused = { type: 'fused_ring', rings: [ring1] };
+    const code = decompile(fused);
+    expect(code).toBe("export const v1 = Fragment('C1CCCCC1');");
+  });
+});
+
+describe('Decompiler - FusedRing (interleaved/complex path, verbose)', () => {
   // When .fuse() produces parser metadata (interleaved positions), the decompiler
   // should emit FusedRing({ metadata: { rings: [...] } }) with hierarchical colocated atoms.
   // No scattered Maps, no mutations.
@@ -230,7 +356,7 @@ describe('Decompiler - FusedRing (interleaved/complex path)', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
     const fused = ring1.fuse(1, ring2);
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }] } });`);
@@ -241,7 +367,7 @@ export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, 
     const ring2 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
     const fused = ring1.fuse(1, ring2);
     fused.metaLeadingBond = '=';
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = FusedRing({ metadata: { leadingBond: '=', rings: [{ ring: v1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }] } });`);
@@ -273,7 +399,7 @@ export const v3 = FusedRing({ metadata: { leadingBond: '=', rings: [{ ring: v1, 
         atoms: [{ position: 12, depth: 0, value: 'O' }],
       },
     });
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     // Attachments stay as .attach() calls on rings.
     // FusedRing uses hierarchical metadata with the extra atom (position 12, value 'O') colocated.
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
@@ -307,7 +433,7 @@ export const v5 = FusedRing({ metadata: { rings: [{ ring: v3, start: 0, end: 9, 
         atoms: [{ position: 12, depth: 0, value: 'N' }],
       },
     });
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
 export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, atoms: [{ position: 0, depth: 0 }, { position: 1, depth: 0 }, { position: 6, depth: 0 }, { position: 7, depth: 0 }, { position: 8, depth: 0 }, { position: 9, depth: 0 }] }, { ring: v2, start: 1, end: 6, atoms: [{ position: 1, depth: 0 }, { position: 2, depth: 0 }, { position: 3, depth: 0 }, { position: 4, depth: 0 }, { position: 5, depth: 0 }, { position: 6, depth: 0 }] }], atoms: [{ position: 12, depth: 0, value: 'N' }] } });`);
@@ -318,14 +444,14 @@ export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, 
     const fused = ring1.addSequentialRings([]);
     fused.metaBranchDepthMap.set(5, 0);
     fused.metaBondMap.set(5, null);
-    const code = decompile(fused, { includeMetadata: true });
+    const code = decompile(fused, { verbose: true, includeMetadata: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 
   test('decompiles single-ring fused with empty maps returns just Ring', () => {
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const fused = ring1.addSequentialRings([]);
-    const code = decompile(fused, { includeMetadata: true });
+    const code = decompile(fused, { verbose: true, includeMetadata: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 
@@ -335,12 +461,12 @@ export const v3 = FusedRing({ metadata: { rings: [{ ring: v1, start: 0, end: 9, 
     const fused = ring1.fuse(1, ring2);
     fused.metaSequentialRings = [];
     fused.rings = [ring1];
-    const code = decompile(fused);
+    const code = decompile(fused, { verbose: true });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 });
 
-describe('Decompiler - FusedRing (sequential rings)', () => {
+describe('Decompiler - FusedRing (sequential rings, verbose)', () => {
   // Sequential rings: all const, no let+reassignment.
   // Depth colocated per-ring as { ring: v, depth: N }. Depth 0 is default (omitted).
   // chainAtoms: depth always explicit.
@@ -351,7 +477,7 @@ describe('Decompiler - FusedRing (sequential rings)', () => {
     const fused = ring1.fuse(1, ring2);
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
     const result = fused.addSequentialRings([seqRing]);
-    const code = decompile(result);
+    const code = decompile(result, { verbose: true });
     // const for fuse, new const for addSequentialRings, depth 0 omitted
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
@@ -366,7 +492,7 @@ export const v5 = v3.addSequentialRings([{ ring: v4 }]);`);
     const fused = ring1.fuse(1, ring2);
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
     const result = fused.addSequentialRings([seqRing]);
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     // depth 0 is default, so omitted in the ring entry
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1 });
@@ -379,7 +505,7 @@ export const v5 = v3.addSequentialRings([{ ring: v4 }]);`);
     const ring1 = Ring({ atoms: 'C', size: 6 });
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
     const result = ring1.addSequentialRings([seqRing]);
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     // Single base ring + sequential ring, all depth 0 (omitted), all const
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
@@ -395,7 +521,7 @@ export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
         atom: 'N', depth: 0, position: 'after', attachments: [attachment],
       }],
     });
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     // chainAtoms depth always explicit, attachment declared before addSequentialRings
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
@@ -409,7 +535,7 @@ export const v4 = v1.addSequentialRings([{ ring: v2 }], { chainAtoms: [{ atom: '
     const result = ring1.addSequentialRings([seqRing]);
     // Position 10 is within the sequential ring — atom value here doesn't need chainAtom
     result.metaAtomValueMap.set(10, 'N');
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
 export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
@@ -423,7 +549,7 @@ export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
     result.metaBondMap.set(1, '=');
     result.metaBondMap.set(2, null);
     result.metaBondMap.set(3, '#');
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
 export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
@@ -437,7 +563,7 @@ export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
     const result = ring1.addSequentialRings([seqRing]);
     // Attachments at base ring position 3 don't generate chainAtoms
     result.metaSeqAtomAttachments.set(3, [att1, att2]);
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
 export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
@@ -456,7 +582,7 @@ export const v3 = v1.addSequentialRings([{ ring: v2 }]);`);
     const fused = FusedRing([ring1, ring2, ring3]);
     const seqRing = Ring({ atoms: 'C', size: 5, ringNumber: 4 });
     const result = fused.addSequentialRings([seqRing]);
-    const code = decompile(result, { includeMetadata: true });
+    const code = decompile(result, { verbose: true, includeMetadata: true });
     // All const, new const for addSequentialRings, depth 0 omitted
     expect(code).toBe(`export const v1 = Ring({ atoms: 'C', size: 6 });
 export const v2 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3 });
@@ -467,12 +593,12 @@ export const v6 = v4.addSequentialRings([{ ring: v5 }]);`);
   });
 });
 
-describe('Decompiler - Molecule', () => {
+describe('Decompiler - Molecule (verbose)', () => {
   test('decompiles molecule with multiple components', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const benzene = Ring({ atoms: 'c', size: 6 });
     const molecule = Molecule([propyl, benzene]);
-    const code = decompile(molecule);
+    const code = decompile(molecule, { verbose: true });
     expect(code).toBe(`export const v1 = Linear(['C', 'C', 'C']);
 export const v2 = Ring({ atoms: 'c', size: 6 });
 export const v3 = Molecule([v1, v2]);`);
@@ -480,17 +606,45 @@ export const v3 = Molecule([v1, v2]);`);
 
   test('decompiles empty molecule', () => {
     const empty = Molecule([]);
+    const code = decompile(empty, { verbose: true });
+    expect(code).toBe('export const v1 = Molecule([]);');
+  });
+
+  test('uses toCode() method with verbose', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const molecule = Molecule([propyl, benzene]);
+    const code = molecule.toCode('molecule', { verbose: true });
+    expect(code).toBe(`export const molecule1 = Linear(['C', 'C', 'C']);
+export const molecule2 = Ring({ atoms: 'c', size: 6 });
+export const molecule3 = Molecule([molecule1, molecule2]);`);
+  });
+});
+
+describe('Decompiler - Molecule (non-verbose)', () => {
+  test('decompiles molecule with Fragment', () => {
+    const propyl = Linear(['C', 'C', 'C']);
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const molecule = Molecule([propyl, benzene]);
+    const code = decompile(molecule);
+    expect(code).toBe(`export const v1 = Fragment('CCC');
+export const v2 = Fragment('c1ccccc1');
+export const v3 = Molecule([v1, v2]);`);
+  });
+
+  test('decompiles empty molecule same as verbose', () => {
+    const empty = Molecule([]);
     const code = decompile(empty);
     expect(code).toBe('export const v1 = Molecule([]);');
   });
 
-  test('uses toCode() method', () => {
+  test('uses toCode() non-verbose by default', () => {
     const propyl = Linear(['C', 'C', 'C']);
     const benzene = Ring({ atoms: 'c', size: 6 });
     const molecule = Molecule([propyl, benzene]);
     const code = molecule.toCode();
-    expect(code).toBe(`export const molecule1 = Linear(['C', 'C', 'C']);
-export const molecule2 = Ring({ atoms: 'c', size: 6 });
+    expect(code).toBe(`export const molecule1 = Fragment('CCC');
+export const molecule2 = Fragment('c1ccccc1');
 export const molecule3 = Molecule([molecule1, molecule2]);`);
   });
 });
@@ -498,20 +652,20 @@ export const molecule3 = Molecule([molecule1, molecule2]);`);
 describe('Decompiler - Options', () => {
   test('handles custom indent option', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
-    const code = decompile(ring, { indent: 2 });
+    const code = decompile(ring, { indent: 2, verbose: true });
     expect(code).toBe("    export const v1 = Ring({ atoms: 'C', size: 6 });");
   });
 
   test('handles custom varName option', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
-    const code = decompile(ring, { varName: 'node' });
+    const code = decompile(ring, { varName: 'node', verbose: true });
     expect(code).toBe("export const node1 = Ring({ atoms: 'C', size: 6 });");
   });
 
   test('includeMetadata false strips branchDepths', () => {
     const ring = Ring({ atoms: 'C', size: 6 });
     ring.metaBranchDepths = [0, 0, 0, 1, 1, 1];
-    const code = decompile(ring, { includeMetadata: false });
+    const code = decompile(ring, { verbose: true, includeMetadata: false });
     expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 6, branchDepths: [0, 0, 0, 1, 1, 1] });");
   });
 
@@ -522,21 +676,39 @@ describe('Decompiler - Options', () => {
 });
 
 describe('Decompiler - Round-trip', () => {
-  test('generated code can be evaluated', () => {
+  test('generated code can be evaluated (verbose)', () => {
     const benzene = Ring({ atoms: 'c', size: 6 });
-    const code = benzene.toCode('r');
+    const code = benzene.toCode('r', { verbose: true });
     expect(code).toBe("export const r1 = Ring({ atoms: 'c', size: 6 });");
   });
 
-  test('preserves structure through decompile', () => {
+  test('generated code can be evaluated (non-verbose)', () => {
+    const benzene = Ring({ atoms: 'c', size: 6 });
+    const code = benzene.toCode('r');
+    expect(code).toBe("export const r1 = Fragment('c1ccccc1');");
+  });
+
+  test('preserves structure through decompile (verbose)', () => {
     const propane = Linear(['C', 'C', 'C']);
-    const code = propane.toCode('p');
+    const code = propane.toCode('p', { verbose: true });
     expect(code).toBe("export const p1 = Linear(['C', 'C', 'C']);");
   });
 
-  test('round-trips parsed ring with bonds', () => {
+  test('preserves structure through decompile (non-verbose)', () => {
+    const propane = Linear(['C', 'C', 'C']);
+    const code = propane.toCode('p');
+    expect(code).toBe("export const p1 = Fragment('CCC');");
+  });
+
+  test('round-trips parsed ring with bonds (verbose)', () => {
+    const ast = parse('C1CC=CC1');
+    const code = decompile(ast, { verbose: true, includeMetadata: true });
+    expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 5, bonds: [null, null, '=', null, null] });");
+  });
+
+  test('round-trips parsed ring with bonds (non-verbose)', () => {
     const ast = parse('C1CC=CC1');
     const code = decompile(ast, { includeMetadata: true });
-    expect(code).toBe("export const v1 = Ring({ atoms: 'C', size: 5, bonds: [null, null, '=', null, null] });");
+    expect(code).toBe("export const v1 = Fragment('C1CC=CC1');");
   });
 });

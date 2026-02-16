@@ -23,6 +23,12 @@ describe('Morphine Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(MORPHINE_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(MORPHINE_SMILES);
     const code = ast.toCode('v');
@@ -30,14 +36,14 @@ describe('Morphine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(MORPHINE_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -63,6 +69,12 @@ describe('Codeine Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(CODEINE_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(CODEINE_SMILES);
     const code = ast.toCode('v');
@@ -70,14 +82,14 @@ describe('Codeine Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(CODEINE_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -102,6 +114,12 @@ describe('Oxycodone Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(OXYCODONE_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(OXYCODONE_SMILES);
     const code = ast.toCode('v');
@@ -109,14 +127,14 @@ describe('Oxycodone Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(OXYCODONE_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -141,6 +159,12 @@ describe('Hydrocodone Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(HYDROCODONE_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(HYDROCODONE_SMILES);
     const code = ast.toCode('v');
@@ -148,14 +172,14 @@ describe('Hydrocodone Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(HYDROCODONE_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -181,6 +205,12 @@ describe('Fentanyl Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(FENTANYL_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(FENTANYL_SMILES);
     const code = ast.toCode('v');
@@ -188,14 +218,14 @@ describe('Fentanyl Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(FENTANYL_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -221,6 +251,12 @@ describe('Tramadol Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(TRAMADOL_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(TRAMADOL_SMILES);
     const code = ast.toCode('v');
@@ -228,14 +264,14 @@ describe('Tramadol Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(TRAMADOL_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);
@@ -261,6 +297,12 @@ describe('Methadone Integration Test', () => {
     expect(code).toMatchSnapshot();
   });
 
+  test('generates valid verbose code via toCode()', () => {
+    const ast = parse(METHADONE_SMILES);
+    const code = ast.toCode('v', { verbose: true });
+    expect(code).toMatchSnapshot();
+  });
+
   test('generated code is valid JavaScript', () => {
     const ast = parse(METHADONE_SMILES);
     const code = ast.toCode('v');
@@ -268,14 +310,14 @@ describe('Methadone Integration Test', () => {
 
     let factory;
     expect(() => {
-      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', executableCode);
+      factory = createFunction('Ring', 'Linear', 'FusedRing', 'Molecule', 'RawFragment', 'Fragment', executableCode);
     }).not.toThrow();
     expect(typeof factory).toBe('function');
   });
 
   test('codegen round-trip: generated code produces valid SMILES', () => {
     const ast = parse(METHADONE_SMILES);
-    const code = ast.toCode('v');
+    const code = ast.toCode('v', { verbose: true });
     const executableCode = stripExports(code);
 
     const varMatch = code.match(/export const (v\d+) = /g);

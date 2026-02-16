@@ -71,6 +71,23 @@ exports[`Telmisartan Integration Test parses telmisartan 1`] = `
 `;
 
 exports[`Telmisartan Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCC');
+export const v2 = Fragment('C1=CC((=CC1))');
+export const v3 = Fragment('C1=NC((=CN1))');
+export const v4 = Fragment('C2=C(C=C(C=C2))');
+export const v5 = v3.fuse(2, v4);
+export const v6 = Fragment('C5=CC=CC5');
+export const v7 = Fragment('C5=NC=CN5');
+export const v8 = Fragment('C3=CC=C(C=C3)');
+export const v9 = Fragment('C6=CC=CC=C6');
+export const v10 = Fragment('C4=CC=CC=C4');
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v5.addSequentialRings([{ ring: v7, depth: 1 }, { ring: v8, depth: 2 }, { ring: v9, depth: 1 }, { ring: v10, depth: 2 }], { chainAtoms: [{ atom: 'C', depth: 2, position: 'before' }, { atom: 'C', depth: 2, position: 'after', attachments: [v11] }, { atom: 'O', depth: 2, position: 'after' }, { atom: 'C', depth: 1, position: 'after' }] });
+export const v13 = Fragment('C');
+export const v14 = Molecule([v1, v12, v13]);"
+`;
+
+exports[`Telmisartan Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C']);
 export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null], branchDepths: [0, 0, 0, 2, 2] });
 export const v3 = v2.substitute(2, 'N');
@@ -219,6 +236,22 @@ exports[`Losartan Integration Test parses losartan 1`] = `
 `;
 
 exports[`Losartan Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCC');
+export const v2 = Fragment('C1=CC=CC1');
+export const v3 = Fragment('C1=NC=CN1');
+export const v4 = Fragment('Cl');
+export const v5 = v3.attach(3, v4);
+export const v6 = Fragment('CO');
+export const v7 = v5.attach(4, v6);
+export const v8 = Fragment('C');
+export const v9 = Fragment('C2=CC=C(C=C2)');
+export const v10 = Fragment('C3=CC=CC=C3');
+export const v11 = Fragment('N4=NNN=N4');
+export const v12 = Fragment('C4=NNN=N4');
+export const v13 = Molecule([v1, v7, v8, v9, v10, v12]);"
+`;
+
+exports[`Losartan Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C']);
 export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, '=', null, null] });
 export const v3 = v2.substitute(2, 'N');
@@ -372,6 +405,26 @@ exports[`Valsartan Integration Test parses valsartan 1`] = `
 `;
 
 exports[`Valsartan Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCCCNCCO');
+export const v2 = Linear(['O'], ['=']);
+export const v3 = v1.attach(5, v2);
+export const v4 = Fragment('C');
+export const v5 = Fragment('C1=CC=C(C=C1)');
+export const v6 = Fragment('C2=CC=CC=C2');
+export const v7 = Fragment('N3=NNN=N3');
+export const v8 = Fragment('C3=NNN=N3');
+export const v9 = v6.addSequentialRings([{ ring: v8 }]);
+export const v10 = Molecule([v4, v5, v9]);
+export const v11 = v3.attach(6, v10);
+export const v12 = Fragment('CC');
+export const v13 = Fragment('C');
+export const v14 = v12.attach(1, v13);
+export const v15 = v11.attach(7, v14);
+export const v16 = Linear(['O'], ['=']);
+export const v17 = v15.attach(8, v16);"
+`;
+
+exports[`Valsartan Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C', 'C', 'N', 'C', 'C', 'O']);
 export const v2 = Linear(['O'], ['=']);
 export const v3 = v1.attach(5, v2);
@@ -528,6 +581,22 @@ exports[`Irbesartan Integration Test parses irbesartan 1`] = `
 `;
 
 exports[`Irbesartan Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCC');
+export const v2 = Fragment('C1=CCCC1');
+export const v3 = Fragment('C1=NCCN1');
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(4, v4);
+export const v6 = Fragment('C2(CCCC2)');
+export const v7 = FusedRing({ metadata: { rings: [{ ring: v5, start: 4, end: 13, atoms: [{ position: 4, depth: 0, value: 'C', rings: [1, 1] }, { position: 5, depth: 0, value: 'N', bond: '=', rings: [1] }, { position: 6, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 11, depth: 0, value: 'C', rings: [1] }, { position: 13, depth: 0, value: 'N', rings: [1] }] }, { ring: v6, start: 6, end: 10, atoms: [{ position: 6, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 7, depth: 1, value: 'C', rings: [2], branchId: 10 }, { position: 8, depth: 1, value: 'C', rings: [2], branchId: 10 }, { position: 9, depth: 1, value: 'C', rings: [2], branchId: 10 }, { position: 10, depth: 1, value: 'C', rings: [2], branchId: 10 }] }] } });
+export const v8 = Fragment('C');
+export const v9 = Fragment('C3=CC=C(C=C3)');
+export const v10 = Fragment('C4=CC=CC=C4');
+export const v11 = Fragment('N5=NNN=N5');
+export const v12 = Fragment('C5=NNN=N5');
+export const v13 = Molecule([v1, v7, v8, v9, v10, v12]);"
+`;
+
+exports[`Irbesartan Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C']);
 export const v2 = Ring({ atoms: 'C', size: 5, bonds: ['=', null, null, null, null] });
 export const v3 = v2.substitute(2, 'N');

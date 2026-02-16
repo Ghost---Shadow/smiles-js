@@ -2,6 +2,7 @@ import { parse } from '../src/parser/index.js';
 import {
   Ring, Linear, FusedRing, Molecule, RawFragment,
 } from '../src/constructors.js';
+import { Fragment } from '../src/fragment.js';
 
 // Use indirect Function constructor access to satisfy linter
 // This is a legitimate use case for testing code generation
@@ -38,9 +39,10 @@ export function executeCode(code, returnVar) {
     'FusedRing',
     'Molecule',
     'RawFragment',
+    'Fragment',
     `${code}\nreturn ${returnVar};`,
   );
-  return factory(Ring, Linear, FusedRing, Molecule, RawFragment);
+  return factory(Ring, Linear, FusedRing, Molecule, RawFragment, Fragment);
 }
 
 /**
@@ -51,7 +53,7 @@ export function executeCode(code, returnVar) {
  */
 export function codegenRoundTrip(smiles) {
   const ast = parse(smiles);
-  const code = ast.toCode('v');
+  const code = ast.toCode('v', { verbose: true });
 
   // Find the last variable name in the generated code
   const varMatches = code.match(/export (?:const|let) (v\d+)/g);

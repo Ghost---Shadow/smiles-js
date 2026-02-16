@@ -2,6 +2,7 @@
 // Pain relief through nerve block or topical application
 
 import { Fragment } from 'smiles-js';
+import { Ring, Linear, Molecule } from 'smiles-js';
 
 // === LIDOCAINE ===
 // Amide-type local anesthetic (first of this class)
@@ -14,6 +15,38 @@ export const lidocaine = Fragment('CCN(CC)CC(=O)NC1=C(C)C=CC=C1C');
 // SMILES: CCCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C
 
 export const bupivacaine = Fragment('CCCCN1CCCCC1C(=O)NC2=C(C)C=CC=C2C');
+
+// Refactored from bupivacaine:
+export const bupivacaine1 = Linear(['C', 'C', 'C', 'C']);
+export const bupivacaine2 = Ring({ atoms: 'C', size: 6 });
+export const bupivacaine3 = bupivacaine2.substitute(1, 'N');
+export const bupivacaine4 = Linear(['C', 'N']);
+export const bupivacaine5 = Linear(['O'], ['=']);
+export const bupivacaine6 = bupivacaine4.attach(1, bupivacaine5);
+export const bupivacaine7 = Ring({
+  atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null],
+});
+export const bupivacaine8 = Linear(['C']);
+export const bupivacaine9 = bupivacaine7.attach(2, bupivacaine8);
+export const bupivacaine10 = Linear(['C']);
+export const bupivacaine11 = Molecule([
+  bupivacaine1, bupivacaine3, bupivacaine6, bupivacaine9, bupivacaine10,
+]);
+
+// Refactored from bupivacaine:
+export const b1 = Fragment('CCCC');
+export const b2 = Fragment('C1CCCCC1');
+export const b3 = Fragment('N1CCCCC1');
+export const b4 = Fragment('CN');
+export const b5 = Linear(['O'], ['=']);
+export const b6 = b4.attach(1, b5);
+export const b7 = Fragment('C2=CC=CC=C2');
+export const b8 = Fragment('C');
+export const b9 = b7.attach(2, b8);
+export const b10 = Fragment('C');
+export const b11 = Molecule([
+  b1, b3, b6, b9, b10,
+]);
 
 // === ROPIVACAINE ===
 // Similar to bupivacaine but with n-propyl instead of n-butyl

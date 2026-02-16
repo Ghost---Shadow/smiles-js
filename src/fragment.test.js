@@ -61,8 +61,13 @@ describe('Fragment', () => {
     });
   });
 
-  test('toCode works on fragment', () => {
+  test('toCode works on fragment (non-verbose default)', () => {
     const benzene = Fragment('c1ccccc1');
-    expect(benzene.toCode('v')).toBe("export const v1 = Ring({ atoms: 'c', size: 6 });");
+    expect(benzene.toCode('v')).toBe("export const v1 = Fragment('c1ccccc1');");
+  });
+
+  test('toCode works on fragment (verbose)', () => {
+    const benzene = Fragment('c1ccccc1');
+    expect(benzene.toCode('v', { verbose: true })).toBe("export const v1 = Ring({ atoms: 'c', size: 6 });");
   });
 });

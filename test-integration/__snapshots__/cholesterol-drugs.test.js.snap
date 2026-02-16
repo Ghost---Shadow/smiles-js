@@ -212,6 +212,34 @@ exports[`Atorvastatin Integration Test parses atorvastatin 1`] = `
 `;
 
 exports[`Atorvastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CC');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(2, v2);
+export const v4 = Fragment('c1cccc1');
+export const v5 = Fragment('c1cccn1');
+export const v6 = Fragment('CN');
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(1, v7);
+export const v9 = Fragment('c2ccccc2');
+export const v10 = Molecule([v8, v9]);
+export const v11 = v5.attach(2, v10);
+export const v12 = Ring({ atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-' });
+export const v13 = v11.attach(3, v12);
+export const v14 = Ring({ atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-' });
+export const v15 = Fragment('F');
+export const v16 = v14.attach(4, v15);
+export const v17 = v13.attach(4, v16);
+export const v18 = Fragment('CC[C@@H]C[C@@H]CCO');
+export const v19 = Fragment('O');
+export const v20 = v18.attach(3, v19);
+export const v21 = Fragment('O');
+export const v22 = v20.attach(5, v21);
+export const v23 = Linear(['O'], ['=']);
+export const v24 = v22.attach(7, v23);
+export const v25 = Molecule([v3, v17, v24]);"
+`;
+
+exports[`Atorvastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
@@ -497,6 +525,31 @@ exports[`Simvastatin Integration Test parses simvastatin 1`] = `
 `;
 
 exports[`Simvastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCCO');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(3, v2);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(4, v4);
+export const v6 = Fragment('C1CCC=CC=CCCC1');
+export const v7 = Fragment('C');
+export const v8 = v6.attach(3, v7);
+export const v9 = Fragment('C');
+export const v10 = v8.attach(8, v9);
+export const v11 = Fragment('CC');
+export const v12 = Fragment('C3CCCCC3');
+export const v13 = Fragment('C3CCCCO3');
+export const v14 = Fragment('O');
+export const v15 = v13.attach(3, v14);
+export const v16 = Linear(['O'], ['=']);
+export const v17 = v15.attach(5, v16);
+export const v18 = Molecule([v11, v17]);
+export const v19 = v10.attach(9, v18);
+export const v20 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 4, bonds: [null, '=', null, null, null, null], leadingBond: '=' });
+export const v21 = v19.fuse(4, v20);
+export const v22 = Molecule([v5, v21]);"
+`;
+
+exports[`Simvastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C', 'O']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(3, v2);
@@ -718,6 +771,34 @@ exports[`Rosuvastatin Integration Test parses rosuvastatin 1`] = `
 `;
 
 exports[`Rosuvastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CC');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(2, v2);
+export const v4 = Fragment('c1cc(cc(c1))');
+export const v5 = Fragment('c1nc(nc(c1))');
+export const v6 = Fragment('c2ccccc2');
+export const v7 = Fragment('F');
+export const v8 = v6.attach(4, v7);
+export const v9 = v5.attach(3, v8, { sibling: false });
+export const v10 = Linear(['C', 'C', '[C@@H]', 'C', '[C@@H]', 'C', 'C', 'O'], ['/', '=', '/', null, null, null, null, null]);
+export const v11 = Fragment('O');
+export const v12 = v10.attach(3, v11);
+export const v13 = Fragment('O');
+export const v14 = v12.attach(5, v13);
+export const v15 = Linear(['O'], ['=']);
+export const v16 = v14.attach(7, v15);
+export const v17 = v9.attach(5, v16, { sibling: false });
+export const v18 = Fragment('NSC');
+export const v19 = Fragment('C');
+export const v20 = v18.attach(1, v19);
+export const v21 = Linear(['O'], ['=']);
+export const v22 = v20.attach(2, v21);
+export const v23 = Linear(['O'], ['=']);
+export const v24 = v22.attach(2, v23);
+export const v25 = Molecule([v3, v17, v24]);"
+`;
+
+exports[`Rosuvastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
@@ -982,6 +1063,29 @@ exports[`Pravastatin Integration Test parses pravastatin 1`] = `
 `;
 
 exports[`Pravastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCCO');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(3, v2);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(4, v4);
+export const v6 = Fragment('C1CCC=CC=CCCC1');
+export const v7 = Fragment('[C@H]1C[C@H]C=CC=C[C@H][C@H][C@H]1');
+export const v8 = Fragment('O');
+export const v9 = v7.attach(3, v8);
+export const v10 = Fragment('C');
+export const v11 = v9.attach(8, v10);
+export const v12 = Fragment('CC[C@@H]CCO');
+export const v13 = Fragment('O');
+export const v14 = v12.attach(3, v13);
+export const v15 = Linear(['O'], ['=']);
+export const v16 = v14.attach(5, v15);
+export const v17 = v11.attach(9, v16);
+export const v18 = Ring({ atoms: '[C@H]', size: 6, ringNumber: 2, offset: 4, bonds: [null, '=', null, null, null, null], leadingBond: '=' });
+export const v19 = v17.fuse(4, v18);
+export const v20 = Molecule([v5, v19]);"
+`;
+
+exports[`Pravastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C', 'O']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(3, v2);
@@ -1266,6 +1370,31 @@ exports[`Lovastatin Integration Test parses lovastatin 1`] = `
 `;
 
 exports[`Lovastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCCCO');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(3, v2);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(4, v4);
+export const v6 = Fragment('C1CCC=CC=CCCC1');
+export const v7 = Fragment('C');
+export const v8 = v6.attach(3, v7);
+export const v9 = Fragment('C');
+export const v10 = v8.attach(8, v9);
+export const v11 = Fragment('CC');
+export const v12 = Fragment('C3CCCCC3');
+export const v13 = Fragment('C3CCCCO3');
+export const v14 = Fragment('O');
+export const v15 = v13.attach(3, v14);
+export const v16 = Linear(['O'], ['=']);
+export const v17 = v15.attach(5, v16);
+export const v18 = Molecule([v11, v17]);
+export const v19 = v10.attach(9, v18);
+export const v20 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 4, bonds: [null, '=', null, null, null, null], leadingBond: '=' });
+export const v21 = v19.fuse(4, v20);
+export const v22 = Molecule([v5, v21]);"
+`;
+
+exports[`Lovastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'C', 'C', 'O']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(3, v2);
@@ -1497,6 +1626,34 @@ exports[`Fluvastatin Integration Test parses fluvastatin 1`] = `
 `;
 
 exports[`Fluvastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CC');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(2, v2);
+export const v4 = Fragment('c1cccc1');
+export const v5 = Fragment('n1cccc1');
+export const v6 = Fragment('CN');
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(1, v7);
+export const v9 = Fragment('c2ccccc2');
+export const v10 = Fragment('C');
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(1, v11);
+export const v13 = Molecule([v9, v12]);
+export const v14 = Fragment('O');
+export const v15 = Molecule([v8, v13, v14]);
+export const v16 = v5.attach(2, v15);
+export const v17 = Ring({ atoms: 'c', size: 6, ringNumber: 2, leadingBond: '-' });
+export const v18 = Fragment('F');
+export const v19 = v17.attach(4, v18);
+export const v20 = v16.attach(3, v19);
+export const v21 = Fragment('O');
+export const v22 = v20.attach(4, v21);
+export const v23 = Linear(['C', 'C'], ['='], {}, '/');
+export const v24 = Ring({ atoms: 'c', size: 6, leadingBond: '/' });
+export const v25 = Molecule([v3, v22, v23, v24]);"
+`;
+
+exports[`Fluvastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
@@ -1678,6 +1835,30 @@ exports[`Ezetimibe Integration Test parses ezetimibe 1`] = `
 `;
 
 exports[`Ezetimibe Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('C');
+export const v2 = Fragment('[C@H]1[C@H][C@H]([C@H][C@H]1)');
+export const v3 = Fragment('[C@H]1[C@@H][C@H](O[C@H]1)');
+export const v4 = Fragment('O');
+export const v5 = v3.attach(2, v4, { sibling: true });
+export const v6 = Fragment('c2ccccc2');
+export const v7 = Fragment('F');
+export const v8 = v6.attach(4, v7);
+export const v9 = v5.addSequentialRings([{ ring: v8, depth: 1 }], { baseMetadata: { positions: [1, 2, 4, 5, 6], start: 1, end: 6, totalAtoms: 7, useInterleavedCodegen: true, branchDepthMap: [[1, 0], [2, 0], [4, 0], [5, 1], [6, 1]], atomValueMap: [[1, '[C@H]'], [2, '[C@@H]'], [4, '[C@H]'], [5, 'O'], [6, '[C@H]']] } });
+export const v10 = Fragment('c3ccccc3');
+export const v11 = Fragment('O');
+export const v12 = v10.attach(4, v11);
+export const v13 = Fragment('C');
+export const v14 = Linear(['O'], ['=']);
+export const v15 = v13.attach(1, v14);
+export const v16 = Fragment('C4CCC(CC4)');
+export const v17 = Fragment('N4CCC(CC4)');
+export const v18 = Fragment('c5ccccc5');
+export const v19 = Fragment('F');
+export const v20 = v18.attach(4, v19);
+export const v21 = Molecule([v1, v9, v12, v15, v17, v20]);"
+`;
+
+exports[`Ezetimibe Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C']);
 export const v2 = Ring({ atoms: '[C@H]', size: 5, branchDepths: [0, 0, 0, 1, 1] });
 export const v3 = v2.substitute(2, '[C@@H]');
@@ -1845,6 +2026,26 @@ exports[`Fenofibrate Integration Test parses fenofibrate 1`] = `
 `;
 
 exports[`Fenofibrate Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCOCCO');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(2, v2);
+export const v4 = Linear(['O'], ['=']);
+export const v5 = v3.attach(4, v4);
+export const v6 = Fragment('C');
+export const v7 = v5.attach(5, v6);
+export const v8 = Fragment('C');
+export const v9 = v7.attach(5, v8);
+export const v10 = Fragment('c1ccc(cc1)');
+export const v11 = Fragment('C');
+export const v12 = Linear(['O'], ['=']);
+export const v13 = v11.attach(1, v12);
+export const v14 = Fragment('c2ccccc2');
+export const v15 = Fragment('Cl');
+export const v16 = v14.attach(4, v15);
+export const v17 = Molecule([v9, v10, v13, v16]);"
+`;
+
+exports[`Fenofibrate Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C', 'O', 'C', 'C', 'O']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
@@ -1965,6 +2166,21 @@ exports[`Gemfibrozil Integration Test parses gemfibrozil 1`] = `
 `;
 
 exports[`Gemfibrozil Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('C');
+export const v2 = Fragment('C1=CC=CC=C1');
+export const v3 = Fragment('C');
+export const v4 = v2.attach(3, v3);
+export const v5 = Fragment('CCCCCO');
+export const v6 = Fragment('C');
+export const v7 = v5.attach(4, v6);
+export const v8 = Fragment('C');
+export const v9 = v7.attach(4, v8);
+export const v10 = Linear(['O'], ['=']);
+export const v11 = v9.attach(5, v10);
+export const v12 = Molecule([v1, v4, v11]);"
+`;
+
+exports[`Gemfibrozil Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C']);
 export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
 export const v3 = Linear(['C']);
@@ -2166,6 +2382,31 @@ exports[`Pitavastatin Integration Test parses pitavastatin 1`] = `
 `;
 
 exports[`Pitavastatin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CC');
+export const v2 = Fragment('C');
+export const v3 = v1.attach(2, v2);
+export const v4 = Fragment('c1cc(cc(c1))');
+export const v5 = Fragment('c1nc(nc(c1))');
+export const v6 = Fragment('c2ccccc2');
+export const v7 = Fragment('F');
+export const v8 = v6.attach(4, v7);
+export const v9 = v5.attach(3, v8, { sibling: false });
+export const v10 = Linear(['C', 'C', '[C@@H]', 'C', '[C@@H]', 'C', 'C', 'O'], ['/', '=', '/', null, null, null, null, null]);
+export const v11 = Fragment('O');
+export const v12 = v10.attach(3, v11);
+export const v13 = Fragment('O');
+export const v14 = v12.attach(5, v13);
+export const v15 = Linear(['O'], ['=']);
+export const v16 = v14.attach(7, v15);
+export const v17 = v9.attach(5, v16, { sibling: false });
+export const v18 = Fragment('NC');
+export const v19 = Linear(['O'], ['=']);
+export const v20 = v18.attach(2, v19);
+export const v21 = Fragment('C3CC3');
+export const v22 = Molecule([v3, v17, v20, v21]);"
+`;
+
+exports[`Pitavastatin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
@@ -2341,6 +2582,26 @@ exports[`Cholesterol Integration Test parses cholesterol 1`] = `
 `;
 
 exports[`Cholesterol Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('C[C@H]');
+export const v2 = Fragment('CCCCC');
+export const v3 = Fragment('C');
+export const v4 = v2.attach(4, v3);
+export const v5 = v1.attach(2, v4);
+export const v6 = Fragment('C1CCCC1');
+export const v7 = Fragment('[C@H]1CC[C@@H][C@@]1');
+export const v8 = Fragment('[C@H]2[C@H]([C@H][C@H][C@H][C@H]2)');
+export const v9 = Fragment('[C@@H]2[C@@](CC[C@H][C@H]2)');
+export const v10 = Fragment('C3CCC=CC3');
+export const v11 = Fragment('[C@H]3[C@H]CC=C[C@@]3');
+export const v12 = Ring({ atoms: 'C', size: 6, ringNumber: 4, branchDepths: [1, 1, 2, 2, 2, 3], leadingBond: '=' });
+export const v13 = v12.substitute(2, '[C@@]');
+export const v14 = v13.substitute(5, '[C@@H]');
+export const v15 = FusedRing({ metadata: { rings: [{ ring: v7, start: 8, end: 12, atoms: [{ position: 8, depth: 0, value: '[C@H]', rings: [1, 1] }, { position: 9, depth: 0, value: 'C', rings: [1] }, { position: 10, depth: 0, value: 'C', rings: [1] }, { position: 11, depth: 0, value: '[C@@H]', rings: [2, 1, 2] }, { position: 12, depth: 0, value: '[C@@]', rings: [1, 2] }] }, { ring: v9, start: 11, end: 16, atoms: [{ position: 11, depth: 0, value: '[C@@H]', rings: [2, 1, 2] }, { position: 12, depth: 0, value: '[C@@]', rings: [1, 2] }, { position: 13, depth: 1, value: 'C', rings: [2], branchId: 20 }, { position: 14, depth: 1, value: 'C', rings: [2], branchId: 20 }, { position: 15, depth: 1, value: '[C@H]', rings: [3, 2, 3], branchId: 20 }, { position: 16, depth: 1, value: '[C@H]', rings: [2, 3], branchId: 20 }] }, { ring: v11, start: 15, end: 20, atoms: [{ position: 15, depth: 1, value: '[C@H]', rings: [3, 2, 3], branchId: 20 }, { position: 16, depth: 1, value: '[C@H]', rings: [2, 3], branchId: 20 }, { position: 17, depth: 1, value: 'C', rings: [3], branchId: 20 }, { position: 18, depth: 1, value: 'C', rings: [3], branchId: 20 }, { position: 19, depth: 1, value: 'C', bond: '=', rings: [4, 3, 4], branchId: 20 }, { position: 20, depth: 1, value: '[C@@]', rings: [3, 4], branchId: 20 }] }, { ring: v14, start: 19, end: 24, atoms: [{ position: 19, depth: 1, value: 'C', bond: '=', rings: [4, 3, 4], branchId: 20 }, { position: 20, depth: 1, value: '[C@@]', rings: [3, 4], branchId: 20 }, { position: 21, depth: 2, value: 'C', rings: [4], branchId: 34 }, { position: 22, depth: 2, value: 'C', rings: [4], branchId: 34 }, { position: 23, depth: 2, value: '[C@@H]', rings: [4], branchId: 34 }, { position: 24, depth: 3, value: 'C', rings: [4], branchId: 38 }] }], atoms: [{ position: 25, depth: 2, value: 'O', branchId: 34 }, { position: 26, depth: 1, value: 'C', branchId: 20 }] } });
+export const v16 = Fragment('C');
+export const v17 = Molecule([v5, v15, v16]);"
+`;
+
+exports[`Cholesterol Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', '[C@H]']);
 export const v2 = Linear(['C', 'C', 'C', 'C', 'C']);
 export const v3 = Linear(['C']);
