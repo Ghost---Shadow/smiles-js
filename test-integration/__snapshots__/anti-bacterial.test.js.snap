@@ -1183,26 +1183,10 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
   "components": [
     {
       "atoms": [
-        "O",
         "C",
       ],
-      "attachments": {
-        "2": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-      },
-      "bonds": [
-        "=",
-      ],
+      "attachments": {},
+      "bonds": [],
       "type": "linear",
     },
     {
@@ -1210,6 +1194,33 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
         {
           "atoms": "c",
           "attachments": {
+            "10": [
+              {
+                "atoms": [
+                  "C",
+                  "O",
+                ],
+                "attachments": {
+                  "1": [
+                    {
+                      "atoms": [
+                        "O",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        "=",
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                },
+                "bonds": [
+                  null,
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
             "5": [
               {
                 "atoms": "C",
@@ -1236,13 +1247,37 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
                   null,
                 ],
                 "offset": 0,
-                "ringNumber": 2,
+                "ringNumber": 3,
                 "size": 6,
                 "substitutions": {
                   "1": "N",
                   "4": "N",
                 },
                 "type": "ring",
+              },
+            ],
+            "6": [
+              {
+                "atoms": [
+                  "F",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "9": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
               },
             ],
           },
@@ -1253,12 +1288,131 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
           ],
           "offset": 0,
           "ringNumber": 1,
-          "size": 6,
+          "size": 12,
           "substitutions": {
-            "3": "n",
+            "1": "C",
+            "12": "n",
+            "2": "C",
+            "3": "O",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "c",
+          "attachments": {
+            "2": [
+              {
+                "atoms": "C",
+                "attachments": {
+                  "4": [
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                },
+                "bonds": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 3,
+                "size": 6,
+                "substitutions": {
+                  "1": "N",
+                  "4": "N",
+                },
+                "type": "ring",
+              },
+            ],
+            "3": [
+              {
+                "atoms": [
+                  "F",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "6": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+            "7": [
+              {
+                "atoms": [
+                  "C",
+                  "O",
+                ],
+                "attachments": {
+                  "1": [
+                    {
+                      "atoms": [
+                        "O",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        "=",
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                },
+                "bonds": [
+                  null,
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 3,
+          "ringNumber": 2,
+          "size": 10,
+          "substitutions": {
+            "9": "n",
           },
           "type": "ring",
         },
@@ -1281,27 +1435,17 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
               {
                 "atoms": [
                   "C",
-                  "F",
+                  "O",
                 ],
                 "attachments": {
                   "1": [
                     {
                       "atoms": [
-                        "F",
+                        "O",
                       ],
                       "attachments": {},
                       "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                    {
-                      "atoms": [
-                        "F",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
+                        "=",
                       ],
                       "type": "linear",
                     },
@@ -1321,25 +1465,18 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
             null,
             null,
             null,
+            null,
           ],
-          "offset": 2,
-          "ringNumber": 2,
-          "size": 5,
+          "offset": 7,
+          "ringNumber": 3,
+          "size": 6,
           "substitutions": {
-            "1": "n",
+            "5": "n",
           },
           "type": "ring",
         },
       ],
       "type": "fused_ring",
-    },
-    {
-      "atoms": [
-        "F",
-      ],
-      "attachments": {},
-      "bonds": [],
-      "type": "linear",
     },
   ],
   "type": "molecule",
@@ -1347,56 +1484,55 @@ exports[`Levofloxacin Integration Test parses levofloxacin 1`] = `
 `;
 
 exports[`Levofloxacin Integration Test generates valid code via toCode() 1`] = `
-"export const v1 = Linear(['O', 'C'], ['=']);
-export const v2 = Fragment('O');
-export const v3 = v1.attach(2, v2);
-export const v4 = Fragment('c1ccccc1');
-export const v5 = Fragment('c1cnccc1');
-export const v6 = Fragment('C2CCCCC2');
-export const v7 = Fragment('N2CCNCC2');
-export const v8 = Fragment('C');
-export const v9 = v7.attach(4, v8);
-export const v10 = v5.attach(5, v9);
-export const v11 = Fragment('c2cccc2');
-export const v12 = Fragment('n2cccc2');
-export const v13 = Linear(['O'], ['=']);
-export const v14 = v12.attach(2, v13);
-export const v15 = Fragment('CF');
-export const v16 = Fragment('F');
-export const v17 = v15.attach(1, v16);
-export const v18 = Fragment('F');
-export const v19 = v17.attach(1, v18);
-export const v20 = v14.attach(3, v19);
-export const v21 = FusedRing({ metadata: { rings: [{ ring: v10, start: 3, end: 23, atoms: [{ position: 3, depth: 0, value: 'c', rings: [1, 1] }, { position: 4, depth: 0, value: 'c', rings: [1] }, { position: 5, depth: 0, value: 'n', rings: [2, 2, 1] }, { position: 14, depth: 0, value: 'c', rings: [2, 1] }, { position: 15, depth: 0, value: 'c', rings: [1] }, { position: 23, depth: 0, value: 'c', rings: [1] }] }, { ring: v20, start: 5, end: 14, atoms: [{ position: 5, depth: 0, value: 'n', rings: [2, 2, 1] }, { position: 6, depth: 0, value: 'c', rings: [2] }, { position: 8, depth: 0, value: 'c', rings: [2] }, { position: 13, depth: 0, value: 'c', rings: [2] }, { position: 14, depth: 0, value: 'c', rings: [2, 1] }] }] } });
-export const v22 = Fragment('F');
-export const v23 = Molecule([v3, v21, v22]);"
+"export const v1 = Fragment('C');
+export const v2 = Fragment('c1ccccccccccc1');
+export const v3 = Fragment('C1COccccccccn1');
+export const v4 = Fragment('C3CCCCC3');
+export const v5 = Fragment('N3CCNCC3');
+export const v6 = Fragment('C');
+export const v7 = v5.attach(4, v6);
+export const v8 = v3.attach(5, v7);
+export const v9 = Fragment('F');
+export const v10 = v8.attach(6, v9);
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(9, v11);
+export const v13 = Fragment('CO');
+export const v14 = Linear(['O'], ['=']);
+export const v15 = v13.attach(1, v14);
+export const v16 = v12.attach(10, v15);
+export const v17 = Fragment('c2ccccccccc2');
+export const v18 = Fragment('c3ccccc3');
+export const v19 = v16.fuse(3, v17);
+export const v20 = v19.addRing(7, v18);
+export const v21 = Molecule([v1, v20]);"
 `;
 
 exports[`Levofloxacin Integration Test generates valid verbose code via toCode() 1`] = `
-"export const v1 = Linear(['O', 'C'], ['=']);
-export const v2 = Linear(['O']);
-export const v3 = v1.attach(2, v2);
-export const v4 = Ring({ atoms: 'c', size: 6 });
-export const v5 = v4.substitute(3, 'n');
-export const v6 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-export const v7 = v6.substitute(1, 'N');
-export const v8 = v7.substitute(4, 'N');
-export const v9 = Linear(['C']);
-export const v10 = v8.attach(4, v9);
-export const v11 = v5.attach(5, v10);
-export const v12 = Ring({ atoms: 'c', size: 5, ringNumber: 2, offset: 2 });
-export const v13 = v12.substitute(1, 'n');
-export const v14 = Linear(['O'], ['=']);
-export const v15 = v13.attach(2, v14);
-export const v16 = Linear(['C', 'F']);
-export const v17 = Linear(['F']);
-export const v18 = v16.attach(1, v17);
-export const v19 = Linear(['F']);
-export const v20 = v18.attach(1, v19);
-export const v21 = v15.attach(3, v20);
-export const v22 = FusedRing({ metadata: { rings: [{ ring: v11, start: 3, end: 23, atoms: [{ position: 3, depth: 0, value: 'c', rings: [1, 1] }, { position: 4, depth: 0, value: 'c', rings: [1] }, { position: 5, depth: 0, value: 'n', rings: [2, 2, 1] }, { position: 14, depth: 0, value: 'c', rings: [2, 1] }, { position: 15, depth: 0, value: 'c', rings: [1] }, { position: 23, depth: 0, value: 'c', rings: [1] }] }, { ring: v21, start: 5, end: 14, atoms: [{ position: 5, depth: 0, value: 'n', rings: [2, 2, 1] }, { position: 6, depth: 0, value: 'c', rings: [2] }, { position: 8, depth: 0, value: 'c', rings: [2] }, { position: 13, depth: 0, value: 'c', rings: [2] }, { position: 14, depth: 0, value: 'c', rings: [2, 1] }] }] } });
-export const v23 = Linear(['F']);
-export const v24 = Molecule([v3, v22, v23]);"
+"export const v1 = Linear(['C']);
+export const v2 = Ring({ atoms: 'c', size: 12 });
+export const v3 = v2.substitute(1, 'C');
+export const v4 = v3.substitute(2, 'C');
+export const v5 = v4.substitute(3, 'O');
+export const v6 = v5.substitute(12, 'n');
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
+export const v8 = v7.substitute(1, 'N');
+export const v9 = v8.substitute(4, 'N');
+export const v10 = Linear(['C']);
+export const v11 = v9.attach(4, v10);
+export const v12 = v6.attach(5, v11);
+export const v13 = Linear(['F']);
+export const v14 = v12.attach(6, v13);
+export const v15 = Linear(['O'], ['=']);
+export const v16 = v14.attach(9, v15);
+export const v17 = Linear(['C', 'O']);
+export const v18 = Linear(['O'], ['=']);
+export const v19 = v17.attach(1, v18);
+export const v20 = v16.attach(10, v19);
+export const v21 = Ring({ atoms: 'c', size: 10, ringNumber: 2, offset: 3 });
+export const v22 = Ring({ atoms: 'c', size: 6, ringNumber: 3, offset: 7 });
+export const v23 = v20.fuse(3, v21);
+export const v24 = v23.addRing(7, v22);
+export const v25 = Molecule([v1, v24]);"
 `;
 
 exports[`Tetracycline Integration Test parses tetracycline 1`] = `

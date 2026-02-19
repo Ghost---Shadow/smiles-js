@@ -55,9 +55,9 @@ export const ciprofloxacin = Fragment('O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=
 // Fluoroquinolone (L-isomer of ofloxacin)
 // Trade names: Levaquin, Tavanic
 // Uses: Pneumonia, sinusitis, UTI, anthrax
-// SMILES: O=C(O)c1cn2c(=O)c(C(F)(F)F)cc2c(N2CCN(C)CC2)c1F
+// SMILES: CC1COc2c(N3CCN(C)CC3)c(F)cc3c(=O)c(C(=O)O)cn1c23
 
-export const levofloxacin = Fragment('O=C(O)c1cn2c(=O)c(C(F)(F)F)cc2c(N2CCN(C)CC2)c1F');
+export const levofloxacin = Fragment('CC1COc2c(N3CCN(C)CC3)c(F)cc3c(=O)c(C(=O)O)cn1c23');
 
 // === TETRACYCLINE ===
 // Tetracycline antibiotic

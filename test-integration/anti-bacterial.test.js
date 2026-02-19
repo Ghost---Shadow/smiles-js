@@ -1,8 +1,16 @@
-import { describe, test, expect } from 'bun:test';
+import {
+  describe, test, expect, beforeAll,
+} from 'bun:test';
+import initRDKitModule from '@rdkit/rdkit';
 import { parse } from '../src/parser/index.js';
 import {
   stripExports, createFunction, executeCode,
 } from './utils.js';
+
+let RDKit;
+beforeAll(async () => {
+  RDKit = await initRDKitModule();
+});
 
 const PENICILLIN_G_SMILES = 'CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O';
 const AMOXICILLIN_SMILES = 'CC1(C)SC2C(NC(=O)C(N)c3ccc(O)cc3)C(=O)N2C1C(=O)O';
@@ -10,7 +18,7 @@ const AMPICILLIN_SMILES = 'CC1(C)SC2C(NC(=O)C(N)c3ccccc3)C(=O)N2C1C(=O)O';
 const CEPHALEXIN_SMILES = 'CC1(C(=O)O)SC2CC(=O)N2C1NC(=O)C(N)c1ccccc1';
 const CEFTRIAXONE_SMILES = 'COC1=Nc2ccc(cc2C(=O)N1)c1nsc(=O)[nH]1';
 const CIPROFLOXACIN_SMILES = 'O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O';
-const LEVOFLOXACIN_SMILES = 'O=C(O)c1cn2c(=O)c(C(F)(F)F)cc2c(N2CCN(C)CC2)c1F';
+const LEVOFLOXACIN_SMILES = 'CC1COc2c(N3CCN(C)CC3)c(F)cc3c(=O)c(C(=O)O)cn1c23';
 const TETRACYCLINE_SMILES = 'CN(C)C1C2CC3C(=C(O)c4c(O)cccc43)C(=O)C2(O)C(O)=C1C(N)=O';
 const DOXYCYCLINE_SMILES = 'CN(C)C1C2CC3C(=C(O)c4c(O)cccc43)C(=O)C2(O)C(=O)C1O';
 const MINOCYCLINE_SMILES = 'CN(C)c1ccc2c(c1)C(O)=C1C(=O)C3C(N(C)C)C(O)C(=O)C3(O)C1=C2O';
@@ -77,6 +85,11 @@ function makeTests(name, smiles) {
       const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
       const reconstructed = executeCode(executableCode, lastVar);
       expect(reconstructed.smiles).toBe(smiles);
+    });
+
+    test('RDKit validates SMILES', () => {
+      const mol = RDKit.get_mol(smiles);
+      expect(mol).not.toBeNull();
     });
   });
 }
@@ -151,5 +164,10 @@ describe('Rifampin Integration Test', () => {
     const lastVar = varMatch[varMatch.length - 1].match(/export const (v\d+)/)[1];
     const reconstructed = executeCode(executableCode, lastVar);
     expect(reconstructed.smiles).toBe(RIFAMPIN_SMILES);
+  });
+
+  test('RDKit validates SMILES', () => {
+    const mol = RDKit.get_mol(RIFAMPIN_SMILES);
+    expect(mol).not.toBeNull();
   });
 });
