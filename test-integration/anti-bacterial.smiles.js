@@ -31,17 +31,17 @@ export const ampicillin = Fragment('CC1(C)SC2C(NC(=O)C(N)c3ccccc3)C(=O)N2C1C(=O)
 // First-generation cephalosporin
 // Trade names: Keflex, Daxbia
 // Uses: Skin infections, UTI, respiratory tract infections
-// SMILES: CC1(C(=O)O)SC2CC(=O)N2C1NC(=O)C(N)c1ccccc1
+// SMILES: CC1=C(N2C(C(C2=O)NC(=O)C(C3=CC=CC=C3)N)SC1)C(=O)O
 
-export const cephalexin = Fragment('CC1(C(=O)O)SC2CC(=O)N2C1NC(=O)C(N)c1ccccc1');
+export const cephalexin = Fragment('CC1=C(N2C(C(C2=O)NC(=O)C(C3=CC=CC=C3)N)SC1)C(=O)O');
 
 // === CEFTRIAXONE ===
 // Third-generation cephalosporin
 // Trade names: Rocephin
 // Uses: Meningitis, gonorrhea, sepsis, pneumonia
-// SMILES: COC1=Nc2ccc(cc2C(=O)N1)c1nsc(=O)[nH]1
+// SMILES: CON=C(C(=O)NC1C(=O)N2C(C(=O)O)=C(CSc3nc(=O)c(=O)[nH]n3C)CSC12)c1csc(N)n1
 
-export const ceftriaxone = Fragment('COC1=Nc2ccc(cc2C(=O)N1)c1nsc(=O)[nH]1');
+export const ceftriaxone = Fragment('CON=C(C(=O)NC1C(=O)N2C(C(=O)O)=C(CSc3nc(=O)c(=O)[nH]n3C)CSC12)c1csc(N)n1');
 
 // === CIPROFLOXACIN ===
 // Fluoroquinolone
@@ -63,9 +63,9 @@ export const levofloxacin = Fragment('CC1COc2c(N3CCN(C)CC3)c(F)cc3c(=O)c(C(=O)O)
 // Tetracycline antibiotic
 // Trade names: Sumycin, Tetracyn
 // Uses: Acne, respiratory infections, Lyme disease, chlamydia
-// SMILES: CN(C)C1C2CC3C(=C(O)c4c(O)cccc43)C(=O)C2(O)C(O)=C1C(N)=O
+// SMILES: CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O
 
-export const tetracycline = Fragment('CN(C)C1C2CC3C(=C(O)c4c(O)cccc43)C(=O)C2(O)C(O)=C1C(N)=O');
+export const tetracycline = Fragment('CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O');
 
 // === DOXYCYCLINE ===
 // Second-generation tetracycline
@@ -79,33 +79,36 @@ export const doxycycline = Fragment('CN(C)C1C2CC3C(=C(O)c4c(O)cccc43)C(=O)C2(O)C
 // Third-generation tetracycline
 // Trade names: Minocin, Dynacin
 // Uses: Acne, MRSA skin infections, rheumatoid arthritis
-// SMILES: CN(C)c1ccc2c(c1)C(O)=C1C(=O)C3C(N(C)C)C(O)C(=O)C3(O)C1=C2O
+// SMILES: CN(C)C1C2CC3CC4=C(C=CC(=C4C(=C3C(=O)C2(C(=C(C1=O)C(=O)N)O)O)O)O)N(C)C
 
-export const minocycline = Fragment('CN(C)c1ccc2c(c1)C(O)=C1C(=O)C3C(N(C)C)C(O)C(=O)C3(O)C1=C2O');
+export const minocycline = Fragment('CN(C)C1C2CC3CC4=C(C=CC(=C4C(=C3C(=O)C2(C(=C(C1=O)C(=O)N)O)O)O)O)N(C)C');
 
 // === ERYTHROMYCIN ===
 // Macrolide antibiotic
 // Trade names: Erythrocin, E-Mycin
 // Uses: Respiratory infections, STIs, skin infections (penicillin-allergic patients)
-// SMILES: CCC1OC(=O)C(CC(CC(C(C(C(C(C(C1OC2CC(CC(O2)C)N(C)C)O)C)OC3C(C(CC(O3)C)O)OC)C)O)C)C)=O
+// SMILES: CCC1C(C(C(C(=O)C(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)
+//         OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)O)(C)O
 
-export const erythromycin = Fragment('CCC1OC(=O)C(CC(CC(C(C(C(C(C(C1OC2CC(CC(O2)C)N(C)C)O)C)OC3C(C(CC(O3)C)O)OC)C)O)C)C)=O');
+export const erythromycin = Fragment('CCC1C(C(C(C(=O)C(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)O)(C)O');
 
 // === AZITHROMYCIN ===
 // Azalide macrolide
 // Trade names: Zithromax, Z-Pack
 // Uses: Community-acquired pneumonia, STIs, MAC infections
-// SMILES: CCC1OC(=O)C(CC(CC(C(C(C(C(C(C1OC2CC(CC(O2)C)N(C)C)O)C)OC3C(C(CC(O3)C)O)OC)C)O)C)CN(C)C)=O
+// SMILES: CCC1C(C(C(N(CC(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)
+//         OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)C)O)(C)O
 
-export const azithromycin = Fragment('CCC1OC(=O)C(CC(CC(C(C(C(C(C(C1OC2CC(CC(O2)C)N(C)C)O)C)OC3C(C(CC(O3)C)O)OC)C)O)C)CN(C)C)=O');
+export const azithromycin = Fragment('CCC1C(C(C(N(CC(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)C)O)(C)O');
 
 // === CLARITHROMYCIN ===
 // Macrolide (6-O-methylerythromycin)
 // Trade names: Biaxin
 // Uses: H. pylori eradication, MAC, respiratory infections
-// SMILES: CCC1OC(=O)C(CC(CC(C(C(C(C(C(C1OC2CC(CC(O2)C)N(C)C)OC)C)OC3C(C(CC(O3)C)O)OC)C)O)C)C)=O
+// SMILES: CCC1C(C(C(C(=O)C(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)
+//         OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)O)(C)OC
 
-export const clarithromycin = Fragment('CCC1OC(=O)C(CC(CC(C(C(C(C(C(C1OC2CC(CC(O2)C)N(C)C)OC)C)OC3C(C(CC(O3)C)O)OC)C)O)C)C)=O');
+export const clarithromycin = Fragment('CCC1C(C(C(C(=O)C(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)O)(C)OC');
 
 // === TRIMETHOPRIM ===
 // Diaminopyrimidine (DHFR inhibitor)
@@ -146,17 +149,17 @@ export const vancomycin = Fragment('O=C(O)C1NC(=O)C(Cc2cc(Cl)c(Oc3cc4cc(Cl)c(O)c
 // Oxazolidinone
 // Trade names: Zyvox
 // Uses: MRSA, VRE, drug-resistant gram-positive infections
-// SMILES: O=C(NCC1=CC=C(N2CC(COC(=O)N)OC2=O)C=C1F)C
+// SMILES: CC(=O)NCC1CN(C(=O)O1)C2=CC(=C(C=C2)N3CCOCC3)F
 
-export const linezolid = Fragment('O=C(NCC1=CC=C(N2CC(COC(=O)N)OC2=O)C=C1F)C');
+export const linezolid = Fragment('CC(=O)NCC1CN(C(=O)O1)C2=CC(=C(C=C2)N3CCOCC3)F');
 
 // === CLINDAMYCIN ===
 // Lincosamide
 // Trade names: Cleocin, Dalacin
 // Uses: Anaerobic infections, MRSA skin infections, dental infections
-// SMILES: O=C(NC1C(O)C(OC2OC(SC)C(O)C(O)C2N(C)C)C(Cl)CS1)C(CC)CC
+// SMILES: CCCC1CC(N(C1)C)C(=O)NC(C2C(C(C(C(O2)SC)O)O)O)C(C)Cl
 
-export const clindamycin = Fragment('O=C(NC1C(O)C(OC2OC(SC)C(O)C(O)C2N(C)C)C(Cl)CS1)C(CC)CC');
+export const clindamycin = Fragment('CCCC1CC(N(C1)C)C(=O)NC(C2C(C(C(C(O2)SC)O)O)O)C(C)Cl');
 
 // === RIFAMPICIN (RIFAMPIN) ===
 // Rifamycin

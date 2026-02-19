@@ -679,12 +679,122 @@ exports[`Cephalexin Integration Test parses cephalexin 1`] = `
       "rings": [
         {
           "atoms": "C",
-          "attachments": {
-            "1": [
+          "attachments": {},
+          "bonds": [
+            "=",
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 6,
+          "substitutions": {
+            "3": "N",
+            "5": "S",
+          },
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+          ],
+          "offset": 2,
+          "ringNumber": 2,
+          "size": 4,
+          "substitutions": {
+            "1": "N",
+          },
+          "type": "ring",
+        },
+      ],
+      "type": "fused_ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "O",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+      ],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Cephalexin Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('C');
+export const v2 = Fragment('C1=C(CCCC1)');
+export const v3 = Fragment('C1=C(NCSC1)');
+export const v4 = Fragment('C2C(C(C2))');
+export const v5 = Fragment('N2C(C(C2))');
+export const v6 = Linear(['O'], ['=']);
+export const v7 = Fragment('C3=CC=CC=C3');
+export const v8 = FusedRing({ metadata: { rings: [{ ring: v3, start: 1, end: 20, atoms: [{ position: 1, depth: 0, value: 'C', rings: [1, 1] }, { position: 2, depth: 0, value: 'C', bond: '=', rings: [1] }, { position: 3, depth: 1, value: 'N', rings: [2, 2, 1], branchId: 5 }, { position: 4, depth: 1, value: 'C', rings: [2, 1], branchId: 5 }, { position: 19, depth: 1, value: 'S', rings: [1], branchId: 5 }, { position: 20, depth: 1, value: 'C', rings: [1], branchId: 5 }] }, { ring: v5, start: 3, end: 6, atoms: [{ position: 3, depth: 1, value: 'N', rings: [2, 2, 1], branchId: 5 }, { position: 4, depth: 1, value: 'C', rings: [2, 1], branchId: 5 }, { position: 5, depth: 2, value: 'C', rings: [2], branchId: 9 }, { position: 6, depth: 3, value: 'C', rings: [2], branchId: 11 }] }], atoms: [{ position: 7, depth: 3, value: 'O', bond: '=', branchId: 11 }, { position: 8, depth: 2, value: 'N', branchId: 9 }, { position: 9, depth: 2, value: 'C', branchId: 9, attachments: [v6] }, { position: 11, depth: 2, value: 'C', branchId: 9, attachments: [v7] }, { position: 18, depth: 2, value: 'N', branchId: 9 }] } });
+export const v9 = Fragment('CO');
+export const v10 = Linear(['O'], ['=']);
+export const v11 = v9.attach(1, v10);
+export const v12 = Molecule([v1, v8, v11]);"
+`;
+
+exports[`Cephalexin Integration Test generates valid verbose code via toCode() 1`] = `
+"export const v1 = Linear(['C']);
+export const v2 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, null, null, null, null], branchDepths: [0, 0, 1, 1, 1, 1] });
+export const v3 = v2.substitute(3, 'N');
+export const v4 = v3.substitute(5, 'S');
+export const v5 = Ring({ atoms: 'C', size: 4, ringNumber: 2, offset: 2, branchDepths: [1, 1, 2, 3] });
+export const v6 = v5.substitute(1, 'N');
+export const v7 = Linear(['O'], ['=']);
+export const v8 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: ['=', null, '=', null, '=', null] });
+export const v9 = FusedRing({ metadata: { rings: [{ ring: v4, start: 1, end: 20, atoms: [{ position: 1, depth: 0, value: 'C', rings: [1, 1] }, { position: 2, depth: 0, value: 'C', bond: '=', rings: [1] }, { position: 3, depth: 1, value: 'N', rings: [2, 2, 1], branchId: 5 }, { position: 4, depth: 1, value: 'C', rings: [2, 1], branchId: 5 }, { position: 19, depth: 1, value: 'S', rings: [1], branchId: 5 }, { position: 20, depth: 1, value: 'C', rings: [1], branchId: 5 }] }, { ring: v6, start: 3, end: 6, atoms: [{ position: 3, depth: 1, value: 'N', rings: [2, 2, 1], branchId: 5 }, { position: 4, depth: 1, value: 'C', rings: [2, 1], branchId: 5 }, { position: 5, depth: 2, value: 'C', rings: [2], branchId: 9 }, { position: 6, depth: 3, value: 'C', rings: [2], branchId: 11 }] }], atoms: [{ position: 7, depth: 3, value: 'O', bond: '=', branchId: 11 }, { position: 8, depth: 2, value: 'N', branchId: 9 }, { position: 9, depth: 2, value: 'C', branchId: 9, attachments: [v7] }, { position: 11, depth: 2, value: 'C', branchId: 9, attachments: [v8] }, { position: 18, depth: 2, value: 'N', branchId: 9 }] } });
+export const v10 = Linear(['C', 'O']);
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(1, v11);
+export const v13 = Molecule([v1, v9, v12]);"
+`;
+
+exports[`Ceftriaxone Integration Test parses ceftriaxone 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "O",
+        "N",
+        "C",
+      ],
+      "attachments": {
+        "4": [
+          {
+            "components": [
               {
                 "atoms": [
                   "C",
-                  "O",
+                  "N",
                 ],
                 "attachments": {
                   "1": [
@@ -706,232 +816,288 @@ exports[`Cephalexin Integration Test parses cephalexin 1`] = `
                 ],
                 "type": "linear",
               },
-            ],
-          },
-          "bonds": [
-            null,
-            null,
-            null,
-            null,
-            null,
-          ],
-          "offset": 0,
-          "ringNumber": 1,
-          "size": 5,
-          "substitutions": {
-            "2": "S",
-            "4": "N",
-          },
-          "type": "ring",
-        },
-        {
-          "atoms": "C",
-          "attachments": {
-            "3": [
               {
-                "atoms": [
-                  "O",
+                "rings": [
+                  {
+                    "atoms": "C",
+                    "attachments": {
+                      "2": [
+                        {
+                          "atoms": [
+                            "O",
+                          ],
+                          "attachments": {},
+                          "bonds": [
+                            "=",
+                          ],
+                          "type": "linear",
+                        },
+                      ],
+                      "4": [
+                        {
+                          "atoms": [
+                            "C",
+                            "O",
+                          ],
+                          "attachments": {
+                            "1": [
+                              {
+                                "atoms": [
+                                  "O",
+                                ],
+                                "attachments": {},
+                                "bonds": [
+                                  "=",
+                                ],
+                                "type": "linear",
+                              },
+                            ],
+                          },
+                          "bonds": [
+                            null,
+                            null,
+                          ],
+                          "type": "linear",
+                        },
+                      ],
+                      "5": [
+                        {
+                          "components": [
+                            {
+                              "atoms": [
+                                "C",
+                                "S",
+                              ],
+                              "attachments": {},
+                              "bonds": [
+                                null,
+                                null,
+                              ],
+                              "type": "linear",
+                            },
+                            {
+                              "components": [
+                                {
+                                  "atoms": "c",
+                                  "attachments": {
+                                    "3": [
+                                      {
+                                        "atoms": [
+                                          "O",
+                                        ],
+                                        "attachments": {},
+                                        "bonds": [
+                                          "=",
+                                        ],
+                                        "type": "linear",
+                                      },
+                                    ],
+                                    "4": [
+                                      {
+                                        "atoms": [
+                                          "O",
+                                        ],
+                                        "attachments": {},
+                                        "bonds": [
+                                          "=",
+                                        ],
+                                        "type": "linear",
+                                      },
+                                    ],
+                                  },
+                                  "bonds": [
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                  ],
+                                  "offset": 0,
+                                  "ringNumber": 3,
+                                  "size": 6,
+                                  "substitutions": {
+                                    "2": "n",
+                                    "5": "[nH]",
+                                    "6": "n",
+                                  },
+                                  "type": "ring",
+                                },
+                                {
+                                  "atoms": [
+                                    "C",
+                                  ],
+                                  "attachments": {},
+                                  "bonds": [],
+                                  "type": "linear",
+                                },
+                              ],
+                              "type": "molecule",
+                            },
+                          ],
+                          "type": "molecule",
+                        },
+                      ],
+                    },
+                    "bonds": [
+                      null,
+                      null,
+                      null,
+                      "=",
+                      null,
+                      null,
+                      null,
+                      null,
+                    ],
+                    "offset": 0,
+                    "ringNumber": 1,
+                    "size": 8,
+                    "substitutions": {
+                      "3": "N",
+                      "7": "S",
+                    },
+                    "type": "ring",
+                  },
+                  {
+                    "atoms": "C",
+                    "attachments": {
+                      "2": [
+                        {
+                          "atoms": [
+                            "C",
+                            "O",
+                          ],
+                          "attachments": {
+                            "1": [
+                              {
+                                "atoms": [
+                                  "O",
+                                ],
+                                "attachments": {},
+                                "bonds": [
+                                  "=",
+                                ],
+                                "type": "linear",
+                              },
+                            ],
+                          },
+                          "bonds": [
+                            null,
+                            null,
+                          ],
+                          "type": "linear",
+                        },
+                      ],
+                      "3": [
+                        {
+                          "components": [
+                            {
+                              "atoms": [
+                                "C",
+                                "S",
+                              ],
+                              "attachments": {},
+                              "bonds": [
+                                null,
+                                null,
+                              ],
+                              "type": "linear",
+                            },
+                            {
+                              "components": [
+                                {
+                                  "atoms": "c",
+                                  "attachments": {
+                                    "3": [
+                                      {
+                                        "atoms": [
+                                          "O",
+                                        ],
+                                        "attachments": {},
+                                        "bonds": [
+                                          "=",
+                                        ],
+                                        "type": "linear",
+                                      },
+                                    ],
+                                    "4": [
+                                      {
+                                        "atoms": [
+                                          "O",
+                                        ],
+                                        "attachments": {},
+                                        "bonds": [
+                                          "=",
+                                        ],
+                                        "type": "linear",
+                                      },
+                                    ],
+                                  },
+                                  "bonds": [
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                  ],
+                                  "offset": 0,
+                                  "ringNumber": 3,
+                                  "size": 6,
+                                  "substitutions": {
+                                    "2": "n",
+                                    "5": "[nH]",
+                                    "6": "n",
+                                  },
+                                  "type": "ring",
+                                },
+                                {
+                                  "atoms": [
+                                    "C",
+                                  ],
+                                  "attachments": {},
+                                  "bonds": [],
+                                  "type": "linear",
+                                },
+                              ],
+                              "type": "molecule",
+                            },
+                          ],
+                          "type": "molecule",
+                        },
+                      ],
+                    },
+                    "bonds": [
+                      null,
+                      "=",
+                      null,
+                      null,
+                      null,
+                      null,
+                    ],
+                    "offset": 2,
+                    "ringNumber": 2,
+                    "size": 6,
+                    "substitutions": {
+                      "1": "N",
+                      "5": "S",
+                    },
+                    "type": "ring",
+                  },
                 ],
-                "attachments": {},
-                "bonds": [
-                  "=",
-                ],
-                "type": "linear",
+                "type": "fused_ring",
               },
             ],
-          },
-          "bonds": [
-            null,
-            null,
-            null,
-            null,
-          ],
-          "offset": 2,
-          "ringNumber": 2,
-          "size": 4,
-          "substitutions": {
-            "4": "N",
-          },
-          "type": "ring",
-        },
-      ],
-      "type": "fused_ring",
-    },
-    {
-      "atoms": [
-        "N",
-        "C",
-        "C",
-      ],
-      "attachments": {
-        "2": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              "=",
-            ],
-            "type": "linear",
-          },
-        ],
-        "3": [
-          {
-            "atoms": [
-              "N",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
+            "type": "molecule",
           },
         ],
       },
       "bonds": [
         null,
         null,
+        "=",
       ],
       "type": "linear",
-    },
-    {
-      "atoms": "c",
-      "attachments": {},
-      "bonds": [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-      ],
-      "offset": 0,
-      "ringNumber": 1,
-      "size": 6,
-      "substitutions": {},
-      "type": "ring",
-    },
-  ],
-  "type": "molecule",
-}
-`;
-
-exports[`Cephalexin Integration Test generates valid code via toCode() 1`] = `
-"export const v1 = Fragment('C');
-export const v2 = Fragment('C1CCCC1');
-export const v3 = Fragment('C1SCNC1');
-export const v4 = Fragment('CO');
-export const v5 = Linear(['O'], ['=']);
-export const v6 = v4.attach(1, v5);
-export const v7 = v3.attach(1, v6);
-export const v8 = Fragment('C2CCC2');
-export const v9 = Fragment('C2CCN2');
-export const v10 = Linear(['O'], ['=']);
-export const v11 = v9.attach(3, v10);
-export const v12 = FusedRing({ metadata: { rings: [{ ring: v7, start: 1, end: 11, atoms: [{ position: 1, depth: 0, value: 'C', rings: [1, 1] }, { position: 5, depth: 0, value: 'S', rings: [1] }, { position: 6, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 10, depth: 0, value: 'N', rings: [2, 1] }, { position: 11, depth: 0, value: 'C', rings: [1] }] }, { ring: v11, start: 6, end: 10, atoms: [{ position: 6, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 7, depth: 0, value: 'C', rings: [2] }, { position: 8, depth: 0, value: 'C', rings: [2] }, { position: 10, depth: 0, value: 'N', rings: [2, 1] }] }] } });
-export const v13 = Fragment('NCC');
-export const v14 = Linear(['O'], ['=']);
-export const v15 = v13.attach(2, v14);
-export const v16 = Fragment('N');
-export const v17 = v15.attach(3, v16);
-export const v18 = Fragment('c1ccccc1');
-export const v19 = Molecule([v1, v12, v17, v18]);"
-`;
-
-exports[`Cephalexin Integration Test generates valid verbose code via toCode() 1`] = `
-"export const v1 = Linear(['C']);
-export const v2 = Ring({ atoms: 'C', size: 5 });
-export const v3 = v2.substitute(2, 'S');
-export const v4 = v3.substitute(4, 'N');
-export const v5 = Linear(['C', 'O']);
-export const v6 = Linear(['O'], ['=']);
-export const v7 = v5.attach(1, v6);
-export const v8 = v4.attach(1, v7);
-export const v9 = Ring({ atoms: 'C', size: 4, ringNumber: 2, offset: 2 });
-export const v10 = v9.substitute(4, 'N');
-export const v11 = Linear(['O'], ['=']);
-export const v12 = v10.attach(3, v11);
-export const v13 = FusedRing({ metadata: { rings: [{ ring: v8, start: 1, end: 11, atoms: [{ position: 1, depth: 0, value: 'C', rings: [1, 1] }, { position: 5, depth: 0, value: 'S', rings: [1] }, { position: 6, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 10, depth: 0, value: 'N', rings: [2, 1] }, { position: 11, depth: 0, value: 'C', rings: [1] }] }, { ring: v12, start: 6, end: 10, atoms: [{ position: 6, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 7, depth: 0, value: 'C', rings: [2] }, { position: 8, depth: 0, value: 'C', rings: [2] }, { position: 10, depth: 0, value: 'N', rings: [2, 1] }] }] } });
-export const v14 = Linear(['N', 'C', 'C']);
-export const v15 = Linear(['O'], ['=']);
-export const v16 = v14.attach(2, v15);
-export const v17 = Linear(['N']);
-export const v18 = v16.attach(3, v17);
-export const v19 = Ring({ atoms: 'c', size: 6 });
-export const v20 = Molecule([v1, v13, v18, v19]);"
-`;
-
-exports[`Ceftriaxone Integration Test parses ceftriaxone 1`] = `
-{
-  "components": [
-    {
-      "atoms": [
-        "C",
-        "O",
-      ],
-      "attachments": {},
-      "bonds": [
-        null,
-      ],
-      "type": "linear",
-    },
-    {
-      "rings": [
-        {
-          "atoms": "c",
-          "attachments": {
-            "5": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  "=",
-                ],
-                "type": "linear",
-              },
-            ],
-          },
-          "bonds": [
-            "=",
-            null,
-            null,
-            null,
-            null,
-            null,
-          ],
-          "offset": 0,
-          "ringNumber": 1,
-          "size": 6,
-          "substitutions": {
-            "1": "C",
-            "2": "N",
-            "5": "C",
-            "6": "N",
-          },
-          "type": "ring",
-        },
-        {
-          "atoms": "c",
-          "attachments": {},
-          "bonds": [
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-          ],
-          "offset": 2,
-          "ringNumber": 2,
-          "size": 6,
-          "substitutions": {},
-          "type": "ring",
-        },
-      ],
-      "type": "fused_ring",
     },
     {
       "atoms": "c",
@@ -939,11 +1105,11 @@ exports[`Ceftriaxone Integration Test parses ceftriaxone 1`] = `
         "4": [
           {
             "atoms": [
-              "O",
+              "N",
             ],
             "attachments": {},
             "bonds": [
-              "=",
+              null,
             ],
             "type": "linear",
           },
@@ -960,9 +1126,8 @@ exports[`Ceftriaxone Integration Test parses ceftriaxone 1`] = `
       "ringNumber": 1,
       "size": 5,
       "substitutions": {
-        "2": "n",
         "3": "s",
-        "5": "[nH]",
+        "5": "n",
       },
       "type": "ring",
     },
@@ -972,38 +1137,77 @@ exports[`Ceftriaxone Integration Test parses ceftriaxone 1`] = `
 `;
 
 exports[`Ceftriaxone Integration Test generates valid code via toCode() 1`] = `
-"export const v1 = Fragment('CO');
-export const v2 = Fragment('c1=cc(ccc1)');
-export const v3 = Fragment('C1=Nc(cCN1)');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(5, v4, { sibling: true });
-export const v6 = Fragment('c2ccc(cc2)');
-export const v7 = FusedRing({ metadata: { rings: [{ ring: v5, start: 2, end: 12, atoms: [{ position: 2, depth: 0, value: 'C', rings: [1, 1] }, { position: 3, depth: 0, value: 'N', bond: '=', rings: [1] }, { position: 4, depth: 0, value: 'c', rings: [2, 2, 1] }, { position: 9, depth: 1, value: 'c', rings: [2, 1], branchId: 11 }, { position: 10, depth: 1, value: 'C', rings: [1], branchId: 11 }, { position: 12, depth: 1, value: 'N', rings: [1], branchId: 11 }] }, { ring: v6, start: 4, end: 9, atoms: [{ position: 4, depth: 0, value: 'c', rings: [2, 2, 1] }, { position: 5, depth: 0, value: 'c', rings: [2] }, { position: 6, depth: 0, value: 'c', rings: [2] }, { position: 7, depth: 0, value: 'c', rings: [2] }, { position: 8, depth: 1, value: 'c', rings: [2], branchId: 11 }, { position: 9, depth: 1, value: 'c', rings: [2, 1], branchId: 11 }] }] } });
-export const v8 = Fragment('c1cccc1');
-export const v9 = Fragment('c1nsc[nH]1');
+"export const v1 = Linear(['C', 'O', 'N', 'C'], [null, null, '=']);
+export const v2 = Fragment('CN');
+export const v3 = Linear(['O'], ['=']);
+export const v4 = v2.attach(1, v3);
+export const v5 = Fragment('C1CCC=CCCC1');
+export const v6 = Fragment('C1CNC=CCSC1');
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(2, v7);
+export const v9 = Fragment('CO');
 export const v10 = Linear(['O'], ['=']);
-export const v11 = v9.attach(4, v10);
-export const v12 = Molecule([v1, v7, v11]);"
+export const v11 = v9.attach(1, v10);
+export const v12 = v8.attach(4, v11);
+export const v13 = Fragment('CS');
+export const v14 = Fragment('c3ccccc3');
+export const v15 = Fragment('c3ncc[nH]n3');
+export const v16 = Linear(['O'], ['=']);
+export const v17 = v15.attach(3, v16);
+export const v18 = Linear(['O'], ['=']);
+export const v19 = v17.attach(4, v18);
+export const v20 = Fragment('C');
+export const v21 = Molecule([v19, v20]);
+export const v22 = Molecule([v13, v21]);
+export const v23 = v12.attach(5, v22);
+export const v24 = Fragment('C2C=CCCC2');
+export const v25 = v23.fuse(2, v24);
+export const v26 = Molecule([v4, v25]);
+export const v27 = v1.attach(4, v26);
+export const v28 = Fragment('c1cccc1');
+export const v29 = Fragment('c1cscn1');
+export const v30 = Fragment('N');
+export const v31 = v29.attach(4, v30);
+export const v32 = Molecule([v27, v31]);"
 `;
 
 exports[`Ceftriaxone Integration Test generates valid verbose code via toCode() 1`] = `
-"export const v1 = Linear(['C', 'O']);
-export const v2 = Ring({ atoms: 'c', size: 6, bonds: ['=', null, null, null, null, null], branchDepths: [0, 0, 0, 1, 1, 1] });
-export const v3 = v2.substitute(1, 'C');
-export const v4 = v3.substitute(2, 'N');
-export const v5 = v4.substitute(5, 'C');
-export const v6 = v5.substitute(6, 'N');
-export const v7 = Linear(['O'], ['=']);
-export const v8 = v6.attach(5, v7, { sibling: true });
-export const v9 = Ring({ atoms: 'c', size: 6, ringNumber: 2, offset: 2, branchDepths: [0, 0, 0, 0, 1, 1] });
-export const v10 = FusedRing({ metadata: { rings: [{ ring: v8, start: 2, end: 12, atoms: [{ position: 2, depth: 0, value: 'C', rings: [1, 1] }, { position: 3, depth: 0, value: 'N', bond: '=', rings: [1] }, { position: 4, depth: 0, value: 'c', rings: [2, 2, 1] }, { position: 9, depth: 1, value: 'c', rings: [2, 1], branchId: 11 }, { position: 10, depth: 1, value: 'C', rings: [1], branchId: 11 }, { position: 12, depth: 1, value: 'N', rings: [1], branchId: 11 }] }, { ring: v9, start: 4, end: 9, atoms: [{ position: 4, depth: 0, value: 'c', rings: [2, 2, 1] }, { position: 5, depth: 0, value: 'c', rings: [2] }, { position: 6, depth: 0, value: 'c', rings: [2] }, { position: 7, depth: 0, value: 'c', rings: [2] }, { position: 8, depth: 1, value: 'c', rings: [2], branchId: 11 }, { position: 9, depth: 1, value: 'c', rings: [2, 1], branchId: 11 }] }] } });
-export const v11 = Ring({ atoms: 'c', size: 5 });
-export const v12 = v11.substitute(2, 'n');
-export const v13 = v12.substitute(3, 's');
-export const v14 = v13.substitute(5, '[nH]');
-export const v15 = Linear(['O'], ['=']);
-export const v16 = v14.attach(4, v15);
-export const v17 = Molecule([v1, v10, v16]);"
+"export const v1 = Linear(['C', 'O', 'N', 'C'], [null, null, '=']);
+export const v2 = Linear(['C', 'N']);
+export const v3 = Linear(['O'], ['=']);
+export const v4 = v2.attach(1, v3);
+export const v5 = Ring({ atoms: 'C', size: 8, bonds: [null, null, null, '=', null, null, null, null] });
+export const v6 = v5.substitute(3, 'N');
+export const v7 = v6.substitute(7, 'S');
+export const v8 = Linear(['O'], ['=']);
+export const v9 = v7.attach(2, v8);
+export const v10 = Linear(['C', 'O']);
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(1, v11);
+export const v13 = v9.attach(4, v12);
+export const v14 = Linear(['C', 'S']);
+export const v15 = Ring({ atoms: 'c', size: 6, ringNumber: 3 });
+export const v16 = v15.substitute(2, 'n');
+export const v17 = v16.substitute(5, '[nH]');
+export const v18 = v17.substitute(6, 'n');
+export const v19 = Linear(['O'], ['=']);
+export const v20 = v18.attach(3, v19);
+export const v21 = Linear(['O'], ['=']);
+export const v22 = v20.attach(4, v21);
+export const v23 = Linear(['C']);
+export const v24 = Molecule([v22, v23]);
+export const v25 = Molecule([v14, v24]);
+export const v26 = v13.attach(5, v25);
+export const v27 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 2, bonds: [null, '=', null, null, null, null] });
+export const v28 = v26.fuse(2, v27);
+export const v29 = Molecule([v4, v28]);
+export const v30 = v1.attach(4, v29);
+export const v31 = Ring({ atoms: 'c', size: 5 });
+export const v32 = v31.substitute(3, 's');
+export const v33 = v32.substitute(5, 'n');
+export const v34 = Linear(['N']);
+export const v35 = v33.attach(4, v34);
+export const v36 = Molecule([v30, v35]);"
 `;
 
 exports[`Ciprofloxacin Integration Test parses ciprofloxacin 1`] = `
@@ -1541,25 +1745,9 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
     {
       "atoms": [
         "C",
-        "N",
       ],
-      "attachments": {
-        "2": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-      },
-      "bonds": [
-        null,
-      ],
+      "attachments": {},
+      "bonds": [],
       "type": "linear",
     },
     {
@@ -1567,48 +1755,7 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
         {
           "atoms": "C",
           "attachments": {
-            "3": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "4": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-          },
-          "bonds": [
-            null,
-            null,
-            null,
-            "=",
-            null,
-          ],
-          "offset": 0,
-          "ringNumber": 1,
-          "size": 5,
-          "substitutions": {},
-          "type": "ring",
-        },
-        {
-          "atoms": "C",
-          "attachments": {
-            "4": [
+            "10": [
               {
                 "atoms": [
                   "O",
@@ -1620,6 +1767,44 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
                 "type": "linear",
               },
             ],
+            "6": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  "=",
+                ],
+                "type": "linear",
+              },
+            ],
+          },
+          "bonds": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "=",
+            null,
+            null,
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 1,
+          "size": 14,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {
             "5": [
               {
                 "atoms": [
@@ -1627,13 +1812,14 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
                 ],
                 "attachments": {},
                 "bonds": [
-                  null,
+                  "=",
                 ],
                 "type": "linear",
               },
             ],
           },
           "bonds": [
+            null,
             null,
             null,
             null,
@@ -1642,12 +1828,12 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
           ],
           "offset": 1,
           "ringNumber": 2,
-          "size": 5,
+          "size": 6,
           "substitutions": {},
           "type": "ring",
         },
         {
-          "atoms": "c",
+          "atoms": "C",
           "attachments": {
             "3": [
               {
@@ -1656,70 +1842,38 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
                 ],
                 "attachments": {},
                 "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "5": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
+                  "=",
                 ],
                 "type": "linear",
               },
             ],
           },
           "bonds": [
+            null,
+            null,
             null,
             "=",
             null,
             null,
-            null,
-            null,
-            null,
-            null,
-            null,
           ],
-          "offset": 0,
+          "offset": 3,
           "ringNumber": 3,
-          "size": 9,
-          "substitutions": {
-            "1": "C",
-            "2": "C",
-            "3": "C",
-          },
+          "size": 6,
+          "substitutions": {},
           "type": "ring",
         },
         {
-          "atoms": "c",
-          "attachments": {
-            "2": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-          },
+          "atoms": "C",
+          "attachments": {},
           "bonds": [
+            "=",
             null,
+            "=",
             null,
-            null,
-            null,
-            null,
+            "=",
             null,
           ],
-          "offset": 0,
+          "offset": 12,
           "ringNumber": 4,
           "size": 6,
           "substitutions": {},
@@ -1730,26 +1884,10 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
     },
     {
       "atoms": [
-        "C",
         "O",
       ],
-      "attachments": {
-        "1": [
-          {
-            "atoms": [
-              "N",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-      },
-      "bonds": [
-        "=",
-      ],
+      "attachments": {},
+      "bonds": [],
       "type": "linear",
     },
   ],
@@ -1758,65 +1896,45 @@ exports[`Tetracycline Integration Test parses tetracycline 1`] = `
 `;
 
 exports[`Tetracycline Integration Test generates valid code via toCode() 1`] = `
-"export const v1 = Fragment('CN');
-export const v2 = Fragment('C');
-export const v3 = v1.attach(2, v2);
-export const v4 = Fragment('C1CCC=C1');
-export const v5 = Fragment('O');
-export const v6 = v4.attach(3, v5);
-export const v7 = Fragment('O');
-export const v8 = v6.attach(4, v7);
-export const v9 = Fragment('C2CCCC2');
-export const v10 = Linear(['O'], ['=']);
-export const v11 = v9.attach(4, v10);
-export const v12 = Fragment('O');
-export const v13 = v11.attach(5, v12);
-export const v14 = Fragment('c3c(=ccccccc3)');
-export const v15 = Fragment('C3C(=Ccccccc3)');
-export const v16 = Fragment('O');
-export const v17 = v15.attach(3, v16, { sibling: true });
-export const v18 = Fragment('O');
-export const v19 = v17.attach(5, v18, { sibling: true });
-export const v20 = Fragment('c4ccccc4');
-export const v21 = Fragment('O');
-export const v22 = v20.attach(2, v21);
-export const v23 = FusedRing({ metadata: { rings: [{ ring: v8, start: 3, end: 23, atoms: [{ position: 3, depth: 0, value: 'C', rings: [1, 1] }, { position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 19, depth: 0, value: 'C', rings: [2, 1] }, { position: 21, depth: 0, value: 'C', rings: [1] }, { position: 23, depth: 0, value: 'C', bond: '=', rings: [1] }] }, { ring: v13, start: 4, end: 19, atoms: [{ position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 5, depth: 0, value: 'C', rings: [2] }, { position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 17, depth: 0, value: 'C', rings: [2] }, { position: 19, depth: 0, value: 'C', rings: [2, 1] }] }, { ring: v19, start: 6, end: 16, atoms: [{ position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 7, depth: 0, value: 'C', rings: [3] }, { position: 8, depth: 1, value: 'C', bond: '=', rings: [3], branchId: 13 }, { position: 10, depth: 1, value: 'c', rings: [4, 4, 3], branchId: 13 }, { position: 11, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 13, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 14, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 15, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 16, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }] }, { ring: v22, start: 10, end: 16, atoms: [{ position: 10, depth: 1, value: 'c', rings: [4, 4, 3], branchId: 13 }, { position: 11, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 13, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 14, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 15, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 16, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }] }] } });
-export const v24 = Linear(['C', 'O'], ['=']);
-export const v25 = Fragment('N');
-export const v26 = v24.attach(1, v25);
-export const v27 = Molecule([v3, v23, v26]);"
+"export const v1 = Fragment('C');
+export const v2 = Fragment('C1(CCCC(CC(=C(C(CC=C(C=C1))))))');
+export const v3 = Linear(['O'], ['=']);
+export const v4 = v2.attach(6, v3, { sibling: true });
+export const v5 = Linear(['O'], ['=']);
+export const v6 = v4.attach(10, v5, { sibling: true });
+export const v7 = Fragment('C2CC(((C(CC2))))');
+export const v8 = Linear(['O'], ['=']);
+export const v9 = v7.attach(5, v8, { sibling: true });
+export const v10 = Fragment('C3C(CC(=C(C3)))');
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(3, v11, { sibling: true });
+export const v13 = Fragment('C4=CC=CC=C4');
+export const v14 = Linear(['O'], ['=']);
+export const v15 = Fragment('C');
+export const v16 = FusedRing({ metadata: { rings: [{ ring: v6, start: 1, end: 16, atoms: [{ position: 1, depth: 0, value: 'C', rings: [1, 1] }, { position: 2, depth: 1, value: 'C', rings: [2, 2, 1], branchId: 3 }, { position: 3, depth: 1, value: 'C', rings: [2, 1], branchId: 3 }, { position: 4, depth: 1, value: 'C', rings: [3, 3, 2, 1], branchId: 3 }, { position: 5, depth: 1, value: 'C', rings: [3, 1], branchId: 3 }, { position: 6, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 8, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 9, depth: 3, value: 'C', bond: '=', rings: [3, 1], branchId: 17 }, { position: 10, depth: 4, value: 'C', rings: [3, 2, 1], branchId: 20 }, { position: 11, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }, { position: 13, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }, { position: 14, depth: 5, value: 'C', bond: '=', rings: [1], branchId: 23 }, { position: 15, depth: 6, value: 'C', rings: [4, 1, 4], branchId: 33 }, { position: 16, depth: 6, value: 'C', bond: '=', rings: [1, 4], branchId: 33 }] }, { ring: v9, start: 2, end: 13, atoms: [{ position: 2, depth: 1, value: 'C', rings: [2, 2, 1], branchId: 3 }, { position: 3, depth: 1, value: 'C', rings: [2, 1], branchId: 3 }, { position: 4, depth: 1, value: 'C', rings: [3, 3, 2, 1], branchId: 3 }, { position: 10, depth: 4, value: 'C', rings: [3, 2, 1], branchId: 20 }, { position: 11, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }, { position: 13, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }] }, { ring: v12, start: 4, end: 10, atoms: [{ position: 4, depth: 1, value: 'C', rings: [3, 3, 2, 1], branchId: 3 }, { position: 5, depth: 1, value: 'C', rings: [3, 1], branchId: 3 }, { position: 6, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 8, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 9, depth: 3, value: 'C', bond: '=', rings: [3, 1], branchId: 17 }, { position: 10, depth: 4, value: 'C', rings: [3, 2, 1], branchId: 20 }] }, { ring: v13, start: 15, end: 20, atoms: [{ position: 15, depth: 6, value: 'C', rings: [4, 1, 4], branchId: 33 }, { position: 16, depth: 6, value: 'C', bond: '=', rings: [1, 4], branchId: 33 }, { position: 17, depth: 6, value: 'C', rings: [4], branchId: 33 }, { position: 18, depth: 6, value: 'C', bond: '=', rings: [4], branchId: 33 }, { position: 19, depth: 6, value: 'C', rings: [4], branchId: 33 }, { position: 20, depth: 6, value: 'C', bond: '=', rings: [4], branchId: 33 }] }], atoms: [{ position: 21, depth: 6, value: 'O', branchId: 33 }, { position: 22, depth: 5, value: 'O', branchId: 23 }, { position: 23, depth: 4, value: 'O', branchId: 20 }, { position: 24, depth: 3, value: 'O', branchId: 17 }, { position: 25, depth: 2, value: 'C', branchId: 10, attachments: [v14] }, { position: 27, depth: 2, value: 'N', branchId: 10 }, { position: 28, depth: 1, value: 'N', branchId: 3, attachments: [v15] }, { position: 30, depth: 1, value: 'C', branchId: 3 }] } });
+export const v17 = Fragment('O');
+export const v18 = Molecule([v1, v16, v17]);"
 `;
 
 exports[`Tetracycline Integration Test generates valid verbose code via toCode() 1`] = `
-"export const v1 = Linear(['C', 'N']);
-export const v2 = Linear(['C']);
-export const v3 = v1.attach(2, v2);
-export const v4 = Ring({ atoms: 'C', size: 5, bonds: [null, null, null, '=', null] });
-export const v5 = Linear(['O']);
-export const v6 = v4.attach(3, v5);
-export const v7 = Linear(['O']);
-export const v8 = v6.attach(4, v7);
-export const v9 = Ring({ atoms: 'C', size: 5, ringNumber: 2, offset: 1 });
-export const v10 = Linear(['O'], ['=']);
-export const v11 = v9.attach(4, v10);
-export const v12 = Linear(['O']);
-export const v13 = v11.attach(5, v12);
-export const v14 = Ring({ atoms: 'c', size: 9, ringNumber: 3, bonds: [null, '=', null, null, null, null, null, null, null], branchDepths: [0, 0, 1, 1, 1, 1, 1, 1, 1] });
-export const v15 = v14.substitute(1, 'C');
-export const v16 = v15.substitute(2, 'C');
-export const v17 = v16.substitute(3, 'C');
-export const v18 = Linear(['O']);
-export const v19 = v17.attach(3, v18, { sibling: true });
-export const v20 = Linear(['O']);
-export const v21 = v19.attach(5, v20, { sibling: true });
-export const v22 = Ring({ atoms: 'c', size: 6, ringNumber: 4 });
-export const v23 = Linear(['O']);
-export const v24 = v22.attach(2, v23);
-export const v25 = FusedRing({ metadata: { rings: [{ ring: v8, start: 3, end: 23, atoms: [{ position: 3, depth: 0, value: 'C', rings: [1, 1] }, { position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 19, depth: 0, value: 'C', rings: [2, 1] }, { position: 21, depth: 0, value: 'C', rings: [1] }, { position: 23, depth: 0, value: 'C', bond: '=', rings: [1] }] }, { ring: v13, start: 4, end: 19, atoms: [{ position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 5, depth: 0, value: 'C', rings: [2] }, { position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 17, depth: 0, value: 'C', rings: [2] }, { position: 19, depth: 0, value: 'C', rings: [2, 1] }] }, { ring: v21, start: 6, end: 16, atoms: [{ position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 7, depth: 0, value: 'C', rings: [3] }, { position: 8, depth: 1, value: 'C', bond: '=', rings: [3], branchId: 13 }, { position: 10, depth: 1, value: 'c', rings: [4, 4, 3], branchId: 13 }, { position: 11, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 13, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 14, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 15, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 16, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }] }, { ring: v24, start: 10, end: 16, atoms: [{ position: 10, depth: 1, value: 'c', rings: [4, 4, 3], branchId: 13 }, { position: 11, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 13, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 14, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 15, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }, { position: 16, depth: 1, value: 'c', rings: [4, 3], branchId: 13 }] }] } });
-export const v26 = Linear(['C', 'O'], ['=']);
-export const v27 = Linear(['N']);
-export const v28 = v26.attach(1, v27);
-export const v29 = Molecule([v3, v25, v28]);"
+"export const v1 = Linear(['C']);
+export const v2 = Ring({ atoms: 'C', size: 14, bonds: [null, null, null, null, null, null, '=', null, null, null, '=', null, '=', null], branchDepths: [0, 1, 1, 1, 1, 2, 2, 3, 4, 5, 5, 5, 6, 6] });
+export const v3 = Linear(['O'], ['=']);
+export const v4 = v2.attach(6, v3, { sibling: true });
+export const v5 = Linear(['O'], ['=']);
+export const v6 = v4.attach(10, v5, { sibling: true });
+export const v7 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1, branchDepths: [1, 1, 1, 4, 5, 5] });
+export const v8 = Linear(['O'], ['=']);
+export const v9 = v7.attach(5, v8, { sibling: true });
+export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3, offset: 3, bonds: [null, null, null, '=', null, null], branchDepths: [1, 1, 2, 2, 3, 4] });
+export const v11 = Linear(['O'], ['=']);
+export const v12 = v10.attach(3, v11, { sibling: true });
+export const v13 = Ring({ atoms: 'C', size: 6, ringNumber: 4, offset: 12, bonds: ['=', null, '=', null, '=', null] });
+export const v14 = Linear(['O'], ['=']);
+export const v15 = Linear(['C']);
+export const v16 = FusedRing({ metadata: { rings: [{ ring: v6, start: 1, end: 16, atoms: [{ position: 1, depth: 0, value: 'C', rings: [1, 1] }, { position: 2, depth: 1, value: 'C', rings: [2, 2, 1], branchId: 3 }, { position: 3, depth: 1, value: 'C', rings: [2, 1], branchId: 3 }, { position: 4, depth: 1, value: 'C', rings: [3, 3, 2, 1], branchId: 3 }, { position: 5, depth: 1, value: 'C', rings: [3, 1], branchId: 3 }, { position: 6, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 8, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 9, depth: 3, value: 'C', bond: '=', rings: [3, 1], branchId: 17 }, { position: 10, depth: 4, value: 'C', rings: [3, 2, 1], branchId: 20 }, { position: 11, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }, { position: 13, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }, { position: 14, depth: 5, value: 'C', bond: '=', rings: [1], branchId: 23 }, { position: 15, depth: 6, value: 'C', rings: [4, 1, 4], branchId: 33 }, { position: 16, depth: 6, value: 'C', bond: '=', rings: [1, 4], branchId: 33 }] }, { ring: v9, start: 2, end: 13, atoms: [{ position: 2, depth: 1, value: 'C', rings: [2, 2, 1], branchId: 3 }, { position: 3, depth: 1, value: 'C', rings: [2, 1], branchId: 3 }, { position: 4, depth: 1, value: 'C', rings: [3, 3, 2, 1], branchId: 3 }, { position: 10, depth: 4, value: 'C', rings: [3, 2, 1], branchId: 20 }, { position: 11, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }, { position: 13, depth: 5, value: 'C', rings: [2, 1], branchId: 23 }] }, { ring: v12, start: 4, end: 10, atoms: [{ position: 4, depth: 1, value: 'C', rings: [3, 3, 2, 1], branchId: 3 }, { position: 5, depth: 1, value: 'C', rings: [3, 1], branchId: 3 }, { position: 6, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 8, depth: 2, value: 'C', rings: [3, 1], branchId: 10 }, { position: 9, depth: 3, value: 'C', bond: '=', rings: [3, 1], branchId: 17 }, { position: 10, depth: 4, value: 'C', rings: [3, 2, 1], branchId: 20 }] }, { ring: v13, start: 15, end: 20, atoms: [{ position: 15, depth: 6, value: 'C', rings: [4, 1, 4], branchId: 33 }, { position: 16, depth: 6, value: 'C', bond: '=', rings: [1, 4], branchId: 33 }, { position: 17, depth: 6, value: 'C', rings: [4], branchId: 33 }, { position: 18, depth: 6, value: 'C', bond: '=', rings: [4], branchId: 33 }, { position: 19, depth: 6, value: 'C', rings: [4], branchId: 33 }, { position: 20, depth: 6, value: 'C', bond: '=', rings: [4], branchId: 33 }] }], atoms: [{ position: 21, depth: 6, value: 'O', branchId: 33 }, { position: 22, depth: 5, value: 'O', branchId: 23 }, { position: 23, depth: 4, value: 'O', branchId: 20 }, { position: 24, depth: 3, value: 'O', branchId: 17 }, { position: 25, depth: 2, value: 'C', branchId: 10, attachments: [v14] }, { position: 27, depth: 2, value: 'N', branchId: 10 }, { position: 28, depth: 1, value: 'N', branchId: 3, attachments: [v15] }, { position: 30, depth: 1, value: 'C', branchId: 3 }] } });
+export const v17 = Linear(['O']);
+export const v18 = Molecule([v1, v16, v17]);"
 `;
 
 exports[`Doxycycline Integration Test parses doxycycline 1`] = `
@@ -2113,13 +2231,13 @@ exports[`Minocycline Integration Test parses minocycline 1`] = `
     {
       "rings": [
         {
-          "atoms": "c",
+          "atoms": "C",
           "attachments": {},
           "bonds": [
             null,
             null,
             null,
-            null,
+            "=",
             null,
             null,
           ],
@@ -2132,131 +2250,6 @@ exports[`Minocycline Integration Test parses minocycline 1`] = `
         {
           "atoms": "C",
           "attachments": {
-            "3": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-          },
-          "bonds": [
-            null,
-            null,
-            "=",
-            null,
-            "=",
-            null,
-          ],
-          "offset": 3,
-          "ringNumber": 2,
-          "size": 6,
-          "substitutions": {
-            "1": "c",
-            "2": "c",
-          },
-          "type": "ring",
-        },
-        {
-          "atoms": "C",
-          "attachments": {
-            "2": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  "=",
-                ],
-                "type": "linear",
-              },
-            ],
-            "4": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-          },
-          "bonds": [
-            null,
-            null,
-            null,
-            null,
-            null,
-          ],
-          "offset": 0,
-          "ringNumber": 1,
-          "size": 5,
-          "substitutions": {},
-          "type": "ring",
-        },
-        {
-          "atoms": "C",
-          "attachments": {
-            "2": [
-              {
-                "atoms": [
-                  "N",
-                  "C",
-                ],
-                "attachments": {
-                  "1": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "3": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "4": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  "=",
-                ],
-                "type": "linear",
-              },
-            ],
             "5": [
               {
                 "atoms": [
@@ -2264,7 +2257,7 @@ exports[`Minocycline Integration Test parses minocycline 1`] = `
                 ],
                 "attachments": {},
                 "bonds": [
-                  null,
+                  "=",
                 ],
                 "type": "linear",
               },
@@ -2273,13 +2266,48 @@ exports[`Minocycline Integration Test parses minocycline 1`] = `
           "bonds": [
             null,
             null,
+            "=",
             null,
             null,
             null,
           ],
+          "offset": 1,
+          "ringNumber": 2,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            null,
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
           "offset": 0,
           "ringNumber": 3,
-          "size": 5,
+          "size": 6,
+          "substitutions": {},
+          "type": "ring",
+        },
+        {
+          "atoms": "C",
+          "attachments": {},
+          "bonds": [
+            "=",
+            null,
+            "=",
+            null,
+            "=",
+            null,
+          ],
+          "offset": 0,
+          "ringNumber": 4,
+          "size": 6,
           "substitutions": {},
           "type": "ring",
         },
@@ -2288,10 +2316,26 @@ exports[`Minocycline Integration Test parses minocycline 1`] = `
     },
     {
       "atoms": [
-        "O",
+        "N",
+        "C",
       ],
-      "attachments": {},
-      "bonds": [],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+      ],
       "type": "linear",
     },
   ],
@@ -2303,61 +2347,36 @@ exports[`Minocycline Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Fragment('CN');
 export const v2 = Fragment('C');
 export const v3 = v1.attach(2, v2);
-export const v4 = Fragment('c1cccc(c1)');
-export const v5 = Fragment('C2CC=CC=C2');
-export const v6 = Fragment('c2cC=CC=C2');
-export const v7 = Fragment('O');
-export const v8 = v6.attach(3, v7);
-export const v9 = Ring({ atoms: 'C', size: 5, leadingBond: '=' });
+export const v4 = Fragment('C1C(((C(C(=C(C1))))))');
+export const v5 = Fragment('C2CC(((=CCC2)))');
+export const v6 = Linear(['O'], ['=']);
+export const v7 = v5.attach(5, v6, { sibling: true });
+export const v8 = Fragment('C3CC((=CC(=C3)))');
+export const v9 = Fragment('C4=C(C=CC(=C4))');
 export const v10 = Linear(['O'], ['=']);
-export const v11 = v9.attach(2, v10);
-export const v12 = Fragment('O');
-export const v13 = v11.attach(4, v12);
-export const v14 = Fragment('C3CCCC3');
-export const v15 = Fragment('NC');
-export const v16 = Fragment('C');
-export const v17 = v15.attach(1, v16);
-export const v18 = v14.attach(2, v17);
-export const v19 = Fragment('O');
-export const v20 = v18.attach(3, v19);
-export const v21 = Linear(['O'], ['=']);
-export const v22 = v20.attach(4, v21);
-export const v23 = Fragment('O');
-export const v24 = v22.attach(5, v23);
-export const v25 = FusedRing({ metadata: { rings: [{ ring: v4, start: 3, end: 8, atoms: [{ position: 3, depth: 0, value: 'c', rings: [1, 1] }, { position: 4, depth: 0, value: 'c', rings: [1] }, { position: 5, depth: 0, value: 'c', rings: [1] }, { position: 6, depth: 0, value: 'c', rings: [2, 1, 2] }, { position: 7, depth: 0, value: 'c', rings: [1, 2] }, { position: 8, depth: 1, value: 'c', rings: [1], branchId: 12 }] }, { ring: v8, start: 6, end: 26, atoms: [{ position: 6, depth: 0, value: 'c', rings: [2, 1, 2] }, { position: 7, depth: 0, value: 'c', rings: [1, 2] }, { position: 9, depth: 0, value: 'C', rings: [2] }, { position: 11, depth: 0, value: 'C', bond: '=', rings: [1, 1, 2] }, { position: 25, depth: 0, value: 'C', rings: [1, 2] }, { position: 26, depth: 0, value: 'C', bond: '=', rings: [2] }] }, { ring: v13, start: 11, end: 25, atoms: [{ position: 11, depth: 0, value: 'C', bond: '=', rings: [1, 1, 2] }, { position: 12, depth: 0, value: 'C', rings: [1] }, { position: 14, depth: 0, value: 'C', rings: [3, 3, 1] }, { position: 23, depth: 0, value: 'C', rings: [3, 1] }, { position: 25, depth: 0, value: 'C', rings: [1, 2] }] }, { ring: v24, start: 14, end: 23, atoms: [{ position: 14, depth: 0, value: 'C', rings: [3, 3, 1] }, { position: 15, depth: 0, value: 'C', rings: [3] }, { position: 19, depth: 0, value: 'C', rings: [3] }, { position: 21, depth: 0, value: 'C', rings: [3] }, { position: 23, depth: 0, value: 'C', rings: [3, 1] }] }] } });
-export const v26 = Fragment('O');
-export const v27 = Molecule([v3, v25, v26]);"
+export const v11 = FusedRing({ metadata: { rings: [{ ring: v4, start: 3, end: 21, atoms: [{ position: 3, depth: 0, value: 'C', rings: [1, 1] }, { position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 18, depth: 3, value: 'C', rings: [2, 1], branchId: 27 }, { position: 19, depth: 4, value: 'C', rings: [1], branchId: 38 }, { position: 20, depth: 5, value: 'C', bond: '=', rings: [1], branchId: 40 }, { position: 21, depth: 6, value: 'C', rings: [1], branchId: 43 }] }, { ring: v7, start: 4, end: 18, atoms: [{ position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 5, depth: 0, value: 'C', rings: [2] }, { position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 15, depth: 3, value: 'C', bond: '=', rings: [3, 2], branchId: 27 }, { position: 16, depth: 3, value: 'C', rings: [2], branchId: 27 }, { position: 18, depth: 3, value: 'C', rings: [2, 1], branchId: 27 }] }, { ring: v8, start: 6, end: 15, atoms: [{ position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 7, depth: 0, value: 'C', rings: [3] }, { position: 8, depth: 0, value: 'C', rings: [4, 4, 3] }, { position: 13, depth: 2, value: 'C', bond: '=', rings: [4, 3], branchId: 22 }, { position: 14, depth: 2, value: 'C', rings: [3], branchId: 22 }, { position: 15, depth: 3, value: 'C', bond: '=', rings: [3, 2], branchId: 27 }] }, { ring: v9, start: 8, end: 13, atoms: [{ position: 8, depth: 0, value: 'C', rings: [4, 4, 3] }, { position: 9, depth: 0, value: 'C', bond: '=', rings: [4] }, { position: 10, depth: 1, value: 'C', rings: [4], branchId: 17 }, { position: 11, depth: 1, value: 'C', bond: '=', rings: [4], branchId: 17 }, { position: 12, depth: 1, value: 'C', rings: [4], branchId: 17 }, { position: 13, depth: 2, value: 'C', bond: '=', rings: [4, 3], branchId: 22 }] }], atoms: [{ position: 22, depth: 6, value: 'O', bond: '=', branchId: 43 }, { position: 23, depth: 5, value: 'C', branchId: 40, attachments: [v10] }, { position: 25, depth: 5, value: 'N', branchId: 40 }, { position: 26, depth: 4, value: 'O', branchId: 38 }, { position: 27, depth: 3, value: 'O', branchId: 27 }, { position: 28, depth: 2, value: 'O', branchId: 22 }, { position: 29, depth: 1, value: 'O', branchId: 17 }] } });
+export const v12 = Fragment('NC');
+export const v13 = Fragment('C');
+export const v14 = v12.attach(1, v13);
+export const v15 = Molecule([v3, v11, v14]);"
 `;
 
 exports[`Minocycline Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'N']);
 export const v2 = Linear(['C']);
 export const v3 = v1.attach(2, v2);
-export const v4 = Ring({ atoms: 'c', size: 6, branchDepths: [0, 0, 0, 0, 0, 1] });
-export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 3, bonds: [null, null, '=', null, '=', null] });
-export const v6 = v5.substitute(1, 'c');
-export const v7 = v6.substitute(2, 'c');
-export const v8 = Linear(['O']);
-export const v9 = v7.attach(3, v8);
-export const v10 = Ring({ atoms: 'C', size: 5, leadingBond: '=' });
-export const v11 = Linear(['O'], ['=']);
-export const v12 = v10.attach(2, v11);
-export const v13 = Linear(['O']);
-export const v14 = v12.attach(4, v13);
-export const v15 = Ring({ atoms: 'C', size: 5, ringNumber: 3 });
-export const v16 = Linear(['N', 'C']);
-export const v17 = Linear(['C']);
-export const v18 = v16.attach(1, v17);
-export const v19 = v15.attach(2, v18);
-export const v20 = Linear(['O']);
-export const v21 = v19.attach(3, v20);
-export const v22 = Linear(['O'], ['=']);
-export const v23 = v21.attach(4, v22);
-export const v24 = Linear(['O']);
-export const v25 = v23.attach(5, v24);
-export const v26 = FusedRing({ metadata: { rings: [{ ring: v4, start: 3, end: 8, atoms: [{ position: 3, depth: 0, value: 'c', rings: [1, 1] }, { position: 4, depth: 0, value: 'c', rings: [1] }, { position: 5, depth: 0, value: 'c', rings: [1] }, { position: 6, depth: 0, value: 'c', rings: [2, 1, 2] }, { position: 7, depth: 0, value: 'c', rings: [1, 2] }, { position: 8, depth: 1, value: 'c', rings: [1], branchId: 12 }] }, { ring: v9, start: 6, end: 26, atoms: [{ position: 6, depth: 0, value: 'c', rings: [2, 1, 2] }, { position: 7, depth: 0, value: 'c', rings: [1, 2] }, { position: 9, depth: 0, value: 'C', rings: [2] }, { position: 11, depth: 0, value: 'C', bond: '=', rings: [1, 1, 2] }, { position: 25, depth: 0, value: 'C', rings: [1, 2] }, { position: 26, depth: 0, value: 'C', bond: '=', rings: [2] }] }, { ring: v14, start: 11, end: 25, atoms: [{ position: 11, depth: 0, value: 'C', bond: '=', rings: [1, 1, 2] }, { position: 12, depth: 0, value: 'C', rings: [1] }, { position: 14, depth: 0, value: 'C', rings: [3, 3, 1] }, { position: 23, depth: 0, value: 'C', rings: [3, 1] }, { position: 25, depth: 0, value: 'C', rings: [1, 2] }] }, { ring: v25, start: 14, end: 23, atoms: [{ position: 14, depth: 0, value: 'C', rings: [3, 3, 1] }, { position: 15, depth: 0, value: 'C', rings: [3] }, { position: 19, depth: 0, value: 'C', rings: [3] }, { position: 21, depth: 0, value: 'C', rings: [3] }, { position: 23, depth: 0, value: 'C', rings: [3, 1] }] }] } });
-export const v27 = Linear(['O']);
-export const v28 = Molecule([v3, v26, v27]);"
+export const v4 = Ring({ atoms: 'C', size: 6, bonds: [null, null, null, '=', null, null], branchDepths: [0, 0, 3, 4, 5, 6] });
+export const v5 = Ring({ atoms: 'C', size: 6, ringNumber: 2, offset: 1, bonds: [null, null, '=', null, null, null], branchDepths: [0, 0, 0, 3, 3, 3] });
+export const v6 = Linear(['O'], ['=']);
+export const v7 = v5.attach(5, v6, { sibling: true });
+export const v8 = Ring({ atoms: 'C', size: 6, ringNumber: 3, bonds: [null, null, '=', null, '=', null], branchDepths: [0, 0, 0, 2, 2, 3] });
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 4, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 1, 1, 1, 2] });
+export const v10 = Linear(['O'], ['=']);
+export const v11 = FusedRing({ metadata: { rings: [{ ring: v4, start: 3, end: 21, atoms: [{ position: 3, depth: 0, value: 'C', rings: [1, 1] }, { position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 18, depth: 3, value: 'C', rings: [2, 1], branchId: 27 }, { position: 19, depth: 4, value: 'C', rings: [1], branchId: 38 }, { position: 20, depth: 5, value: 'C', bond: '=', rings: [1], branchId: 40 }, { position: 21, depth: 6, value: 'C', rings: [1], branchId: 43 }] }, { ring: v7, start: 4, end: 18, atoms: [{ position: 4, depth: 0, value: 'C', rings: [2, 2, 1] }, { position: 5, depth: 0, value: 'C', rings: [2] }, { position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 15, depth: 3, value: 'C', bond: '=', rings: [3, 2], branchId: 27 }, { position: 16, depth: 3, value: 'C', rings: [2], branchId: 27 }, { position: 18, depth: 3, value: 'C', rings: [2, 1], branchId: 27 }] }, { ring: v8, start: 6, end: 15, atoms: [{ position: 6, depth: 0, value: 'C', rings: [3, 3, 2] }, { position: 7, depth: 0, value: 'C', rings: [3] }, { position: 8, depth: 0, value: 'C', rings: [4, 4, 3] }, { position: 13, depth: 2, value: 'C', bond: '=', rings: [4, 3], branchId: 22 }, { position: 14, depth: 2, value: 'C', rings: [3], branchId: 22 }, { position: 15, depth: 3, value: 'C', bond: '=', rings: [3, 2], branchId: 27 }] }, { ring: v9, start: 8, end: 13, atoms: [{ position: 8, depth: 0, value: 'C', rings: [4, 4, 3] }, { position: 9, depth: 0, value: 'C', bond: '=', rings: [4] }, { position: 10, depth: 1, value: 'C', rings: [4], branchId: 17 }, { position: 11, depth: 1, value: 'C', bond: '=', rings: [4], branchId: 17 }, { position: 12, depth: 1, value: 'C', rings: [4], branchId: 17 }, { position: 13, depth: 2, value: 'C', bond: '=', rings: [4, 3], branchId: 22 }] }], atoms: [{ position: 22, depth: 6, value: 'O', bond: '=', branchId: 43 }, { position: 23, depth: 5, value: 'C', branchId: 40, attachments: [v10] }, { position: 25, depth: 5, value: 'N', branchId: 40 }, { position: 26, depth: 4, value: 'O', branchId: 38 }, { position: 27, depth: 3, value: 'O', branchId: 27 }, { position: 28, depth: 2, value: 'O', branchId: 22 }, { position: 29, depth: 1, value: 'O', branchId: 17 }] } });
+export const v12 = Linear(['N', 'C']);
+export const v13 = Linear(['C']);
+export const v14 = v12.attach(1, v13);
+export const v15 = Molecule([v3, v11, v14]);"
 `;
 
 exports[`Erythromycin Integration Test parses erythromycin 1`] = `
@@ -2393,13 +2412,204 @@ exports[`Erythromycin Integration Test parses erythromycin 1`] = `
               {
                 "atoms": "C",
                 "attachments": {
-                  "2": [
+                  "3": [
                     {
                       "atoms": [
                         "O",
                       ],
                       "attachments": {},
                       "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                  "4": [
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                },
+                "bonds": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 2,
+                "size": 6,
+                "substitutions": {
+                  "6": "O",
+                },
+                "type": "ring",
+              },
+              {
+                "atoms": [
+                  "O",
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "type": "molecule",
+          },
+        ],
+        "11": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "13": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "2": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "3": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "4": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "5": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "6": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "8": [
+          {
+            "components": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+              {
+                "atoms": "C",
+                "attachments": {
+                  "2": [
+                    {
+                      "atoms": [
+                        "N",
+                        "C",
+                      ],
+                      "attachments": {
+                        "1": [
+                          {
+                            "atoms": [
+                              "C",
+                            ],
+                            "attachments": {},
+                            "bonds": [
+                              null,
+                            ],
+                            "type": "linear",
+                          },
+                        ],
+                      },
+                      "bonds": [
+                        null,
                         null,
                       ],
                       "type": "linear",
@@ -2437,155 +2647,17 @@ exports[`Erythromycin Integration Test parses erythromycin 1`] = `
               {
                 "atoms": [
                   "O",
-                  "C",
                 ],
                 "attachments": {},
-                "bonds": [
-                  null,
-                ],
+                "bonds": [],
                 "type": "linear",
               },
             ],
             "type": "molecule",
           },
-        ],
-        "11": [
           {
             "atoms": [
               "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "12": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "13": [
-          {
-            "components": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-              {
-                "atoms": "C",
-                "attachments": {
-                  "3": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                ],
-                "offset": 0,
-                "ringNumber": 2,
-                "size": 6,
-                "substitutions": {
-                  "6": "O",
-                },
-                "type": "ring",
-              },
-              {
-                "atoms": [
-                  "N",
-                  "C",
-                ],
-                "attachments": {
-                  "1": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "type": "molecule",
-          },
-        ],
-        "3": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              "=",
-            ],
-            "type": "linear",
-          },
-        ],
-        "4": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "6": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "8": [
-          {
-            "atoms": [
-              "O",
             ],
             "attachments": {},
             "bonds": [
@@ -2627,7 +2699,7 @@ exports[`Erythromycin Integration Test parses erythromycin 1`] = `
       "ringNumber": 1,
       "size": 14,
       "substitutions": {
-        "2": "O",
+        "14": "O",
       },
       "type": "ring",
     },
@@ -2646,86 +2718,106 @@ exports[`Erythromycin Integration Test parses erythromycin 1`] = `
 
 exports[`Erythromycin Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Fragment('CC');
-export const v2 = Fragment('C1CCC(CC(CC(C(C(C(C(C(C1))))))))');
-export const v3 = Fragment('C1OCC(CC(CC(C(C(C(C(C(C1))))))))');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(3, v4, { sibling: true });
+export const v2 = Fragment('C1C(C(C(CC(CC(C(C(C(C(CC1)))))))))');
+export const v3 = Fragment('C1C(C(C(CC(CC(C(C(C(C(CO1)))))))))');
+export const v4 = Fragment('O');
+export const v5 = v3.attach(2, v4, { sibling: false });
 export const v6 = Fragment('C');
-export const v7 = v5.attach(4, v6, { sibling: false });
+export const v7 = v5.attach(2, v6, { sibling: true });
 export const v8 = Fragment('C');
-export const v9 = v7.attach(6, v8, { sibling: false });
-export const v10 = Fragment('O');
-export const v11 = v9.attach(8, v10, { sibling: false });
-export const v12 = Fragment('C');
-export const v13 = v11.attach(9, v12, { sibling: false });
+export const v9 = v7.attach(3, v8, { sibling: false });
+export const v10 = Fragment('C');
+export const v11 = v9.attach(4, v10, { sibling: false });
+export const v12 = Linear(['O'], ['=']);
+export const v13 = v11.attach(5, v12, { sibling: true });
 export const v14 = Fragment('O');
-export const v15 = Fragment('C3C(C(CC(C3)))');
-export const v16 = Fragment('C3C(C(CC(O3)))');
-export const v17 = Fragment('O');
-export const v18 = v16.attach(2, v17, { sibling: false });
-export const v19 = Fragment('C');
-export const v20 = v18.attach(3, v19, { sibling: false });
-export const v21 = Fragment('OC');
-export const v22 = Molecule([v14, v20, v21]);
-export const v23 = v13.attach(10, v22, { sibling: false });
-export const v24 = Fragment('C');
-export const v25 = v23.attach(11, v24, { sibling: false });
-export const v26 = Fragment('O');
-export const v27 = v25.attach(12, v26, { sibling: false });
-export const v28 = Fragment('O');
-export const v29 = Fragment('C2CC(CC(C2))');
-export const v30 = Fragment('C2CC(CC(O2))');
-export const v31 = Fragment('C');
-export const v32 = v30.attach(3, v31, { sibling: false });
-export const v33 = Fragment('NC');
-export const v34 = Fragment('C');
-export const v35 = v33.attach(1, v34);
-export const v36 = Molecule([v28, v32, v35]);
-export const v37 = v27.attach(13, v36, { sibling: false });
-export const v38 = Linear(['O'], [], {}, '=');
-export const v39 = Molecule([v1, v37, v38]);"
+export const v15 = v13.attach(6, v14, { sibling: false });
+export const v16 = Fragment('O');
+export const v17 = Fragment('C3C(C(CC(C3)))');
+export const v18 = Fragment('C3C(C(CC(O3)))');
+export const v19 = Fragment('NC');
+export const v20 = Fragment('C');
+export const v21 = v19.attach(1, v20);
+export const v22 = v18.attach(2, v21, { sibling: false });
+export const v23 = Fragment('C');
+export const v24 = v22.attach(3, v23, { sibling: false });
+export const v25 = Fragment('O');
+export const v26 = Molecule([v16, v24, v25]);
+export const v27 = v15.attach(8, v26, { sibling: false });
+export const v28 = Fragment('C');
+export const v29 = v27.attach(8, v28, { sibling: true });
+export const v30 = Fragment('C');
+export const v31 = v29.attach(9, v30, { sibling: false });
+export const v32 = Fragment('O');
+export const v33 = Fragment('C2CC(C(C(C2)))');
+export const v34 = Fragment('C2CC(C(C(O2)))');
+export const v35 = Fragment('O');
+export const v36 = v34.attach(3, v35, { sibling: false });
+export const v37 = Fragment('C');
+export const v38 = v36.attach(3, v37, { sibling: true });
+export const v39 = Fragment('C');
+export const v40 = v38.attach(4, v39, { sibling: false });
+export const v41 = Fragment('OC');
+export const v42 = Molecule([v32, v40, v41]);
+export const v43 = v31.attach(10, v42, { sibling: false });
+export const v44 = Fragment('C');
+export const v45 = v43.attach(11, v44, { sibling: false });
+export const v46 = Linear(['O'], ['=']);
+export const v47 = v45.attach(13, v46, { sibling: true });
+export const v48 = Fragment('O');
+export const v49 = Molecule([v1, v47, v48]);"
 `;
 
 exports[`Erythromycin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
-export const v2 = Ring({ atoms: 'C', size: 14, branchDepths: [0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8] });
-export const v3 = v2.substitute(2, 'O');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(3, v4, { sibling: true });
+export const v2 = Ring({ atoms: 'C', size: 14, branchDepths: [0, 0, 1, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9] });
+export const v3 = v2.substitute(14, 'O');
+export const v4 = Linear(['O']);
+export const v5 = v3.attach(2, v4, { sibling: false });
 export const v6 = Linear(['C']);
-export const v7 = v5.attach(4, v6, { sibling: false });
+export const v7 = v5.attach(2, v6, { sibling: true });
 export const v8 = Linear(['C']);
-export const v9 = v7.attach(6, v8, { sibling: false });
-export const v10 = Linear(['O']);
-export const v11 = v9.attach(8, v10, { sibling: false });
-export const v12 = Linear(['C']);
-export const v13 = v11.attach(9, v12, { sibling: false });
+export const v9 = v7.attach(3, v8, { sibling: false });
+export const v10 = Linear(['C']);
+export const v11 = v9.attach(4, v10, { sibling: false });
+export const v12 = Linear(['O'], ['=']);
+export const v13 = v11.attach(5, v12, { sibling: true });
 export const v14 = Linear(['O']);
-export const v15 = Ring({ atoms: 'C', size: 6, ringNumber: 3, branchDepths: [5, 5, 6, 7, 7, 8] });
-export const v16 = v15.substitute(6, 'O');
-export const v17 = Linear(['O']);
-export const v18 = v16.attach(2, v17, { sibling: false });
-export const v19 = Linear(['C']);
-export const v20 = v18.attach(3, v19, { sibling: false });
-export const v21 = Linear(['O', 'C']);
-export const v22 = Molecule([v14, v20, v21]);
-export const v23 = v13.attach(10, v22, { sibling: false });
-export const v24 = Linear(['C']);
-export const v25 = v23.attach(11, v24, { sibling: false });
-export const v26 = Linear(['O']);
-export const v27 = v25.attach(12, v26, { sibling: false });
-export const v28 = Linear(['O']);
-export const v29 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [8, 8, 8, 9, 9, 10] });
-export const v30 = v29.substitute(6, 'O');
-export const v31 = Linear(['C']);
-export const v32 = v30.attach(3, v31, { sibling: false });
-export const v33 = Linear(['N', 'C']);
-export const v34 = Linear(['C']);
-export const v35 = v33.attach(1, v34);
-export const v36 = Molecule([v28, v32, v35]);
-export const v37 = v27.attach(13, v36, { sibling: false });
-export const v38 = Linear(['O'], [], {}, '=');
-export const v39 = Molecule([v1, v37, v38]);"
+export const v15 = v13.attach(6, v14, { sibling: false });
+export const v16 = Linear(['O']);
+export const v17 = Ring({ atoms: 'C', size: 6, ringNumber: 3, branchDepths: [5, 5, 6, 7, 7, 8] });
+export const v18 = v17.substitute(6, 'O');
+export const v19 = Linear(['N', 'C']);
+export const v20 = Linear(['C']);
+export const v21 = v19.attach(1, v20);
+export const v22 = v18.attach(2, v21, { sibling: false });
+export const v23 = Linear(['C']);
+export const v24 = v22.attach(3, v23, { sibling: false });
+export const v25 = Linear(['O']);
+export const v26 = Molecule([v16, v24, v25]);
+export const v27 = v15.attach(8, v26, { sibling: false });
+export const v28 = Linear(['C']);
+export const v29 = v27.attach(8, v28, { sibling: true });
+export const v30 = Linear(['C']);
+export const v31 = v29.attach(9, v30, { sibling: false });
+export const v32 = Linear(['O']);
+export const v33 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [7, 7, 7, 8, 9, 10] });
+export const v34 = v33.substitute(6, 'O');
+export const v35 = Linear(['O']);
+export const v36 = v34.attach(3, v35, { sibling: false });
+export const v37 = Linear(['C']);
+export const v38 = v36.attach(3, v37, { sibling: true });
+export const v39 = Linear(['C']);
+export const v40 = v38.attach(4, v39, { sibling: false });
+export const v41 = Linear(['O', 'C']);
+export const v42 = Molecule([v32, v40, v41]);
+export const v43 = v31.attach(10, v42, { sibling: false });
+export const v44 = Linear(['C']);
+export const v45 = v43.attach(11, v44, { sibling: false });
+export const v46 = Linear(['O'], ['=']);
+export const v47 = v45.attach(13, v46, { sibling: true });
+export const v48 = Linear(['O']);
+export const v49 = Molecule([v1, v47, v48]);"
 `;
 
 exports[`Azithromycin Integration Test parses azithromycin 1`] = `
@@ -2747,6 +2839,194 @@ exports[`Azithromycin Integration Test parses azithromycin 1`] = `
       "attachments": {
         "10": [
           {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "11": [
+          {
+            "components": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+              {
+                "atoms": "C",
+                "attachments": {
+                  "3": [
+                    {
+                      "atoms": [
+                        "O",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                  "4": [
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                },
+                "bonds": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 2,
+                "size": 6,
+                "substitutions": {
+                  "6": "O",
+                },
+                "type": "ring",
+              },
+              {
+                "atoms": [
+                  "O",
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "type": "molecule",
+          },
+        ],
+        "12": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "14": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "2": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "3": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "4": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "5": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "7": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "9": [
+          {
             "components": [
               {
                 "atoms": [
@@ -2764,10 +3044,25 @@ exports[`Azithromycin Integration Test parses azithromycin 1`] = `
                   "2": [
                     {
                       "atoms": [
-                        "O",
+                        "N",
+                        "C",
                       ],
-                      "attachments": {},
+                      "attachments": {
+                        "1": [
+                          {
+                            "atoms": [
+                              "C",
+                            ],
+                            "attachments": {},
+                            "bonds": [
+                              null,
+                            ],
+                            "type": "linear",
+                          },
+                        ],
+                      },
                       "bonds": [
+                        null,
                         null,
                       ],
                       "type": "linear",
@@ -2805,181 +3100,14 @@ exports[`Azithromycin Integration Test parses azithromycin 1`] = `
               {
                 "atoms": [
                   "O",
-                  "C",
                 ],
                 "attachments": {},
-                "bonds": [
-                  null,
-                ],
+                "bonds": [],
                 "type": "linear",
               },
             ],
             "type": "molecule",
           },
-        ],
-        "11": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "12": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "13": [
-          {
-            "components": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-              {
-                "atoms": "C",
-                "attachments": {
-                  "3": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                ],
-                "offset": 0,
-                "ringNumber": 2,
-                "size": 6,
-                "substitutions": {
-                  "6": "O",
-                },
-                "type": "ring",
-              },
-              {
-                "atoms": [
-                  "N",
-                  "C",
-                ],
-                "attachments": {
-                  "1": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "type": "molecule",
-          },
-        ],
-        "3": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              "=",
-            ],
-            "type": "linear",
-          },
-        ],
-        "4": [
-          {
-            "atoms": [
-              "C",
-              "N",
-              "C",
-            ],
-            "attachments": {
-              "2": [
-                {
-                  "atoms": [
-                    "C",
-                  ],
-                  "attachments": {},
-                  "bonds": [
-                    null,
-                  ],
-                  "type": "linear",
-                },
-              ],
-            },
-            "bonds": [
-              null,
-              null,
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "6": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "8": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "9": [
           {
             "atoms": [
               "C",
@@ -3007,12 +3135,14 @@ exports[`Azithromycin Integration Test parses azithromycin 1`] = `
         null,
         null,
         null,
+        null,
       ],
       "offset": 0,
       "ringNumber": 1,
-      "size": 14,
+      "size": 15,
       "substitutions": {
-        "2": "O",
+        "15": "O",
+        "5": "N",
       },
       "type": "ring",
     },
@@ -3031,90 +3161,107 @@ exports[`Azithromycin Integration Test parses azithromycin 1`] = `
 
 exports[`Azithromycin Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Fragment('CC');
-export const v2 = Fragment('C1CCC(CC(CC(C(C(C(C(C(C1))))))))');
-export const v3 = Fragment('C1OCC(CC(CC(C(C(C(C(C(C1))))))))');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(3, v4, { sibling: true });
-export const v6 = Fragment('CNC');
-export const v7 = Fragment('C');
-export const v8 = v6.attach(2, v7);
-export const v9 = v5.attach(4, v8, { sibling: false });
+export const v2 = Fragment('C1C(C(C(C(CC(CC(C(C(C(C(CC1))))))))))');
+export const v3 = Fragment('C1C(C(C(N(CC(CC(C(C(C(C(CO1))))))))))');
+export const v4 = Fragment('O');
+export const v5 = v3.attach(2, v4, { sibling: false });
+export const v6 = Fragment('C');
+export const v7 = v5.attach(2, v6, { sibling: true });
+export const v8 = Fragment('C');
+export const v9 = v7.attach(3, v8, { sibling: false });
 export const v10 = Fragment('C');
-export const v11 = v9.attach(6, v10, { sibling: false });
-export const v12 = Fragment('O');
-export const v13 = v11.attach(8, v12, { sibling: false });
-export const v14 = Fragment('C');
-export const v15 = v13.attach(9, v14, { sibling: false });
+export const v11 = v9.attach(4, v10, { sibling: false });
+export const v12 = Fragment('C');
+export const v13 = v11.attach(5, v12, { sibling: false });
+export const v14 = Fragment('O');
+export const v15 = v13.attach(7, v14, { sibling: false });
 export const v16 = Fragment('O');
 export const v17 = Fragment('C3C(C(CC(C3)))');
 export const v18 = Fragment('C3C(C(CC(O3)))');
-export const v19 = Fragment('O');
-export const v20 = v18.attach(2, v19, { sibling: false });
-export const v21 = Fragment('C');
-export const v22 = v20.attach(3, v21, { sibling: false });
-export const v23 = Fragment('OC');
-export const v24 = Molecule([v16, v22, v23]);
-export const v25 = v15.attach(10, v24, { sibling: false });
-export const v26 = Fragment('C');
-export const v27 = v25.attach(11, v26, { sibling: false });
-export const v28 = Fragment('O');
-export const v29 = v27.attach(12, v28, { sibling: false });
-export const v30 = Fragment('O');
-export const v31 = Fragment('C2CC(CC(C2))');
-export const v32 = Fragment('C2CC(CC(O2))');
-export const v33 = Fragment('C');
-export const v34 = v32.attach(3, v33, { sibling: false });
-export const v35 = Fragment('NC');
-export const v36 = Fragment('C');
-export const v37 = v35.attach(1, v36);
-export const v38 = Molecule([v30, v34, v37]);
-export const v39 = v29.attach(13, v38, { sibling: false });
-export const v40 = Linear(['O'], [], {}, '=');
-export const v41 = Molecule([v1, v39, v40]);"
+export const v19 = Fragment('NC');
+export const v20 = Fragment('C');
+export const v21 = v19.attach(1, v20);
+export const v22 = v18.attach(2, v21, { sibling: false });
+export const v23 = Fragment('C');
+export const v24 = v22.attach(3, v23, { sibling: false });
+export const v25 = Fragment('O');
+export const v26 = Molecule([v16, v24, v25]);
+export const v27 = v15.attach(9, v26, { sibling: false });
+export const v28 = Fragment('C');
+export const v29 = v27.attach(9, v28, { sibling: true });
+export const v30 = Fragment('C');
+export const v31 = v29.attach(10, v30, { sibling: false });
+export const v32 = Fragment('O');
+export const v33 = Fragment('C2CC(C(C(C2)))');
+export const v34 = Fragment('C2CC(C(C(O2)))');
+export const v35 = Fragment('O');
+export const v36 = v34.attach(3, v35, { sibling: false });
+export const v37 = Fragment('C');
+export const v38 = v36.attach(3, v37, { sibling: true });
+export const v39 = Fragment('C');
+export const v40 = v38.attach(4, v39, { sibling: false });
+export const v41 = Fragment('OC');
+export const v42 = Molecule([v32, v40, v41]);
+export const v43 = v31.attach(11, v42, { sibling: false });
+export const v44 = Fragment('C');
+export const v45 = v43.attach(12, v44, { sibling: false });
+export const v46 = Linear(['O'], ['=']);
+export const v47 = v45.attach(14, v46, { sibling: true });
+export const v48 = Fragment('O');
+export const v49 = Molecule([v1, v47, v48]);"
 `;
 
 exports[`Azithromycin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
-export const v2 = Ring({ atoms: 'C', size: 14, branchDepths: [0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8] });
-export const v3 = v2.substitute(2, 'O');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(3, v4, { sibling: true });
-export const v6 = Linear(['C', 'N', 'C']);
+export const v2 = Ring({ atoms: 'C', size: 15, branchDepths: [0, 0, 1, 2, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 10] });
+export const v3 = v2.substitute(5, 'N');
+export const v4 = v3.substitute(15, 'O');
+export const v5 = Linear(['O']);
+export const v6 = v4.attach(2, v5, { sibling: false });
 export const v7 = Linear(['C']);
-export const v8 = v6.attach(2, v7);
-export const v9 = v5.attach(4, v8, { sibling: false });
-export const v10 = Linear(['C']);
-export const v11 = v9.attach(6, v10, { sibling: false });
-export const v12 = Linear(['O']);
-export const v13 = v11.attach(8, v12, { sibling: false });
-export const v14 = Linear(['C']);
-export const v15 = v13.attach(9, v14, { sibling: false });
-export const v16 = Linear(['O']);
-export const v17 = Ring({ atoms: 'C', size: 6, ringNumber: 3, branchDepths: [5, 5, 6, 7, 7, 8] });
-export const v18 = v17.substitute(6, 'O');
-export const v19 = Linear(['O']);
-export const v20 = v18.attach(2, v19, { sibling: false });
+export const v8 = v6.attach(2, v7, { sibling: true });
+export const v9 = Linear(['C']);
+export const v10 = v8.attach(3, v9, { sibling: false });
+export const v11 = Linear(['C']);
+export const v12 = v10.attach(4, v11, { sibling: false });
+export const v13 = Linear(['C']);
+export const v14 = v12.attach(5, v13, { sibling: false });
+export const v15 = Linear(['O']);
+export const v16 = v14.attach(7, v15, { sibling: false });
+export const v17 = Linear(['O']);
+export const v18 = Ring({ atoms: 'C', size: 6, ringNumber: 3, branchDepths: [6, 6, 7, 8, 8, 9] });
+export const v19 = v18.substitute(6, 'O');
+export const v20 = Linear(['N', 'C']);
 export const v21 = Linear(['C']);
-export const v22 = v20.attach(3, v21, { sibling: false });
-export const v23 = Linear(['O', 'C']);
-export const v24 = Molecule([v16, v22, v23]);
-export const v25 = v15.attach(10, v24, { sibling: false });
-export const v26 = Linear(['C']);
-export const v27 = v25.attach(11, v26, { sibling: false });
-export const v28 = Linear(['O']);
-export const v29 = v27.attach(12, v28, { sibling: false });
-export const v30 = Linear(['O']);
-export const v31 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [8, 8, 8, 9, 9, 10] });
-export const v32 = v31.substitute(6, 'O');
-export const v33 = Linear(['C']);
-export const v34 = v32.attach(3, v33, { sibling: false });
-export const v35 = Linear(['N', 'C']);
-export const v36 = Linear(['C']);
-export const v37 = v35.attach(1, v36);
-export const v38 = Molecule([v30, v34, v37]);
-export const v39 = v29.attach(13, v38, { sibling: false });
-export const v40 = Linear(['O'], [], {}, '=');
-export const v41 = Molecule([v1, v39, v40]);"
+export const v22 = v20.attach(1, v21);
+export const v23 = v19.attach(2, v22, { sibling: false });
+export const v24 = Linear(['C']);
+export const v25 = v23.attach(3, v24, { sibling: false });
+export const v26 = Linear(['O']);
+export const v27 = Molecule([v17, v25, v26]);
+export const v28 = v16.attach(9, v27, { sibling: false });
+export const v29 = Linear(['C']);
+export const v30 = v28.attach(9, v29, { sibling: true });
+export const v31 = Linear(['C']);
+export const v32 = v30.attach(10, v31, { sibling: false });
+export const v33 = Linear(['O']);
+export const v34 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [8, 8, 8, 9, 10, 11] });
+export const v35 = v34.substitute(6, 'O');
+export const v36 = Linear(['O']);
+export const v37 = v35.attach(3, v36, { sibling: false });
+export const v38 = Linear(['C']);
+export const v39 = v37.attach(3, v38, { sibling: true });
+export const v40 = Linear(['C']);
+export const v41 = v39.attach(4, v40, { sibling: false });
+export const v42 = Linear(['O', 'C']);
+export const v43 = Molecule([v33, v41, v42]);
+export const v44 = v32.attach(11, v43, { sibling: false });
+export const v45 = Linear(['C']);
+export const v46 = v44.attach(12, v45, { sibling: false });
+export const v47 = Linear(['O'], ['=']);
+export const v48 = v46.attach(14, v47, { sibling: true });
+export const v49 = Linear(['O']);
+export const v50 = Molecule([v1, v48, v49]);"
 `;
 
 exports[`Clarithromycin Integration Test parses clarithromycin 1`] = `
@@ -3150,13 +3297,204 @@ exports[`Clarithromycin Integration Test parses clarithromycin 1`] = `
               {
                 "atoms": "C",
                 "attachments": {
-                  "2": [
+                  "3": [
                     {
                       "atoms": [
                         "O",
                       ],
                       "attachments": {},
                       "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                  "4": [
+                    {
+                      "atoms": [
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                      ],
+                      "type": "linear",
+                    },
+                  ],
+                },
+                "bonds": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 2,
+                "size": 6,
+                "substitutions": {
+                  "6": "O",
+                },
+                "type": "ring",
+              },
+              {
+                "atoms": [
+                  "O",
+                  "C",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+            ],
+            "type": "molecule",
+          },
+        ],
+        "11": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "13": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "2": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "3": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "4": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "5": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "6": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
+        ],
+        "8": [
+          {
+            "components": [
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [
+                  null,
+                ],
+                "type": "linear",
+              },
+              {
+                "atoms": "C",
+                "attachments": {
+                  "2": [
+                    {
+                      "atoms": [
+                        "N",
+                        "C",
+                      ],
+                      "attachments": {
+                        "1": [
+                          {
+                            "atoms": [
+                              "C",
+                            ],
+                            "attachments": {},
+                            "bonds": [
+                              null,
+                            ],
+                            "type": "linear",
+                          },
+                        ],
+                      },
+                      "bonds": [
+                        null,
                         null,
                       ],
                       "type": "linear",
@@ -3194,157 +3532,17 @@ exports[`Clarithromycin Integration Test parses clarithromycin 1`] = `
               {
                 "atoms": [
                   "O",
-                  "C",
                 ],
                 "attachments": {},
-                "bonds": [
-                  null,
-                ],
+                "bonds": [],
                 "type": "linear",
               },
             ],
             "type": "molecule",
           },
-        ],
-        "11": [
           {
             "atoms": [
               "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "12": [
-          {
-            "atoms": [
-              "O",
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "13": [
-          {
-            "components": [
-              {
-                "atoms": [
-                  "O",
-                ],
-                "attachments": {},
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-              {
-                "atoms": "C",
-                "attachments": {
-                  "3": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                ],
-                "offset": 0,
-                "ringNumber": 2,
-                "size": 6,
-                "substitutions": {
-                  "6": "O",
-                },
-                "type": "ring",
-              },
-              {
-                "atoms": [
-                  "N",
-                  "C",
-                ],
-                "attachments": {
-                  "1": [
-                    {
-                      "atoms": [
-                        "C",
-                      ],
-                      "attachments": {},
-                      "bonds": [
-                        null,
-                      ],
-                      "type": "linear",
-                    },
-                  ],
-                },
-                "bonds": [
-                  null,
-                ],
-                "type": "linear",
-              },
-            ],
-            "type": "molecule",
-          },
-        ],
-        "3": [
-          {
-            "atoms": [
-              "O",
-            ],
-            "attachments": {},
-            "bonds": [
-              "=",
-            ],
-            "type": "linear",
-          },
-        ],
-        "4": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "6": [
-          {
-            "atoms": [
-              "C",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-        ],
-        "8": [
-          {
-            "atoms": [
-              "O",
             ],
             "attachments": {},
             "bonds": [
@@ -3386,16 +3584,19 @@ exports[`Clarithromycin Integration Test parses clarithromycin 1`] = `
       "ringNumber": 1,
       "size": 14,
       "substitutions": {
-        "2": "O",
+        "14": "O",
       },
       "type": "ring",
     },
     {
       "atoms": [
         "O",
+        "C",
       ],
       "attachments": {},
-      "bonds": [],
+      "bonds": [
+        null,
+      ],
       "type": "linear",
     },
   ],
@@ -3405,86 +3606,106 @@ exports[`Clarithromycin Integration Test parses clarithromycin 1`] = `
 
 exports[`Clarithromycin Integration Test generates valid code via toCode() 1`] = `
 "export const v1 = Fragment('CC');
-export const v2 = Fragment('C1CCC(CC(CC(C(C(C(C(C(C1))))))))');
-export const v3 = Fragment('C1OCC(CC(CC(C(C(C(C(C(C1))))))))');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(3, v4, { sibling: true });
+export const v2 = Fragment('C1C(C(C(CC(CC(C(C(C(C(CC1)))))))))');
+export const v3 = Fragment('C1C(C(C(CC(CC(C(C(C(C(CO1)))))))))');
+export const v4 = Fragment('O');
+export const v5 = v3.attach(2, v4, { sibling: false });
 export const v6 = Fragment('C');
-export const v7 = v5.attach(4, v6, { sibling: false });
+export const v7 = v5.attach(2, v6, { sibling: true });
 export const v8 = Fragment('C');
-export const v9 = v7.attach(6, v8, { sibling: false });
-export const v10 = Fragment('O');
-export const v11 = v9.attach(8, v10, { sibling: false });
-export const v12 = Fragment('C');
-export const v13 = v11.attach(9, v12, { sibling: false });
+export const v9 = v7.attach(3, v8, { sibling: false });
+export const v10 = Fragment('C');
+export const v11 = v9.attach(4, v10, { sibling: false });
+export const v12 = Linear(['O'], ['=']);
+export const v13 = v11.attach(5, v12, { sibling: true });
 export const v14 = Fragment('O');
-export const v15 = Fragment('C3C(C(CC(C3)))');
-export const v16 = Fragment('C3C(C(CC(O3)))');
-export const v17 = Fragment('O');
-export const v18 = v16.attach(2, v17, { sibling: false });
-export const v19 = Fragment('C');
-export const v20 = v18.attach(3, v19, { sibling: false });
-export const v21 = Fragment('OC');
-export const v22 = Molecule([v14, v20, v21]);
-export const v23 = v13.attach(10, v22, { sibling: false });
-export const v24 = Fragment('C');
-export const v25 = v23.attach(11, v24, { sibling: false });
-export const v26 = Fragment('OC');
-export const v27 = v25.attach(12, v26, { sibling: false });
-export const v28 = Fragment('O');
-export const v29 = Fragment('C2CC(CC(C2))');
-export const v30 = Fragment('C2CC(CC(O2))');
-export const v31 = Fragment('C');
-export const v32 = v30.attach(3, v31, { sibling: false });
-export const v33 = Fragment('NC');
-export const v34 = Fragment('C');
-export const v35 = v33.attach(1, v34);
-export const v36 = Molecule([v28, v32, v35]);
-export const v37 = v27.attach(13, v36, { sibling: false });
-export const v38 = Linear(['O'], [], {}, '=');
-export const v39 = Molecule([v1, v37, v38]);"
+export const v15 = v13.attach(6, v14, { sibling: false });
+export const v16 = Fragment('O');
+export const v17 = Fragment('C3C(C(CC(C3)))');
+export const v18 = Fragment('C3C(C(CC(O3)))');
+export const v19 = Fragment('NC');
+export const v20 = Fragment('C');
+export const v21 = v19.attach(1, v20);
+export const v22 = v18.attach(2, v21, { sibling: false });
+export const v23 = Fragment('C');
+export const v24 = v22.attach(3, v23, { sibling: false });
+export const v25 = Fragment('O');
+export const v26 = Molecule([v16, v24, v25]);
+export const v27 = v15.attach(8, v26, { sibling: false });
+export const v28 = Fragment('C');
+export const v29 = v27.attach(8, v28, { sibling: true });
+export const v30 = Fragment('C');
+export const v31 = v29.attach(9, v30, { sibling: false });
+export const v32 = Fragment('O');
+export const v33 = Fragment('C2CC(C(C(C2)))');
+export const v34 = Fragment('C2CC(C(C(O2)))');
+export const v35 = Fragment('O');
+export const v36 = v34.attach(3, v35, { sibling: false });
+export const v37 = Fragment('C');
+export const v38 = v36.attach(3, v37, { sibling: true });
+export const v39 = Fragment('C');
+export const v40 = v38.attach(4, v39, { sibling: false });
+export const v41 = Fragment('OC');
+export const v42 = Molecule([v32, v40, v41]);
+export const v43 = v31.attach(10, v42, { sibling: false });
+export const v44 = Fragment('C');
+export const v45 = v43.attach(11, v44, { sibling: false });
+export const v46 = Linear(['O'], ['=']);
+export const v47 = v45.attach(13, v46, { sibling: true });
+export const v48 = Fragment('OC');
+export const v49 = Molecule([v1, v47, v48]);"
 `;
 
 exports[`Clarithromycin Integration Test generates valid verbose code via toCode() 1`] = `
 "export const v1 = Linear(['C', 'C']);
-export const v2 = Ring({ atoms: 'C', size: 14, branchDepths: [0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8] });
-export const v3 = v2.substitute(2, 'O');
-export const v4 = Linear(['O'], ['=']);
-export const v5 = v3.attach(3, v4, { sibling: true });
+export const v2 = Ring({ atoms: 'C', size: 14, branchDepths: [0, 0, 1, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9] });
+export const v3 = v2.substitute(14, 'O');
+export const v4 = Linear(['O']);
+export const v5 = v3.attach(2, v4, { sibling: false });
 export const v6 = Linear(['C']);
-export const v7 = v5.attach(4, v6, { sibling: false });
+export const v7 = v5.attach(2, v6, { sibling: true });
 export const v8 = Linear(['C']);
-export const v9 = v7.attach(6, v8, { sibling: false });
-export const v10 = Linear(['O']);
-export const v11 = v9.attach(8, v10, { sibling: false });
-export const v12 = Linear(['C']);
-export const v13 = v11.attach(9, v12, { sibling: false });
+export const v9 = v7.attach(3, v8, { sibling: false });
+export const v10 = Linear(['C']);
+export const v11 = v9.attach(4, v10, { sibling: false });
+export const v12 = Linear(['O'], ['=']);
+export const v13 = v11.attach(5, v12, { sibling: true });
 export const v14 = Linear(['O']);
-export const v15 = Ring({ atoms: 'C', size: 6, ringNumber: 3, branchDepths: [5, 5, 6, 7, 7, 8] });
-export const v16 = v15.substitute(6, 'O');
-export const v17 = Linear(['O']);
-export const v18 = v16.attach(2, v17, { sibling: false });
-export const v19 = Linear(['C']);
-export const v20 = v18.attach(3, v19, { sibling: false });
-export const v21 = Linear(['O', 'C']);
-export const v22 = Molecule([v14, v20, v21]);
-export const v23 = v13.attach(10, v22, { sibling: false });
-export const v24 = Linear(['C']);
-export const v25 = v23.attach(11, v24, { sibling: false });
-export const v26 = Linear(['O', 'C']);
-export const v27 = v25.attach(12, v26, { sibling: false });
-export const v28 = Linear(['O']);
-export const v29 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [8, 8, 8, 9, 9, 10] });
-export const v30 = v29.substitute(6, 'O');
-export const v31 = Linear(['C']);
-export const v32 = v30.attach(3, v31, { sibling: false });
-export const v33 = Linear(['N', 'C']);
-export const v34 = Linear(['C']);
-export const v35 = v33.attach(1, v34);
-export const v36 = Molecule([v28, v32, v35]);
-export const v37 = v27.attach(13, v36, { sibling: false });
-export const v38 = Linear(['O'], [], {}, '=');
-export const v39 = Molecule([v1, v37, v38]);"
+export const v15 = v13.attach(6, v14, { sibling: false });
+export const v16 = Linear(['O']);
+export const v17 = Ring({ atoms: 'C', size: 6, ringNumber: 3, branchDepths: [5, 5, 6, 7, 7, 8] });
+export const v18 = v17.substitute(6, 'O');
+export const v19 = Linear(['N', 'C']);
+export const v20 = Linear(['C']);
+export const v21 = v19.attach(1, v20);
+export const v22 = v18.attach(2, v21, { sibling: false });
+export const v23 = Linear(['C']);
+export const v24 = v22.attach(3, v23, { sibling: false });
+export const v25 = Linear(['O']);
+export const v26 = Molecule([v16, v24, v25]);
+export const v27 = v15.attach(8, v26, { sibling: false });
+export const v28 = Linear(['C']);
+export const v29 = v27.attach(8, v28, { sibling: true });
+export const v30 = Linear(['C']);
+export const v31 = v29.attach(9, v30, { sibling: false });
+export const v32 = Linear(['O']);
+export const v33 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [7, 7, 7, 8, 9, 10] });
+export const v34 = v33.substitute(6, 'O');
+export const v35 = Linear(['O']);
+export const v36 = v34.attach(3, v35, { sibling: false });
+export const v37 = Linear(['C']);
+export const v38 = v36.attach(3, v37, { sibling: true });
+export const v39 = Linear(['C']);
+export const v40 = v38.attach(4, v39, { sibling: false });
+export const v41 = Linear(['O', 'C']);
+export const v42 = Molecule([v32, v40, v41]);
+export const v43 = v31.attach(10, v42, { sibling: false });
+export const v44 = Linear(['C']);
+export const v45 = v43.attach(11, v44, { sibling: false });
+export const v46 = Linear(['O'], ['=']);
+export const v47 = v45.attach(13, v46, { sibling: true });
+export const v48 = Linear(['O', 'C']);
+export const v49 = Molecule([v1, v47, v48]);"
 `;
 
 exports[`Trimethoprim Integration Test parses trimethoprim 1`] = `
@@ -4542,217 +4763,229 @@ export const v72 = Molecule([v3, v67, v68, v71]);"
 
 exports[`Linezolid Integration Test parses linezolid 1`] = `
 {
-  "atoms": [
-    "O",
-    "C",
-    "C",
-  ],
-  "attachments": {
-    "2": [
-      {
-        "components": [
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "N",
+        "C",
+      ],
+      "attachments": {
+        "2": [
           {
             "atoms": [
-              "N",
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "4": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 5,
+      "substitutions": {
+        "3": "N",
+        "5": "O",
+      },
+      "type": "ring",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "3": [
+          {
+            "atoms": "C",
+            "attachments": {},
+            "bonds": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+            ],
+            "offset": 0,
+            "ringNumber": 3,
+            "size": 6,
+            "substitutions": {
+              "1": "N",
+              "4": "O",
+            },
+            "type": "ring",
+          },
+        ],
+      },
+      "bonds": [
+        "=",
+        null,
+        "=",
+        null,
+        "=",
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 2,
+      "size": 6,
+      "substitutions": {},
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "F",
+      ],
+      "attachments": {},
+      "bonds": [],
+      "type": "linear",
+    },
+  ],
+  "type": "molecule",
+}
+`;
+
+exports[`Linezolid Integration Test generates valid code via toCode() 1`] = `
+"export const v1 = Fragment('CCNC');
+export const v2 = Linear(['O'], ['=']);
+export const v3 = v1.attach(2, v2);
+export const v4 = Fragment('C1CC(CC1)');
+export const v5 = Fragment('C1CN(CO1)');
+export const v6 = Linear(['O'], ['=']);
+export const v7 = v5.attach(4, v6, { sibling: true });
+export const v8 = Fragment('C2=CC(=C(C=C2))');
+export const v9 = Fragment('C3CCCCC3');
+export const v10 = Fragment('N3CCOCC3');
+export const v11 = v8.attach(3, v10, { sibling: false });
+export const v12 = Fragment('F');
+export const v13 = Molecule([v3, v7, v11, v12]);"
+`;
+
+exports[`Linezolid Integration Test generates valid verbose code via toCode() 1`] = `
+"export const v1 = Linear(['C', 'C', 'N', 'C']);
+export const v2 = Linear(['O'], ['=']);
+export const v3 = v1.attach(2, v2);
+export const v4 = Ring({ atoms: 'C', size: 5, branchDepths: [0, 0, 0, 1, 1] });
+export const v5 = v4.substitute(3, 'N');
+export const v6 = v5.substitute(5, 'O');
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(4, v7, { sibling: true });
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 2, bonds: ['=', null, '=', null, '=', null], branchDepths: [0, 0, 0, 1, 2, 2] });
+export const v10 = Ring({ atoms: 'C', size: 6, ringNumber: 3 });
+export const v11 = v10.substitute(1, 'N');
+export const v12 = v11.substitute(4, 'O');
+export const v13 = v9.attach(3, v12, { sibling: false });
+export const v14 = Linear(['F']);
+export const v15 = Molecule([v3, v8, v13, v14]);"
+`;
+
+exports[`Clindamycin Integration Test parses clindamycin 1`] = `
+{
+  "components": [
+    {
+      "atoms": [
+        "C",
+        "C",
+        "C",
+      ],
+      "attachments": {},
+      "bonds": [
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
+    {
+      "atoms": "C",
+      "attachments": {
+        "3": [
+          {
+            "atoms": [
               "C",
             ],
             "attachments": {},
             "bonds": [
               null,
-              null,
             ],
             "type": "linear",
           },
+        ],
+      },
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "offset": 0,
+      "ringNumber": 1,
+      "size": 5,
+      "substitutions": {
+        "4": "N",
+      },
+      "type": "ring",
+    },
+    {
+      "atoms": [
+        "C",
+        "N",
+        "C",
+        "C",
+        "Cl",
+      ],
+      "attachments": {
+        "1": [
+          {
+            "atoms": [
+              "O",
+            ],
+            "attachments": {},
+            "bonds": [
+              "=",
+            ],
+            "type": "linear",
+          },
+        ],
+        "3": [
           {
             "components": [
               {
                 "atoms": "C",
                 "attachments": {
-                  "4": [
-                    {
-                      "components": [
-                        {
-                          "atoms": "C",
-                          "attachments": {
-                            "3": [
-                              {
-                                "atoms": [
-                                  "C",
-                                  "O",
-                                  "C",
-                                  "N",
-                                ],
-                                "attachments": {
-                                  "3": [
-                                    {
-                                      "atoms": [
-                                        "O",
-                                      ],
-                                      "attachments": {},
-                                      "bonds": [
-                                        "=",
-                                      ],
-                                      "type": "linear",
-                                    },
-                                  ],
-                                },
-                                "bonds": [
-                                  null,
-                                  null,
-                                  null,
-                                  null,
-                                ],
-                                "type": "linear",
-                              },
-                            ],
-                          },
-                          "bonds": [
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                          ],
-                          "offset": 0,
-                          "ringNumber": 2,
-                          "size": 5,
-                          "substitutions": {
-                            "1": "N",
-                            "4": "O",
-                          },
-                          "type": "ring",
-                        },
-                        {
-                          "atoms": [
-                            "O",
-                          ],
-                          "attachments": {},
-                          "bonds": [],
-                          "type": "linear",
-                        },
-                      ],
-                      "type": "molecule",
-                    },
-                  ],
-                },
-                "bonds": [
-                  "=",
-                  null,
-                  "=",
-                  null,
-                  "=",
-                  null,
-                ],
-                "offset": 0,
-                "ringNumber": 1,
-                "size": 6,
-                "substitutions": {},
-                "type": "ring",
-              },
-              {
-                "atoms": [
-                  "F",
-                ],
-                "attachments": {},
-                "bonds": [],
-                "type": "linear",
-              },
-            ],
-            "type": "molecule",
-          },
-        ],
-        "type": "molecule",
-      },
-    ],
-  },
-  "bonds": [
-    "=",
-    null,
-  ],
-  "type": "linear",
-}
-`;
-
-exports[`Linezolid Integration Test generates valid code via toCode() 1`] = `
-"export const v1 = Linear(['O', 'C', 'C'], ['=', null]);
-export const v2 = Fragment('NC');
-export const v3 = Fragment('C1=CC=CC=C1');
-export const v4 = Fragment('C2CCCC2');
-export const v5 = Fragment('N2CCOC2');
-export const v6 = Fragment('COCN');
-export const v7 = Linear(['O'], ['=']);
-export const v8 = v6.attach(3, v7);
-export const v9 = v5.attach(3, v8);
-export const v10 = Linear(['O'], [], {}, '=');
-export const v11 = Molecule([v9, v10]);
-export const v12 = v3.attach(4, v11);
-export const v13 = Fragment('F');
-export const v14 = Molecule([v12, v13]);
-export const v15 = Molecule([v2, v14]);
-export const v16 = v1.attach(2, v15);"
-`;
-
-exports[`Linezolid Integration Test generates valid verbose code via toCode() 1`] = `
-"export const v1 = Linear(['O', 'C', 'C'], ['=', null]);
-export const v2 = Linear(['N', 'C']);
-export const v3 = Ring({ atoms: 'C', size: 6, bonds: ['=', null, '=', null, '=', null] });
-export const v4 = Ring({ atoms: 'C', size: 5, ringNumber: 2 });
-export const v5 = v4.substitute(1, 'N');
-export const v6 = v5.substitute(4, 'O');
-export const v7 = Linear(['C', 'O', 'C', 'N']);
-export const v8 = Linear(['O'], ['=']);
-export const v9 = v7.attach(3, v8);
-export const v10 = v6.attach(3, v9);
-export const v11 = Linear(['O'], [], {}, '=');
-export const v12 = Molecule([v10, v11]);
-export const v13 = v3.attach(4, v12);
-export const v14 = Linear(['F']);
-export const v15 = Molecule([v13, v14]);
-export const v16 = Molecule([v2, v15]);
-export const v17 = v1.attach(2, v16);"
-`;
-
-exports[`Clindamycin Integration Test parses clindamycin 1`] = `
-{
-  "atoms": [
-    "O",
-    "C",
-    "C",
-    "C",
-    "C",
-  ],
-  "attachments": {
-    "2": [
-      {
-        "components": [
-          {
-            "atoms": [
-              "N",
-            ],
-            "attachments": {},
-            "bonds": [
-              null,
-            ],
-            "type": "linear",
-          },
-          {
-            "atoms": "C",
-            "attachments": {
-              "2": [
-                {
-                  "atoms": [
-                    "O",
-                  ],
-                  "attachments": {},
-                  "bonds": [
-                    null,
-                  ],
-                  "type": "linear",
-                },
-              ],
-              "3": [
-                {
-                  "components": [
+                  "2": [
                     {
                       "atoms": [
                         "O",
@@ -4763,220 +4996,136 @@ exports[`Clindamycin Integration Test parses clindamycin 1`] = `
                       ],
                       "type": "linear",
                     },
-                    {
-                      "components": [
-                        {
-                          "atoms": "C",
-                          "attachments": {
-                            "3": [
-                              {
-                                "atoms": [
-                                  "S",
-                                  "C",
-                                ],
-                                "attachments": {},
-                                "bonds": [
-                                  null,
-                                  null,
-                                ],
-                                "type": "linear",
-                              },
-                            ],
-                            "4": [
-                              {
-                                "atoms": [
-                                  "O",
-                                ],
-                                "attachments": {},
-                                "bonds": [
-                                  null,
-                                ],
-                                "type": "linear",
-                              },
-                            ],
-                            "5": [
-                              {
-                                "atoms": [
-                                  "O",
-                                ],
-                                "attachments": {},
-                                "bonds": [
-                                  null,
-                                ],
-                                "type": "linear",
-                              },
-                            ],
-                          },
-                          "bonds": [
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                          ],
-                          "offset": 0,
-                          "ringNumber": 2,
-                          "size": 6,
-                          "substitutions": {
-                            "2": "O",
-                          },
-                          "type": "ring",
-                        },
-                        {
-                          "atoms": [
-                            "N",
-                          ],
-                          "attachments": {
-                            "1": [
-                              {
-                                "atoms": [
-                                  "C",
-                                ],
-                                "attachments": {},
-                                "bonds": [
-                                  null,
-                                ],
-                                "type": "linear",
-                              },
-                            ],
-                          },
-                          "bonds": [],
-                          "type": "linear",
-                        },
-                      ],
-                      "type": "molecule",
-                    },
+                  ],
+                  "3": [
                     {
                       "atoms": [
-                        "C",
+                        "O",
                       ],
                       "attachments": {},
-                      "bonds": [],
+                      "bonds": [
+                        null,
+                      ],
                       "type": "linear",
                     },
                   ],
-                  "type": "molecule",
-                },
-              ],
-              "4": [
-                {
-                  "atoms": [
-                    "Cl",
+                  "4": [
+                    {
+                      "atoms": [
+                        "S",
+                        "C",
+                      ],
+                      "attachments": {},
+                      "bonds": [
+                        null,
+                        null,
+                      ],
+                      "type": "linear",
+                    },
                   ],
-                  "attachments": {},
-                  "bonds": [
-                    null,
-                  ],
-                  "type": "linear",
                 },
-              ],
-            },
-            "bonds": [
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
+                "bonds": [
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ],
+                "offset": 0,
+                "ringNumber": 2,
+                "size": 6,
+                "substitutions": {
+                  "6": "O",
+                },
+                "type": "ring",
+              },
+              {
+                "atoms": [
+                  "O",
+                ],
+                "attachments": {},
+                "bonds": [],
+                "type": "linear",
+              },
             ],
-            "offset": 0,
-            "ringNumber": 1,
-            "size": 6,
-            "substitutions": {
-              "6": "S",
-            },
-            "type": "ring",
+            "type": "molecule",
           },
         ],
-        "type": "molecule",
-      },
-    ],
-    "3": [
-      {
-        "atoms": [
-          "C",
-          "C",
+        "4": [
+          {
+            "atoms": [
+              "C",
+            ],
+            "attachments": {},
+            "bonds": [
+              null,
+            ],
+            "type": "linear",
+          },
         ],
-        "attachments": {},
-        "bonds": [
-          null,
-          null,
-        ],
-        "type": "linear",
       },
-    ],
-  },
-  "bonds": [
-    "=",
-    null,
-    null,
-    null,
+      "bonds": [
+        null,
+        null,
+        null,
+        null,
+      ],
+      "type": "linear",
+    },
   ],
-  "type": "linear",
+  "type": "molecule",
 }
 `;
 
 exports[`Clindamycin Integration Test generates valid code via toCode() 1`] = `
-"export const v1 = Linear(['O', 'C', 'C', 'C', 'C'], ['=', null, null, null]);
-export const v2 = Fragment('N');
-export const v3 = Fragment('C1CCCCC1');
-export const v4 = Fragment('C1CCCCS1');
-export const v5 = Fragment('O');
-export const v6 = v4.attach(2, v5);
-export const v7 = Fragment('O');
-export const v8 = Fragment('C2CCCCC2');
-export const v9 = Fragment('C2OCCCC2');
-export const v10 = Fragment('SC');
-export const v11 = v9.attach(3, v10);
-export const v12 = Fragment('O');
-export const v13 = v11.attach(4, v12);
-export const v14 = Fragment('O');
-export const v15 = v13.attach(5, v14);
-export const v16 = Fragment('N');
-export const v17 = Fragment('C');
-export const v18 = v16.attach(1, v17);
-export const v19 = Molecule([v15, v18]);
+"export const v1 = Fragment('CCC');
+export const v2 = Fragment('C1CC(C(C1))');
+export const v3 = Fragment('C1CC(N(C1))');
+export const v4 = Fragment('C');
+export const v5 = v3.attach(3, v4, { sibling: false });
+export const v6 = Fragment('CNCCCl');
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(1, v7);
+export const v9 = Fragment('C2C(C(C(C(C2))))');
+export const v10 = Fragment('C2C(C(C(C(O2))))');
+export const v11 = Fragment('O');
+export const v12 = v10.attach(2, v11, { sibling: false });
+export const v13 = Fragment('O');
+export const v14 = v12.attach(3, v13, { sibling: false });
+export const v15 = Fragment('SC');
+export const v16 = v14.attach(4, v15, { sibling: false });
+export const v17 = Fragment('O');
+export const v18 = Molecule([v16, v17]);
+export const v19 = v8.attach(3, v18);
 export const v20 = Fragment('C');
-export const v21 = Molecule([v7, v19, v20]);
-export const v22 = v6.attach(3, v21);
-export const v23 = Fragment('Cl');
-export const v24 = v22.attach(4, v23);
-export const v25 = Molecule([v2, v24]);
-export const v26 = v1.attach(2, v25);
-export const v27 = Fragment('CC');
-export const v28 = v26.attach(3, v27);"
+export const v21 = v19.attach(4, v20);
+export const v22 = Molecule([v1, v5, v21]);"
 `;
 
 exports[`Clindamycin Integration Test generates valid verbose code via toCode() 1`] = `
-"export const v1 = Linear(['O', 'C', 'C', 'C', 'C'], ['=', null, null, null]);
-export const v2 = Linear(['N']);
-export const v3 = Ring({ atoms: 'C', size: 6 });
-export const v4 = v3.substitute(6, 'S');
-export const v5 = Linear(['O']);
-export const v6 = v4.attach(2, v5);
-export const v7 = Linear(['O']);
-export const v8 = Ring({ atoms: 'C', size: 6, ringNumber: 2 });
-export const v9 = v8.substitute(2, 'O');
-export const v10 = Linear(['S', 'C']);
-export const v11 = v9.attach(3, v10);
-export const v12 = Linear(['O']);
-export const v13 = v11.attach(4, v12);
-export const v14 = Linear(['O']);
-export const v15 = v13.attach(5, v14);
-export const v16 = Linear(['N']);
-export const v17 = Linear(['C']);
-export const v18 = v16.attach(1, v17);
-export const v19 = Molecule([v15, v18]);
+"export const v1 = Linear(['C', 'C', 'C']);
+export const v2 = Ring({ atoms: 'C', size: 5, branchDepths: [0, 0, 0, 1, 2] });
+export const v3 = v2.substitute(4, 'N');
+export const v4 = Linear(['C']);
+export const v5 = v3.attach(3, v4, { sibling: false });
+export const v6 = Linear(['C', 'N', 'C', 'C', 'Cl']);
+export const v7 = Linear(['O'], ['=']);
+export const v8 = v6.attach(1, v7);
+export const v9 = Ring({ atoms: 'C', size: 6, ringNumber: 2, branchDepths: [1, 1, 2, 3, 4, 5] });
+export const v10 = v9.substitute(6, 'O');
+export const v11 = Linear(['O']);
+export const v12 = v10.attach(2, v11, { sibling: false });
+export const v13 = Linear(['O']);
+export const v14 = v12.attach(3, v13, { sibling: false });
+export const v15 = Linear(['S', 'C']);
+export const v16 = v14.attach(4, v15, { sibling: false });
+export const v17 = Linear(['O']);
+export const v18 = Molecule([v16, v17]);
+export const v19 = v8.attach(3, v18);
 export const v20 = Linear(['C']);
-export const v21 = Molecule([v7, v19, v20]);
-export const v22 = v6.attach(3, v21);
-export const v23 = Linear(['Cl']);
-export const v24 = v22.attach(4, v23);
-export const v25 = Molecule([v2, v24]);
-export const v26 = v1.attach(2, v25);
-export const v27 = Linear(['C', 'C']);
-export const v28 = v26.attach(3, v27);"
+export const v21 = v19.attach(4, v20);
+export const v22 = Molecule([v1, v5, v21]);"
 `;
 
 exports[`Rifampicin Integration Test parses rifampicin 1`] = `
